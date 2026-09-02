@@ -1,0 +1,584 @@
+// Gold Loan & Pledge Management ERP — Prisma schema
+// Covers MVP scope (PRD §103) plus the custody/audit backbone the rest of the
+// product depends on. IDs use human-readable prefixed codes (CUS-, GL-, etc.)
+// as documented display IDs, backed by a UUID primary key (`id`) so we never
+// have to worry about collisions or renumbering.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  OWNER
+  MANAGER
+  APPRAISER
+  CASHIER
+  STAFF
+}
+
+enum KycDocType {
+  AADHAAR
+  PAN
+  DRIVING_LICENCE
+  VOTER_ID
+  OTHER
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum BiometricStatus {
+  NOT_ENROLLED
+  ENROLLED
+  ENROLLMENT_FAILED
+}
+
+enum BiometricResult {
+  MATCH
+  NO_MATCH
+  DEVICE_ERROR
+}
+
+enum LoanStatus {
+  DRAFT
+  APPRAISAL_PENDING
+  APPRAISED
+  APPROVAL_PENDING
+  APPROVED
+  DOCUMENT_PENDING
+  DISBURSED
+  ACTIVE
+  OVERDUE
+  NOTICE
+  AUCTION_ELIGIBLE
+  AUCTIONED
+  HOLD
+  CLOSED
+}
+
+enum JewelleryStatus {
+  PLEDGED
+  PART_RELEASE_PENDING
+  RELEASED
+}
+
+enum AppraisalStatus {
+  DRAFT
+  APPRAISER_CONFIRMED
+  MANAGER_APPROVED
+  LOCKED
+}
+
+enum InterestType {
+  MONTHLY_SIMPLE
+  DAILY_SIMPLE
+  ANNUAL_SIMPLE
+  CUSTOM
+}
+
+enum LedgerEntryType {
+  DISBURSEMENT
+  PAYMENT
+  INTEREST_ACCRUED
+  INTEREST_PAID
+  PRINCIPAL_PAID
+  PENALTY_CHARGED
+  PENALTY_PAID
+  CHARGE
+  REVERSAL
+  ADJUSTMENT
+}
+
+enum PaymentMode {
+  CASH
+  UPI
+  BANK_TRANSFER
+  OTHER
+}
+
+enum PacketStatus {
+  CREATED
+  SEALED
+  STORED
+  IN_CLOSURE_PROCESS
+  RETRIEVED
+  RELEASED
+}
+
+enum DocumentType {
+  PLEDGE_AGREEMENT
+  APPRAISAL_SHEET
+  PAYMENT_RECEIPT
+  RENEWAL
+  CLOSURE
+  GOLD_RELEASE_RECEIPT
+  CUSTOMER_STATEMENT
+  NOTICE
+}
+
+enum DocumentStatus {
+  GENERATED
+  PRINTED
+  SIGNED_PHYSICALLY
+  PACKET_CREATED
+  STORED
+  SUPERSEDED
+}
+
+enum RecordLifecycle {
+  ACTIVE
+  VOIDED
+  CANCELLED
+  REVERSED
+  ARCHIVED
+}
+
+enum HoldReason {
+  IDENTITY_DISPUTE
+  OWNERSHIP_DISPUTE
+  PAYMENT_DISPUTE
+  LEGAL_NOTICE
+  MISSING_PACKET
+  JEWELLERY_MISMATCH
+  SUSPECTED_FRAUD
+  SYSTEM_DISCREPANCY
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// USERS / AUTH
+// ─────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  employeeCode String   @unique // e.g. EMP-004
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  active       Boolean  @default(true)
+  mfaEnabled   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Reverse relations kept minimal on purpose — most attribution happens via
+  // the *ById string fields below plus AuditLog, not FK-heavy back-relations,
+  // so a deleted/disabled user never breaks historical records (BR-010/TC-010).
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// CUSTOMER
+// ─────────────────────────────────────────────────────────────────────────
+
+model Customer {
+  id               String           @id @default(uuid())
+  customerCode     String           @unique // CUS-2026-000001
+  fullName         String
+  guardianName     String? // father's/spouse's name
+  dateOfBirth      DateTime?
+  mobile           String
+  alternateMobile  String?
+  address          String?
+  city             String?
+  state            String?
+  pincode          String?
+  occupation       String?
+  photoUrl         String?
+  signatureUrl     String?
+  kycStatus        VerificationStatus @default(PENDING)
+  biometricStatus  BiometricStatus    @default(NOT_ENROLLED)
+  status           RecordLifecycle    @default(ACTIVE)
+  createdById      String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  documents    CustomerDocument[]
+  biometric    BiometricEnrollment?
+  bioVerifications BiometricVerificationLog[]
+  loans        Loan[]
+  notifications Notification[]
+
+  @@index([mobile])
+  @@index([fullName])
+  @@map("customers")
+}
+
+model CustomerDocument {
+  id                 String             @id @default(uuid())
+  documentCode       String             @unique // DOC-2026-000123 (KYC doc, distinct series from generated Documents)
+  customerId         String
+  customer           Customer           @relation(fields: [customerId], references: [id])
+  docType            KycDocType
+  docNumberMasked    String // store masked/last-4 form for display; full value handled via secure storage only
+  fileUrl            String
+  issueDate          DateTime?
+  expiryDate         DateTime?
+  verificationStatus VerificationStatus @default(PENDING)
+  verifiedById       String?
+  verifiedAt         DateTime?
+  createdAt          DateTime           @default(now())
+
+  @@map("customer_documents")
+}
+
+model BiometricEnrollment {
+  id            String          @id @default(uuid())
+  enrollmentCode String         @unique // BIO-2026-000184
+  customerId    String          @unique
+  customer      Customer        @relation(fields: [customerId], references: [id])
+  deviceId      String
+  templateRef   String // opaque reference returned by vendor SDK — never a raw fingerprint image
+  status        BiometricStatus @default(ENROLLED)
+  enrolledById  String
+  enrolledAt    DateTime        @default(now())
+
+  @@map("biometric_enrollments")
+}
+
+model BiometricVerificationLog {
+  id             String          @id @default(uuid())
+  customerId     String
+  customer       Customer        @relation(fields: [customerId], references: [id])
+  loanId         String?
+  loan           Loan?           @relation(fields: [loanId], references: [id])
+  deviceId       String
+  result         BiometricResult
+  attemptNumber  Int
+  fallbackUsed   Boolean         @default(false)
+  fallbackReason String?
+  verifiedById   String
+  timestamp      DateTime        @default(now())
+
+  @@map("biometric_verification_logs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// LOAN
+// ─────────────────────────────────────────────────────────────────────────
+
+model LoanScheme {
+  id           String       @id @default(uuid())
+  name         String
+  interestType InterestType
+  interestRate Float // percentage, meaning depends on interestType
+  ltvThreshold Float? // percentage
+  active       Boolean      @default(true)
+  config       Json? // rounding rules, grace period, penalty config, etc.
+
+  loans Loan[]
+
+  @@map("loan_schemes")
+}
+
+model Loan {
+  id                 String     @id @default(uuid())
+  loanCode           String     @unique // GL-2026-000184
+  customerId         String
+  customer           Customer   @relation(fields: [customerId], references: [id])
+  schemeId           String?
+  scheme             LoanScheme? @relation(fields: [schemeId], references: [id])
+  status             LoanStatus @default(DRAFT)
+  principalAmount    Float?
+  interestRate       Float? // snapshot at disbursement, independent of scheme changing later
+  interestType       InterestType?
+  processingCharges  Float?     @default(0)
+  otherCharges       Float?     @default(0)
+  sanctionedDate     DateTime?
+  maturityDate       DateTime?
+  holdReason         HoldReason?
+  holdNotes          String?
+  createdById        String
+  approvedById       String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  jewelleryItems JewelleryItem[]
+  appraisals     Appraisal[]
+  payments       Payment[]
+  ledgerEntries  LedgerEntry[]
+  packet         Packet?
+  documents      Document[]
+  bioVerifications BiometricVerificationLog[]
+
+  @@index([status])
+  @@map("loans")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// JEWELLERY / APPRAISAL
+// ─────────────────────────────────────────────────────────────────────────
+
+model JewelleryItem {
+  id                    String          @id @default(uuid())
+  itemCode              String          @unique // GL-2026-000184-01
+  loanId                String
+  loan                  Loan            @relation(fields: [loanId], references: [id])
+  category              String // Necklace, Chain, Ring, ... — configurable master list, kept as string for MVP
+  description           String
+  grossWeight           Float // grams
+  stoneWeight           Float           @default(0)
+  netWeight             Float // gross - stone; computed server-side, never client-editable directly (§16)
+  purityKarat           String // "22K" etc.
+  fineness              Int? // e.g. 916
+  valuationRate         Float // rate per gram used
+  valuation              Float
+  hallmarkDetails       String?
+  identifyingMarks      String?
+  condition             String?
+  ownershipDeclaration  Boolean         @default(false)
+  appraisalRemarks      String?
+  status                JewelleryStatus @default(PLEDGED)
+  releasedAt            DateTime?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  photos JewelleryPhoto[]
+
+  @@map("jewellery_items")
+}
+
+model JewelleryPhoto {
+  id              String        @id @default(uuid())
+  jewelleryItemId String
+  jewelleryItem   JewelleryItem @relation(fields: [jewelleryItemId], references: [id])
+  angle           String // front, back, close_up, hallmark, packaging
+  fileUrl         String
+  capturedById    String
+  capturedAt      DateTime      @default(now())
+
+  @@map("jewellery_photos")
+}
+
+model Appraisal {
+  id            String          @id @default(uuid())
+  loanId        String
+  loan          Loan            @relation(fields: [loanId], references: [id])
+  appraiserId   String
+  status        AppraisalStatus @default(DRAFT)
+  notes         String?
+  approvedById  String?
+  approvedAt    DateTime?
+  goldRateSource String? // e.g. "MCX spot", "internal sheet"
+  goldRateValue  Float?
+  goldRateAt     DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("appraisals")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// PAYMENTS / LEDGER
+// ─────────────────────────────────────────────────────────────────────────
+
+model Payment {
+  id                 String          @id @default(uuid())
+  paymentCode        String          @unique // PAY-2026-001927
+  loanId             String
+  loan               Loan            @relation(fields: [loanId], references: [id])
+  amount             Float
+  paymentDate        DateTime        @default(now())
+  mode               PaymentMode
+  principalComponent Float           @default(0)
+  interestComponent  Float           @default(0)
+  penaltyComponent   Float           @default(0)
+  otherCharges       Float           @default(0)
+  cashierId          String
+  receiptNumber      String          @unique
+  transactionRef     String?
+  notes              String?
+  lifecycle          RecordLifecycle @default(ACTIVE) // reversal/void goes through this, never a delete (§60)
+  createdAt          DateTime        @default(now())
+
+  @@map("payments")
+}
+
+// Append-only financial ledger. Every event that changes a loan's financial
+// position writes one of these; nothing is ever overwritten (§4.2, §25).
+model LedgerEntry {
+  id             String          @id @default(uuid())
+  loanId         String
+  loan           Loan            @relation(fields: [loanId], references: [id])
+  type           LedgerEntryType
+  amount         Float
+  balanceAfter   Float
+  reason         String?
+  relatedPaymentId String?
+  createdById    String
+  createdAt      DateTime        @default(now())
+
+  @@index([loanId, createdAt])
+  @@map("ledger_entries")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// PHYSICAL CUSTODY: PACKETS / STORAGE / MOVEMENT
+// ─────────────────────────────────────────────────────────────────────────
+
+model StorageLocation {
+  id       String  @id @default(uuid())
+  branch   String  @default("Main Branch")
+  safe     String
+  locker   String
+  shelf    String
+  position String
+  label    String  @unique // denormalized "SAFE01-L03-S12-P07" for fast lookup/QR
+
+  packets        Packet[]
+  movementsFrom  PacketMovement[] @relation("MovementFrom")
+  movementsTo    PacketMovement[] @relation("MovementTo")
+
+  @@unique([branch, safe, locker, shelf, position])
+  @@map("storage_locations")
+}
+
+model Packet {
+  id                String           @id @default(uuid())
+  packetCode        String           @unique // PKT-2026-000184
+  loanId            String           @unique // BR-002/BR-011: one active loan per packet
+  loan              Loan             @relation(fields: [loanId], references: [id])
+  status            PacketStatus     @default(CREATED)
+  storageLocationId String?
+  storageLocation   StorageLocation? @relation(fields: [storageLocationId], references: [id])
+  sealedAt          DateTime?
+  storedAt          DateTime?
+  releasedAt        DateTime?
+  createdById       String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  movements PacketMovement[]
+
+  @@map("packets")
+}
+
+model PacketMovement {
+  id               String           @id @default(uuid())
+  packetId         String
+  packet           Packet           @relation(fields: [packetId], references: [id])
+  fromLocationId   String?
+  fromLocation     StorageLocation? @relation("MovementFrom", fields: [fromLocationId], references: [id])
+  toLocationId     String?
+  toLocation       StorageLocation? @relation("MovementTo", fields: [toLocationId], references: [id])
+  reason           String
+  movedById        String
+  returned         Boolean          @default(false)
+  timestamp        DateTime         @default(now())
+
+  @@map("packet_movements")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// DOCUMENTS
+// ─────────────────────────────────────────────────────────────────────────
+
+model Document {
+  id             String         @id @default(uuid())
+  documentCode   String         @unique // DOC-2026-004821
+  loanId         String
+  loan           Loan           @relation(fields: [loanId], references: [id])
+  type           DocumentType
+  status         DocumentStatus @default(GENERATED)
+  currentVersion Int            @default(1)
+  verificationCode String       @unique // e.g. "8F72-KD91"
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  versions DocumentVersion[]
+
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id           String   @id @default(uuid())
+  documentId   String
+  document     Document @relation(fields: [documentId], references: [id])
+  versionNumber Int
+  fileUrl      String
+  reason       String? // why this version was regenerated, required if versionNumber > 1
+  createdById  String
+  createdAt    DateTime @default(now())
+  scannedSignedCopyUrl String? // V2 feature (§67) — nullable placeholder in MVP schema
+
+  @@unique([documentId, versionNumber])
+  @@map("document_versions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────────────────
+
+model Notification {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  loanId     String?
+  type       String // loan_created, payment_received, due_reminder, overdue, closure_confirmation, ...
+  channel    String // sms, whatsapp, email
+  status     String // queued, sent, failed
+  sentAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// ID SEQUENCES
+// ─────────────────────────────────────────────────────────────────────────
+
+// Backs the human-readable codes (CUS-2026-000001, GL-2026-000184, ...).
+// One row per (prefix, year); `lastValue` is incremented atomically inside
+// a transaction by IdGeneratorService so two concurrent requests can never
+// be handed the same code (§8 — identifiers must never be reused).
+model IdSequence {
+  prefix    String
+  year      Int
+  lastValue Int    @default(0)
+
+  @@id([prefix, year])
+  @@map("id_sequences")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// AUDIT
+// ─────────────────────────────────────────────────────────────────────────
+
+// Tamper-resistant by convention: only ever inserted, never updated/deleted
+// by application code. No FK cascade-delete anywhere in this schema touches
+// this table, and userId is a plain string (not a hard FK with onDelete)
+// so a removed User row can never take audit history down with it (BR-010).
+model AuditLog {
+  id         String   @id @default(uuid())
+  entityType String // "Loan", "Payment", "Packet", ...
+  entityId   String
+  action     String // "LOAN_AMOUNT_CHANGED", "GOLD_RELEASED", ...
+  userId     String
+  user       User?    @relation(fields: [userId], references: [id])
+  roleAtTime UserRole
+  oldValue   Json?
+  newValue   Json?
+  reason     String?
+  approvedById String?
+  ipAddress  String?
+  deviceId   String?
+  result     String // "SUCCESS", "DENIED", "ERROR"
+  timestamp  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
