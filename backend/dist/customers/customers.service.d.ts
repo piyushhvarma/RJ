@@ -12,6 +12,7 @@ export declare class CustomersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        customerCode: string;
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
@@ -22,7 +23,6 @@ export declare class CustomersService {
         state: string | null;
         pincode: string | null;
         occupation: string | null;
-        customerCode: string;
         photoUrl: string | null;
         signatureUrl: string | null;
         kycStatus: import("@prisma/client").$Enums.VerificationStatus;
@@ -34,23 +34,23 @@ export declare class CustomersService {
         documents: {
             id: string;
             createdAt: Date;
-            documentCode: string;
             customerId: string;
+            verifiedById: string | null;
+            fileUrl: string;
+            documentCode: string;
             docType: import("@prisma/client").$Enums.KycDocType;
             docNumberMasked: string;
-            fileUrl: string;
             issueDate: Date | null;
             expiryDate: Date | null;
             verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
-            verifiedById: string | null;
             verifiedAt: Date | null;
         }[];
         biometric: {
             id: string;
             deviceId: string;
             status: import("@prisma/client").$Enums.BiometricStatus;
-            customerId: string;
             enrollmentCode: string;
+            customerId: string;
             templateRef: string;
             enrolledById: string;
             enrolledAt: Date;
@@ -63,22 +63,23 @@ export declare class CustomersService {
             status: import("@prisma/client").$Enums.LoanStatus;
             createdById: string;
             customerId: string;
-            loanCode: string;
-            schemeId: string | null;
             principalAmount: number | null;
             interestRate: number | null;
             interestType: import("@prisma/client").$Enums.InterestType | null;
             processingCharges: number | null;
+            maturityDate: Date | null;
+            loanCode: string;
             otherCharges: number | null;
             sanctionedDate: Date | null;
-            maturityDate: Date | null;
             holdReason: import("@prisma/client").$Enums.HoldReason | null;
             holdNotes: string | null;
+            schemeId: string | null;
         }[];
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        customerCode: string;
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
@@ -89,7 +90,6 @@ export declare class CustomersService {
         state: string | null;
         pincode: string | null;
         occupation: string | null;
-        customerCode: string;
         photoUrl: string | null;
         signatureUrl: string | null;
         kycStatus: import("@prisma/client").$Enums.VerificationStatus;
@@ -101,6 +101,7 @@ export declare class CustomersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        customerCode: string;
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
@@ -111,7 +112,6 @@ export declare class CustomersService {
         state: string | null;
         pincode: string | null;
         occupation: string | null;
-        customerCode: string;
         photoUrl: string | null;
         signatureUrl: string | null;
         kycStatus: import("@prisma/client").$Enums.VerificationStatus;

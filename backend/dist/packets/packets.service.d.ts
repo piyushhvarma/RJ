@@ -69,26 +69,26 @@ export declare class PacketsService {
             status: import("@prisma/client").$Enums.LoanStatus;
             createdById: string;
             customerId: string;
-            loanCode: string;
-            schemeId: string | null;
             principalAmount: number | null;
             interestRate: number | null;
             interestType: import("@prisma/client").$Enums.InterestType | null;
             processingCharges: number | null;
+            maturityDate: Date | null;
+            loanCode: string;
             otherCharges: number | null;
             sanctionedDate: Date | null;
-            maturityDate: Date | null;
             holdReason: import("@prisma/client").$Enums.HoldReason | null;
             holdNotes: string | null;
+            schemeId: string | null;
         };
         storageLocation: {
             id: string;
+            label: string;
             branch: string;
             safe: string;
             locker: string;
             shelf: string;
             position: string;
-            label: string;
         } | null;
         movements: {
             id: string;

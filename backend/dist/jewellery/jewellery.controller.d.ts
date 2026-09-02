@@ -30,20 +30,20 @@ export declare class JewelleryController {
     }>;
     addPhoto(id: string, dto: AddJewelleryPhotoDto, user: AuthenticatedUser): Promise<{
         id: string;
-        fileUrl: string;
-        jewelleryItemId: string;
         angle: string;
+        fileUrl: string;
         capturedById: string;
         capturedAt: Date;
+        jewelleryItemId: string;
     }>;
     findByLoan(loanId: string): Promise<({
         photos: {
             id: string;
-            fileUrl: string;
-            jewelleryItemId: string;
             angle: string;
+            fileUrl: string;
             capturedById: string;
             capturedAt: Date;
+            jewelleryItemId: string;
         }[];
     } & {
         id: string;
