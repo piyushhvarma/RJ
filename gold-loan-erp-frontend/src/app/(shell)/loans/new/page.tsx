@@ -16,13 +16,14 @@ import {
     type CreateLoanDto, type DisburseLoanDto, type CreateJewelleryItemDto, type CreateAppraisalDto, type StorePacketDto,
 } from '@/lib/schemas';
 import { createLoan, disburseLoan } from '@/lib/api/loans';
-import { createJewelleryItem } from '@/lib/api/jewellery';
+import { createJewelleryItem, addJewelleryPhoto } from '@/lib/api/jewellery';
 import { createAppraisal, confirmAppraisal, approveAppraisal } from '@/lib/api/appraisals';
 import { createPacket, storePacket } from '@/lib/api/packets';
 import { getCustomers, getCustomer } from '@/lib/api/customers';
 import { RoleGate } from '@/components/shared/RoleGate';
 import { AppraisalStatusBadge } from '@/components/shared/StatusBadge';
-import { ArrowLeft, ArrowRight, Check, AlertTriangle } from 'lucide-react';
+import { PhotoCaptureModal } from '@/components/shared/PhotoCaptureModal';
+import { ArrowLeft, ArrowRight, Check, AlertTriangle, Camera } from 'lucide-react';
 import Link from 'next/link';
 import type { Loan, JewelleryItem, Appraisal, Packet } from '@/lib/api/types';
 
@@ -209,6 +210,8 @@ function JewelleryStep({
 }) {
     const [error, setError] = useState<string | null>(null);
     const [lastItem, setLastItem] = useState<JewelleryItem | null>(null);
+    const [photoModalOpen, setPhotoModalOpen] = useState(false);
+    const [itemPhotoCount, setItemPhotoCount] = useState<Record<string, number>>({});
     const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CreateJewelleryItemDto>({
         resolver: zodResolver(createJewelleryItemSchema),
         defaultValues: { loanId, stoneWeight: 0, ownershipDeclaration: false },
@@ -226,9 +229,19 @@ function JewelleryStep({
             </div>
 
             {lastItem && (
-                <div className="rounded-xl bg-green-50 border border-green-200 p-4">
-                    <p className="text-sm font-medium text-green-800">✓ Item added: {lastItem.itemCode}</p>
-                    <p className="text-xs text-green-700 mt-0.5">
+                <div className="rounded-xl bg-green-50 border border-green-200 p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm font-bold text-green-900">✓ Item added: {lastItem.itemCode}</p>
+                        <button
+                            type="button"
+                            onClick={() => setPhotoModalOpen(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold transition-colors shadow-xs"
+                        >
+                            <Camera className="w-3.5 h-3.5" />
+                            {itemPhotoCount[lastItem.id] ? `Add Another Photo (${itemPhotoCount[lastItem.id]} attached)` : 'Attach Item Photo'}
+                        </button>
+                    </div>
+                    <p className="text-xs text-green-700">
                         Net weight: {lastItem.netWeight}g · Valuation: ₹{lastItem.valuation.toLocaleString('en-IN')}
                     </p>
                 </div>
@@ -310,6 +323,27 @@ function JewelleryStep({
                     Next (Appraisal) <ArrowRight className="w-4 h-4" />
                 </button>
             </div>
+
+            <PhotoCaptureModal
+                isOpen={photoModalOpen && !!lastItem}
+                onClose={() => setPhotoModalOpen(false)}
+                title={`Item Photo: ${lastItem?.itemCode}`}
+                subtitle="Capture or upload photo of the pledged jewellery piece."
+                showAngleSelect={true}
+                defaultAngle="front"
+                onConfirm={async (fileUrl, angle) => {
+                    if (lastItem) {
+                        await addJewelleryPhoto(lastItem.id, {
+                            angle: angle ?? 'front',
+                            fileUrl,
+                        });
+                        setItemPhotoCount(prev => ({
+                            ...prev,
+                            [lastItem.id]: (prev[lastItem.id] ?? 0) + 1,
+                        }));
+                    }
+                }}
+            />
         </div>
     );
 }
