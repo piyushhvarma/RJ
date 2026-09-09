@@ -36,9 +36,31 @@ let CustomersService = class CustomersService {
                     state: dto.state,
                     pincode: dto.pincode,
                     occupation: dto.occupation,
+                    photoUrl: dto.photoUrl,
                     createdById: actor.id,
                 },
             });
+            if (dto.aadhaarNumber) {
+                const clean = dto.aadhaarNumber.replace(/\D/g, '');
+                const masked = clean.length >= 4 ? `XXXX-XXXX-${clean.slice(-4)}` : dto.aadhaarNumber;
+                const documentCode = await this.ids.next('DOC', tx);
+                await tx.customerDocument.create({
+                    data: {
+                        documentCode,
+                        customerId: customer.id,
+                        docType: 'AADHAAR',
+                        docNumberMasked: masked,
+                        fileUrl: dto.aadhaarFileUrl ?? '',
+                        verificationStatus: 'VERIFIED',
+                        verifiedById: actor.id,
+                        verifiedAt: new Date(),
+                    },
+                });
+                await tx.customer.update({
+                    where: { id: customer.id },
+                    data: { kycStatus: 'VERIFIED' },
+                });
+            }
             await this.audit.log({
                 entityType: 'Customer',
                 entityId: customer.id,
@@ -51,11 +73,74 @@ let CustomersService = class CustomersService {
             return customer;
         });
     }
+    async updatePhoto(id, photoUrl, actor) {
+        const customer = await this.prisma.customer.findUnique({ where: { id } });
+        if (!customer)
+            throw new NotFoundException('Customer not found');
+        const updated = await this.prisma.customer.update({
+            where: { id },
+            data: { photoUrl },
+        });
+        await this.audit.log({
+            entityType: 'Customer',
+            entityId: id,
+            action: 'CUSTOMER_PHOTO_UPDATED',
+            userId: actor.id,
+            roleAtTime: actor.role,
+            result: 'SUCCESS',
+        });
+        return updated;
+    }
+    async addDocument(id, dto, actor) {
+        const customer = await this.prisma.customer.findUnique({ where: { id } });
+        if (!customer)
+            throw new NotFoundException('Customer not found');
+        const documentCode = await this.ids.next('DOC');
+        let docNumberMasked = dto.docNumber;
+        const clean = dto.docNumber.replace(/\D/g, '');
+        if (dto.docType === 'AADHAAR' && clean.length >= 4) {
+            docNumberMasked = `XXXX-XXXX-${clean.slice(-4)}`;
+        }
+        else if (dto.docType === 'PAN' && dto.docNumber.length >= 4) {
+            docNumberMasked = `XXXXXX${dto.docNumber.slice(-4)}`;
+        }
+        const status = dto.verificationStatus ?? 'VERIFIED';
+        const [doc] = await this.prisma.$transaction([
+            this.prisma.customerDocument.create({
+                data: {
+                    documentCode,
+                    customerId: id,
+                    docType: dto.docType,
+                    docNumberMasked,
+                    fileUrl: dto.fileUrl,
+                    issueDate: dto.issueDate ? new Date(dto.issueDate) : undefined,
+                    expiryDate: dto.expiryDate ? new Date(dto.expiryDate) : undefined,
+                    verificationStatus: status,
+                    verifiedById: actor.id,
+                    verifiedAt: new Date(),
+                },
+            }),
+            this.prisma.customer.update({
+                where: { id },
+                data: { kycStatus: status },
+            }),
+        ]);
+        await this.audit.log({
+            entityType: 'Customer',
+            entityId: id,
+            action: 'CUSTOMER_DOCUMENT_ADDED',
+            userId: actor.id,
+            roleAtTime: actor.role,
+            newValue: { documentCode, docType: dto.docType, docNumberMasked },
+            result: 'SUCCESS',
+        });
+        return doc;
+    }
     async findById(id) {
         const customer = await this.prisma.customer.findUnique({
             where: { id },
             include: {
-                documents: true,
+                documents: { orderBy: { createdAt: 'desc' } },
                 biometric: true,
                 loans: { orderBy: { createdAt: 'desc' } },
             },
