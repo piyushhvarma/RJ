@@ -18,22 +18,16 @@ export default function LoginPage() {
         formState: { errors, isSubmitting },
     } = useForm<LoginDto>({
         resolver: zodResolver(loginSchema),
-        defaultValues: { email: 'demo@radhikajewellers.example', password: 'demo-password' },
+        defaultValues: { email: 'owner@radhikajewellers.example', password: 'ChangeMe123!' },
     });
 
     async function onSubmit(data: LoginDto) {
         setError(null);
         try {
-            // Bypassed backend auth by user request
+            const res = await login(data.email, data.password);
             setSession({
-                accessToken: 'demo-bypass-token-123',
-                user: {
-                    id: 'usr_demo123',
-                    employeeCode: 'EMP-001',
-                    name: 'Demo Owner',
-                    email: data.email,
-                    role: 'OWNER',
-                } as any,
+                accessToken: res.accessToken,
+                user: res.user as any,
             });
             router.push('/dashboard');
         } catch (err: any) {
