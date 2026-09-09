@@ -25,6 +25,9 @@ export const createCustomerSchema = z.object({
     state: z.string().optional(),
     pincode: z.string().optional(),
     occupation: z.string().optional(),
+    photoUrl: z.string().optional(),
+    aadhaarNumber: z.string().optional(),
+    aadhaarFileUrl: z.string().optional(),
 });
 export type CreateCustomerDto = z.infer<typeof createCustomerSchema>;
 
