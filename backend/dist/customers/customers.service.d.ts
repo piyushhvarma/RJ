@@ -3,6 +3,7 @@ import { IdGeneratorService } from '../common/services/id-generator.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { AuthenticatedUser } from '../common/decorators/current-user.decorator.js';
 import { CreateCustomerDto } from './dto/create-customer.dto.js';
+import { AddCustomerDocumentDto } from './dto/add-customer-document.dto.js';
 export declare class CustomersService {
     private readonly prisma;
     private readonly ids;
@@ -12,7 +13,6 @@ export declare class CustomersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        customerCode: string;
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
@@ -24,33 +24,70 @@ export declare class CustomersService {
         pincode: string | null;
         occupation: string | null;
         photoUrl: string | null;
+        customerCode: string;
         signatureUrl: string | null;
         kycStatus: import("@prisma/client").$Enums.VerificationStatus;
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
         status: import("@prisma/client").$Enums.RecordLifecycle;
         createdById: string;
     }>;
+    updatePhoto(id: string, photoUrl: string, actor: AuthenticatedUser): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        fullName: string;
+        guardianName: string | null;
+        dateOfBirth: Date | null;
+        mobile: string;
+        alternateMobile: string | null;
+        address: string | null;
+        city: string | null;
+        state: string | null;
+        pincode: string | null;
+        occupation: string | null;
+        photoUrl: string | null;
+        customerCode: string;
+        signatureUrl: string | null;
+        kycStatus: import("@prisma/client").$Enums.VerificationStatus;
+        biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
+        status: import("@prisma/client").$Enums.RecordLifecycle;
+        createdById: string;
+    }>;
+    addDocument(id: string, dto: AddCustomerDocumentDto, actor: AuthenticatedUser): Promise<{
+        id: string;
+        createdAt: Date;
+        docType: import("@prisma/client").$Enums.KycDocType;
+        fileUrl: string;
+        issueDate: Date | null;
+        expiryDate: Date | null;
+        verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
+        documentCode: string;
+        customerId: string;
+        docNumberMasked: string;
+        verifiedById: string | null;
+        verifiedAt: Date | null;
+    }>;
     findById(id: string): Promise<{
         documents: {
             id: string;
             createdAt: Date;
-            customerId: string;
-            verifiedById: string | null;
-            fileUrl: string;
-            documentCode: string;
             docType: import("@prisma/client").$Enums.KycDocType;
-            docNumberMasked: string;
+            fileUrl: string;
             issueDate: Date | null;
             expiryDate: Date | null;
             verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
+            documentCode: string;
+            customerId: string;
+            docNumberMasked: string;
+            verifiedById: string | null;
             verifiedAt: Date | null;
         }[];
         biometric: {
             id: string;
             deviceId: string;
             status: import("@prisma/client").$Enums.BiometricStatus;
-            enrollmentCode: string;
             customerId: string;
+            enrollmentCode: string;
             templateRef: string;
             enrolledById: string;
             enrolledAt: Date;
@@ -63,6 +100,7 @@ export declare class CustomersService {
             status: import("@prisma/client").$Enums.LoanStatus;
             createdById: string;
             customerId: string;
+            schemeId: string | null;
             principalAmount: number | null;
             interestRate: number | null;
             interestType: import("@prisma/client").$Enums.InterestType | null;
@@ -73,13 +111,11 @@ export declare class CustomersService {
             sanctionedDate: Date | null;
             holdReason: import("@prisma/client").$Enums.HoldReason | null;
             holdNotes: string | null;
-            schemeId: string | null;
         }[];
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        customerCode: string;
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
@@ -91,6 +127,7 @@ export declare class CustomersService {
         pincode: string | null;
         occupation: string | null;
         photoUrl: string | null;
+        customerCode: string;
         signatureUrl: string | null;
         kycStatus: import("@prisma/client").$Enums.VerificationStatus;
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
@@ -101,7 +138,6 @@ export declare class CustomersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        customerCode: string;
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
@@ -113,6 +149,7 @@ export declare class CustomersService {
         pincode: string | null;
         occupation: string | null;
         photoUrl: string | null;
+        customerCode: string;
         signatureUrl: string | null;
         kycStatus: import("@prisma/client").$Enums.VerificationStatus;
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
