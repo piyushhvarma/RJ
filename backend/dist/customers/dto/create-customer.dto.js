@@ -19,6 +19,9 @@ export class CreateCustomerDto {
     state;
     pincode;
     occupation;
+    photoUrl;
+    aadhaarNumber;
+    aadhaarFileUrl;
 }
 __decorate([
     IsString(),
@@ -68,4 +71,19 @@ __decorate([
     IsString(),
     __metadata("design:type", String)
 ], CreateCustomerDto.prototype, "occupation", void 0);
+__decorate([
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], CreateCustomerDto.prototype, "photoUrl", void 0);
+__decorate([
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], CreateCustomerDto.prototype, "aadhaarNumber", void 0);
+__decorate([
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], CreateCustomerDto.prototype, "aadhaarFileUrl", void 0);
 //# sourceMappingURL=create-customer.dto.js.map
