@@ -69,6 +69,7 @@ export declare class PacketsService {
             status: import("@prisma/client").$Enums.LoanStatus;
             createdById: string;
             customerId: string;
+            schemeId: string | null;
             principalAmount: number | null;
             interestRate: number | null;
             interestType: import("@prisma/client").$Enums.InterestType | null;
@@ -79,16 +80,15 @@ export declare class PacketsService {
             sanctionedDate: Date | null;
             holdReason: import("@prisma/client").$Enums.HoldReason | null;
             holdNotes: string | null;
-            schemeId: string | null;
         };
         storageLocation: {
             id: string;
-            label: string;
             branch: string;
             safe: string;
             locker: string;
             shelf: string;
             position: string;
+            label: string;
         } | null;
         movements: {
             id: string;
