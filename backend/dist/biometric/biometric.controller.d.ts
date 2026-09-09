@@ -8,8 +8,8 @@ export declare class BiometricController {
         id: string;
         deviceId: string;
         status: import("@prisma/client").$Enums.BiometricStatus;
-        enrollmentCode: string;
         customerId: string;
+        enrollmentCode: string;
         templateRef: string;
         enrolledById: string;
         enrolledAt: Date;
@@ -22,10 +22,10 @@ export declare class BiometricController {
         deviceId: string;
         timestamp: Date;
         customerId: string;
+        verifiedById: string;
         attemptNumber: number;
         fallbackUsed: boolean;
         fallbackReason: string | null;
-        verifiedById: string;
         loanId: string | null;
     }>;
     fallback(customerId: string, dto: FallbackBiometricDto, user: AuthenticatedUser): Promise<{
@@ -34,10 +34,10 @@ export declare class BiometricController {
         deviceId: string;
         timestamp: Date;
         customerId: string;
+        verifiedById: string;
         attemptNumber: number;
         fallbackUsed: boolean;
         fallbackReason: string | null;
-        verifiedById: string;
         loanId: string | null;
     }>;
 }
