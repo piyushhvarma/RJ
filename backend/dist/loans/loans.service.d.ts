@@ -17,6 +17,7 @@ export declare class LoansService {
         status: import("@prisma/client").$Enums.LoanStatus;
         createdById: string;
         customerId: string;
+        schemeId: string | null;
         principalAmount: number | null;
         interestRate: number | null;
         interestType: import("@prisma/client").$Enums.InterestType | null;
@@ -27,14 +28,12 @@ export declare class LoansService {
         sanctionedDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
-        schemeId: string | null;
     }>;
     findById(id: string): Promise<{
         customer: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            customerCode: string;
             fullName: string;
             guardianName: string | null;
             dateOfBirth: Date | null;
@@ -46,6 +45,7 @@ export declare class LoansService {
             pincode: string | null;
             occupation: string | null;
             photoUrl: string | null;
+            customerCode: string;
             signatureUrl: string | null;
             kycStatus: import("@prisma/client").$Enums.VerificationStatus;
             biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
@@ -55,12 +55,12 @@ export declare class LoansService {
         packet: ({
             storageLocation: {
                 id: string;
-                label: string;
                 branch: string;
                 safe: string;
                 locker: string;
                 shelf: string;
                 position: string;
+                label: string;
             } | null;
         } & {
             id: string;
@@ -80,17 +80,17 @@ export declare class LoansService {
             createdAt: Date;
             updatedAt: Date;
             status: import("@prisma/client").$Enums.DocumentStatus;
+            documentCode: string;
             loanId: string;
             type: import("@prisma/client").$Enums.DocumentType;
-            documentCode: string;
             currentVersion: number;
             verificationCode: string;
         }[];
         jewelleryItems: ({
             photos: {
                 id: string;
-                angle: string;
                 fileUrl: string;
+                angle: string;
                 capturedById: string;
                 capturedAt: Date;
                 jewelleryItemId: string;
@@ -169,6 +169,7 @@ export declare class LoansService {
         status: import("@prisma/client").$Enums.LoanStatus;
         createdById: string;
         customerId: string;
+        schemeId: string | null;
         principalAmount: number | null;
         interestRate: number | null;
         interestType: import("@prisma/client").$Enums.InterestType | null;
@@ -179,7 +180,6 @@ export declare class LoansService {
         sanctionedDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
-        schemeId: string | null;
     }>;
     disburse(id: string, dto: DisburseLoanDto, actor: AuthenticatedUser): Promise<{
         id: string;
@@ -189,6 +189,7 @@ export declare class LoansService {
         status: import("@prisma/client").$Enums.LoanStatus;
         createdById: string;
         customerId: string;
+        schemeId: string | null;
         principalAmount: number | null;
         interestRate: number | null;
         interestType: import("@prisma/client").$Enums.InterestType | null;
@@ -199,6 +200,5 @@ export declare class LoansService {
         sanctionedDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
-        schemeId: string | null;
     }>;
 }
