@@ -39,6 +39,16 @@ export class CreateCustomerDto {
   @IsString()
   occupation?: string;
 
-  // Photo/signature URLs are set via separate upload endpoints in the real
-  // flow (§10/§11) — omitted here since object storage isn't wired up yet.
+  @IsOptional()
+  @IsString()
+  photoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  aadhaarNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  aadhaarFileUrl?: string;
 }
+
