@@ -1,11 +1,13 @@
 'use client';
 
-import { use } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { use, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getLoan } from '@/lib/api/loans';
+import { addJewelleryPhoto } from '@/lib/api/jewellery';
 import { LoanStatusBadge, PacketStatusBadge, AppraisalStatusBadge } from '@/components/shared/StatusBadge';
 import { RoleGate } from '@/components/shared/RoleGate';
-import { ArrowLeft, Package, CreditCard, Gem, FileText } from 'lucide-react';
+import { PhotoCaptureModal } from '@/components/shared/PhotoCaptureModal';
+import { ArrowLeft, Package, CreditCard, Gem, FileText, Camera, Maximize2, X } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 
@@ -25,6 +27,10 @@ function fmt(n?: number | null) {
 
 export default function LoanProfilePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
+    const qc = useQueryClient();
+    const [activeItemForPhoto, setActiveItemForPhoto] = useState<{ id: string; code: string } | null>(null);
+    const [enlargedPhoto, setEnlargedPhoto] = useState<{ url: string; title: string; angle?: string } | null>(null);
+
     const { data: loan, isLoading, error } = useQuery({
         queryKey: ['loan', id],
         queryFn: () => getLoan(id),
@@ -145,22 +151,70 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
                     {!loan.jewelleryItems?.length ? (
                         <p className="text-sm text-gray-400">No jewellery items added yet.</p>
                     ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             {loan.jewelleryItems.map(item => (
-                                <div key={item.id} className="rounded-lg border border-gray-100 px-4 py-3">
+                                <div key={item.id} className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 space-y-3">
                                     <div className="flex items-start justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-900">{item.itemCode}</p>
-                                            <p className="text-xs text-gray-500 mt-0.5">{item.category} · {item.description}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-bold text-gray-900">{item.itemCode}</p>
+                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">
+                                                    {item.category}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-sm font-semibold text-gray-900">{fmt(item.valuation)}</p>
+                                            <p className="text-sm font-bold text-gray-900">{fmt(item.valuation)}</p>
                                             <p className="text-xs text-gray-500">{item.netWeight}g · {item.purityKarat}</p>
                                         </div>
                                     </div>
+
+                                    {/* Item Photo Gallery & Add Photo Trigger */}
+                                    <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-2">
+                                        {item.photos && item.photos.length > 0 ? (
+                                            item.photos.map((photo) => (
+                                                <div
+                                                    key={photo.id}
+                                                    onClick={() => setEnlargedPhoto({
+                                                        url: photo.fileUrl,
+                                                        title: `${item.itemCode} (${item.category})`,
+                                                        angle: photo.angle
+                                                    })}
+                                                    className="group relative w-14 h-14 rounded-lg overflow-hidden border border-gray-200 bg-black cursor-pointer shadow-xs hover:border-amber-400 transition-all flex items-center justify-center flex-shrink-0"
+                                                >
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img
+                                                        src={photo.fileUrl}
+                                                        alt={photo.angle}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                                    />
+                                                    <span className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[8px] text-center font-medium capitalize truncate py-0.5">
+                                                        {photo.angle}
+                                                    </span>
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                                        <Maximize2 className="w-3 h-3" />
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <span className="text-xs text-gray-400 italic">No item photos attached</span>
+                                        )}
+
+                                        <RoleGate roles={['OWNER', 'MANAGER', 'APPRAISER', 'STAFF']}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setActiveItemForPhoto({ id: item.id, code: item.itemCode })}
+                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/60 hover:bg-amber-100 text-amber-700 text-xs font-bold transition-colors ml-auto"
+                                            >
+                                                <Camera className="w-3.5 h-3.5" />
+                                                + Add Photo
+                                            </button>
+                                        </RoleGate>
+                                    </div>
                                 </div>
                             ))}
-                            <div className="text-right text-sm text-gray-600 pt-1">
+                            <div className="text-right text-xs font-semibold text-gray-600 pt-1">
                                 Total weight: {loan.jewelleryItems.reduce((s, i) => s + i.netWeight, 0).toFixed(2)}g net ·{' '}
                                 Total value: {fmt(loan.jewelleryItems.reduce((s, i) => s + i.valuation, 0))}
                             </div>
@@ -306,6 +360,58 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
                     </div>
                 )}
             </div>
+            {/* Photo Capture Modal for Jewellery */}
+            <PhotoCaptureModal
+                isOpen={!!activeItemForPhoto}
+                onClose={() => setActiveItemForPhoto(null)}
+                title={`Add Photo: ${activeItemForPhoto?.code}`}
+                subtitle="Take a live photo of the pledged piece or upload high-res image."
+                showAngleSelect={true}
+                defaultAngle="front"
+                onConfirm={async (fileUrl, angle) => {
+                    if (activeItemForPhoto) {
+                        await addJewelleryPhoto(activeItemForPhoto.id, {
+                            angle: angle ?? 'front',
+                            fileUrl,
+                        });
+                        qc.invalidateQueries({ queryKey: ['loan', id] });
+                    }
+                }}
+            />
+
+            {/* Lightbox Enlarged Viewer Modal */}
+            {enlargedPhoto && (
+                <div
+                    onClick={() => setEnlargedPhoto(null)}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in"
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="relative max-w-3xl max-h-[85vh] bg-black rounded-2xl overflow-hidden shadow-2xl flex flex-col items-center justify-center p-2"
+                    >
+                        <button
+                            onClick={() => setEnlargedPhoto(null)}
+                            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center z-10"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={enlargedPhoto.url}
+                            alt={enlargedPhoto.title}
+                            className="max-h-[75vh] max-w-full object-contain rounded-xl"
+                        />
+                        <div className="text-center pt-2 pb-1 text-white text-xs">
+                            <span className="font-bold">{enlargedPhoto.title}</span>
+                            {enlargedPhoto.angle && (
+                                <span className="ml-2 px-2 py-0.5 rounded bg-white/20 uppercase font-mono text-[10px]">
+                                    {enlargedPhoto.angle}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
