@@ -25,3 +25,21 @@ export async function getCustomer(id: string): Promise<Customer> {
 export async function createCustomer(data: Record<string, unknown>): Promise<Customer> {
     return apiFetch<Customer>('/customers', { method: 'POST', body: JSON.stringify(data) });
 }
+
+export async function updateCustomerPhoto(id: string, photoUrl: string): Promise<Customer> {
+    return apiFetch<Customer>(`/customers/${id}/photo`, {
+        method: 'POST',
+        body: JSON.stringify({ photoUrl }),
+    });
+}
+
+export async function addCustomerDocument(
+    id: string,
+    data: { docType: string; docNumber: string; fileUrl: string; issueDate?: string; expiryDate?: string }
+): Promise<unknown> {
+    return apiFetch(`/customers/${id}/documents`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
