@@ -19,6 +19,8 @@ import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { CustomersService } from './customers.service.js';
 import { CreateCustomerDto } from './dto/create-customer.dto.js';
 import { SearchCustomersDto } from './dto/search-customers.dto.js';
+import { UpdateCustomerPhotoDto } from './dto/update-customer-photo.dto.js';
+import { AddCustomerDocumentDto } from './dto/add-customer-document.dto.js';
 let CustomersController = class CustomersController {
     customersService;
     constructor(customersService) {
@@ -26,6 +28,12 @@ let CustomersController = class CustomersController {
     }
     create(dto, user) {
         return this.customersService.create(dto, user);
+    }
+    updatePhoto(id, dto, user) {
+        return this.customersService.updatePhoto(id, dto.photoUrl, user);
+    }
+    addDocument(id, dto, user) {
+        return this.customersService.addDocument(id, dto, user);
     }
     search(query) {
         return this.customersService.search(query.q);
@@ -43,6 +51,26 @@ __decorate([
     __metadata("design:paramtypes", [CreateCustomerDto, Object]),
     __metadata("design:returntype", void 0)
 ], CustomersController.prototype, "create", null);
+__decorate([
+    Post(':id/photo'),
+    Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF),
+    __param(0, Param('id')),
+    __param(1, Body()),
+    __param(2, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, UpdateCustomerPhotoDto, Object]),
+    __metadata("design:returntype", void 0)
+], CustomersController.prototype, "updatePhoto", null);
+__decorate([
+    Post(':id/documents'),
+    Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF),
+    __param(0, Param('id')),
+    __param(1, Body()),
+    __param(2, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, AddCustomerDocumentDto, Object]),
+    __metadata("design:returntype", void 0)
+], CustomersController.prototype, "addDocument", null);
 __decorate([
     Get(),
     __param(0, Query()),
