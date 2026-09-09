@@ -183,9 +183,9 @@ export function Sidebar() {
                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
                         <User className="w-4 h-4 text-gray-500" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{session?.user.name ?? 'Staff'}</p>
-                        <p className="text-xs text-gray-500">{session?.user.role}</p>
+                    <div className="flex-1 min-w-0" suppressHydrationWarning>
+                        <p className="text-sm font-medium text-gray-900 truncate" suppressHydrationWarning>{session?.user.name ?? 'Staff'}</p>
+                        <p className="text-xs text-gray-500" suppressHydrationWarning>{session?.user.role}</p>
                     </div>
                     <button
                         onClick={handleLogout}
