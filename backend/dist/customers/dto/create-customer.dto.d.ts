@@ -9,4 +9,7 @@ export declare class CreateCustomerDto {
     state?: string;
     pincode?: string;
     occupation?: string;
+    photoUrl?: string;
+    aadhaarNumber?: string;
+    aadhaarFileUrl?: string;
 }
