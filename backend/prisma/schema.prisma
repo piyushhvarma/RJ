@@ -25,6 +25,12 @@ enum UserRole {
   STAFF
 }
 
+enum MetalType {
+  GOLD
+  SILVER
+  OTHER
+}
+
 enum KycDocType {
   AADHAAR
   PAN
@@ -192,7 +198,7 @@ model Customer {
   fullName         String
   guardianName     String? // father's/spouse's name
   dateOfBirth      DateTime?
-  mobile           String
+  mobile           String?
   alternateMobile  String?
   address          String?
   city             String?
@@ -207,6 +213,7 @@ model Customer {
   createdById      String
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
+  legacySourceRef  String?
 
   documents    CustomerDocument[]
   biometric    BiometricEnrollment?
@@ -307,6 +314,7 @@ model Loan {
   approvedById       String?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
+  legacyPledgeNo     String?    @unique
 
   jewelleryItems JewelleryItem[]
   appraisals     Appraisal[]
@@ -330,6 +338,7 @@ model JewelleryItem {
   loanId                String
   loan                  Loan            @relation(fields: [loanId], references: [id])
   category              String // Necklace, Chain, Ring, ... — configurable master list, kept as string for MVP
+  metalType             MetalType       @default(GOLD)
   description           String
   grossWeight           Float // grams
   stoneWeight           Float           @default(0)
