@@ -19,6 +19,7 @@ import { PacketsModule } from './packets/packets.module.js';
 import { PaymentsModule } from './payments/payments.module.js';
 import { DashboardModule } from './dashboard/dashboard.module.js';
 import { ReportsModule } from './reports/reports.module.js';
+import { DocumentsModule } from './documents/documents.module.js';
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
@@ -38,6 +39,7 @@ AppModule = __decorate([
             PaymentsModule,
             DashboardModule,
             ReportsModule,
+            DocumentsModule,
         ],
     })
 ], AppModule);
