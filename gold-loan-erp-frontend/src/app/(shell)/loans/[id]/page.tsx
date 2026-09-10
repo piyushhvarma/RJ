@@ -7,9 +7,18 @@ import { addJewelleryPhoto } from '@/lib/api/jewellery';
 import { LoanStatusBadge, PacketStatusBadge, AppraisalStatusBadge } from '@/components/shared/StatusBadge';
 import { RoleGate } from '@/components/shared/RoleGate';
 import { PhotoCaptureModal } from '@/components/shared/PhotoCaptureModal';
-import { ArrowLeft, Package, CreditCard, Gem, FileText, Camera, Maximize2, X } from 'lucide-react';
+import { ArrowLeft, Package, CreditCard, Gem, FileText, Camera, Maximize2, X, Printer, FileCheck2, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import {
+    getPledgeAgreementPdfUrl,
+    getJewelleryAnnexurePdfUrl,
+    getPaymentReceiptPdfUrl,
+    getClosureReceiptPdfUrl,
+    getLoanDocuments,
+    markDocumentPrinted,
+    markDocumentSigned,
+} from '@/lib/api/documents';
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
     return (
@@ -34,6 +43,12 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
     const { data: loan, isLoading, error } = useQuery({
         queryKey: ['loan', id],
         queryFn: () => getLoan(id),
+    });
+
+    const { data: documents, refetch: refetchDocs } = useQuery({
+        queryKey: ['loan-documents', id],
+        queryFn: () => getLoanDocuments(id),
+        enabled: !!loan,
     });
 
     if (isLoading) {
@@ -89,7 +104,17 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
                             </Link>
                         )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <a
+                            href={getPledgeAgreementPdfUrl(loan.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs sm:text-sm font-semibold text-amber-900 hover:bg-amber-100 transition-colors inline-flex items-center gap-1.5"
+                            title="Print Pledge Agreement (Girvi Pawn Ticket)"
+                        >
+                            <Printer className="w-4 h-4 text-amber-700" />
+                            <span>Print Agreement</span>
+                        </a>
                         <RoleGate roles={['OWNER', 'MANAGER']}>
                             {(loan.status === 'DRAFT' || loan.status === 'APPROVED') && (
                                 <Link
@@ -314,6 +339,123 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
                 </div>
             </div>
 
+            {/* Paperwork & Legal Documents */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                            <FileCheck2 className="w-5 h-5 text-amber-600" /> Paperwork & Physical Documents
+                        </h2>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                            Dual-custody contracts, jewellery annexures, and printable receipts for branch archives
+                        </p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Pledge Agreement Card */}
+                    <div className="rounded-xl border border-amber-200/80 bg-amber-50/30 p-4 flex flex-col justify-between space-y-3">
+                        <div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold uppercase tracking-wider text-amber-900">Pawn Ticket / गिरवी पावती</span>
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">
+                                    Official Agreement
+                                </span>
+                            </div>
+                            <h3 className="text-sm font-bold text-gray-900 mt-1">Pledge Agreement PDF</h3>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                                Statutory gold pledge contract with interest terms, borrower declaration, and dual signatures.
+                            </p>
+                        </div>
+                        <div className="pt-2 border-t border-amber-100/80 flex items-center gap-2">
+                            <a
+                                href={getPledgeAgreementPdfUrl(loan.id)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs transition-colors"
+                            >
+                                <Printer className="w-3.5 h-3.5" />
+                                Print Agreement
+                            </a>
+                            <a
+                                href={getPledgeAgreementPdfUrl(loan.id)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-medium transition-colors"
+                            >
+                                <ExternalLink className="w-3 h-3 text-gray-500" />
+                                View
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* Jewellery Annexure Card */}
+                    <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 flex flex-col justify-between space-y-3">
+                        <div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold uppercase tracking-wider text-gray-700">Schedule A</span>
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-gray-200 text-gray-800">
+                                    Collateral List
+                                </span>
+                            </div>
+                            <h3 className="text-sm font-bold text-gray-900 mt-1">Jewellery Annexure PDF</h3>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                                Detailed ornament list with gross/net weights, purity karat, hallmark stamps, and photos.
+                            </p>
+                        </div>
+                        <div className="pt-2 border-t border-gray-200/80 flex items-center gap-2">
+                            <a
+                                href={getJewelleryAnnexurePdfUrl(loan.id)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold shadow-xs transition-colors"
+                            >
+                                <Printer className="w-3.5 h-3.5" />
+                                Print Schedule
+                            </a>
+                            <a
+                                href={getJewelleryAnnexurePdfUrl(loan.id)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-white text-gray-700 text-xs font-medium transition-colors"
+                            >
+                                <ExternalLink className="w-3 h-3 text-gray-500" />
+                                View
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* Closure / Release Voucher Card (if closed) */}
+                    {loan.status === 'CLOSED' && (
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 flex flex-col justify-between space-y-3">
+                            <div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">Gold Release</span>
+                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                                        Settlement
+                                    </span>
+                                </div>
+                                <h3 className="text-sm font-bold text-emerald-950 mt-1">Closure Voucher PDF</h3>
+                                <p className="text-xs text-emerald-700 mt-0.5">
+                                    Permanent release receipt acknowledging physical packet handover and zero outstanding.
+                                </p>
+                            </div>
+                            <div className="pt-2 border-t border-emerald-100 flex items-center gap-2">
+                                <a
+                                    href={getClosureReceiptPdfUrl(loan.id)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition-colors"
+                                >
+                                    <Printer className="w-3.5 h-3.5" />
+                                    Print Release Voucher
+                                </a>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* Payments */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -342,7 +484,8 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
                                     <th className="pb-2 font-medium text-gray-500 pr-4">Receipt</th>
                                     <th className="pb-2 font-medium text-gray-500 pr-4">Mode</th>
                                     <th className="pb-2 font-medium text-gray-500 pr-4 text-right">Amount</th>
-                                    <th className="pb-2 font-medium text-gray-500 text-right">Principal</th>
+                                    <th className="pb-2 font-medium text-gray-500 text-right pr-4">Principal</th>
+                                    <th className="pb-2 font-medium text-gray-500 text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -352,7 +495,19 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
                                         <td className="py-2 pr-4 text-gray-700 font-mono text-xs">{p.receiptNumber}</td>
                                         <td className="py-2 pr-4 text-gray-600">{p.mode}</td>
                                         <td className="py-2 pr-4 text-gray-900 font-semibold text-right">{fmt(p.amount)}</td>
-                                        <td className="py-2 text-gray-600 text-right">{fmt(p.principalComponent)}</td>
+                                        <td className="py-2 pr-4 text-gray-600 text-right">{fmt(p.principalComponent)}</td>
+                                        <td className="py-2 text-right">
+                                            <a
+                                                href={getPaymentReceiptPdfUrl(p.id)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                title="Print Official Counter Receipt"
+                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-gray-200 hover:border-amber-400 hover:bg-amber-50 text-gray-600 hover:text-amber-800 text-xs font-semibold transition-colors"
+                                            >
+                                                <Printer className="w-3 h-3 text-amber-600" />
+                                                <span>Receipt</span>
+                                            </a>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

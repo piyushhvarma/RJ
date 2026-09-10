@@ -22,6 +22,7 @@ import {
     TrendingUp
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { getPaymentReceiptPdfUrl } from '@/lib/api/documents';
 
 function fmtINR(n?: number | null) {
     if (n == null) return '—';
@@ -302,15 +303,27 @@ export default function PaymentsPage() {
                                             </td>
 
                                             <td className="px-5 py-3.5 text-right">
-                                                {payment.loan ? (
-                                                    <Link
-                                                        href={`/loans/${payment.loan.id}`}
-                                                        className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 hover:text-amber-900 hover:underline"
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <a
+                                                        href={getPaymentReceiptPdfUrl(payment.id)}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        title="Print Counter Receipt PDF"
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gray-200 bg-white hover:border-amber-400 hover:bg-amber-50 text-gray-700 hover:text-amber-800 text-xs font-semibold shadow-2xs transition-colors"
                                                     >
-                                                        View Loan
-                                                        <ArrowUpRight className="w-3 h-3" />
-                                                    </Link>
-                                                ) : null}
+                                                        <Printer className="w-3.5 h-3.5 text-amber-600" />
+                                                        <span>Receipt</span>
+                                                    </a>
+                                                    {payment.loan ? (
+                                                        <Link
+                                                            href={`/loans/${payment.loan.id}`}
+                                                            className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 hover:text-amber-900 hover:underline"
+                                                        >
+                                                            Loan
+                                                            <ArrowUpRight className="w-3 h-3" />
+                                                        </Link>
+                                                    ) : null}
+                                                </div>
                                             </td>
                                         </tr>
                                     );

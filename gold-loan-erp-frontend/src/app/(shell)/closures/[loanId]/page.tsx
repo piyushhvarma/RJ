@@ -21,9 +21,10 @@ import { createPaymentSchema, type CreatePaymentDto } from '@/lib/schemas';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { RoleGate } from '@/components/shared/RoleGate';
-import { ArrowLeft, Shield, AlertTriangle, Check } from 'lucide-react';
+import { ArrowLeft, Shield, AlertTriangle, Check, Printer, FileCheck2 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { getClosureReceiptPdfUrl } from '@/lib/api/documents';
 
 type Step =
     | 'identify'
@@ -510,19 +511,45 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
                     {/* Step 8: Acknowledgement */}
                     {step === 'acknowledgement' && (
                         <div className="space-y-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Customer Acknowledgement</h2>
+                            <h2 className="text-lg font-semibold text-gray-900">Customer Acknowledgement & Release Voucher</h2>
                             <p className="text-sm text-gray-700">
-                                The customer must physically sign the gold release receipt before this step is confirmed.
-                                Do not advance until the receipt has been signed.
+                                Generate the official Gold Release & Settlement Voucher. The customer must inspect their ornaments and physically sign this voucher before completing closure.
                             </p>
-                            <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
-                                Document generation (closure receipt / gold release receipt) is not yet available.
-                                Use a manual receipt for now and scan/upload it once document generation is built.
+
+                            <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <FileCheck2 className="w-5 h-5 text-emerald-600" />
+                                        <span className="text-sm font-bold text-emerald-950">Official Gold Release Voucher</span>
+                                    </div>
+                                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
+                                        Ready to Print
+                                    </span>
+                                </div>
+                                <p className="text-xs text-emerald-800">
+                                    Contains full loan settlement confirmation, itemized list of released jewellery, and physical wet-ink signature blocks for borrower, appraiser, and manager.
+                                </p>
+                                <div className="pt-1">
+                                    <a
+                                        href={getClosureReceiptPdfUrl(loanId)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 px-4 py-2 text-xs font-bold text-white shadow-xs transition-colors"
+                                    >
+                                        <Printer className="w-4 h-4" />
+                                        Print Gold Release Voucher (PDF)
+                                    </a>
+                                </div>
                             </div>
-                            <button onClick={advance}
-                                className="rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-600 transition-colors">
-                                Customer has physically signed the release receipt →
-                            </button>
+
+                            <div className="pt-2">
+                                <button
+                                    onClick={advance}
+                                    className="rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-600 transition-colors cursor-pointer"
+                                >
+                                    Customer has verified jewellery & physically signed the release voucher →
+                                </button>
+                            </div>
                         </div>
                     )}
 
@@ -534,16 +561,25 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
                             </div>
                             <h2 className="text-xl font-bold text-gray-900">Closure Process Complete</h2>
                             <p className="text-sm text-gray-600">
-                                All closure steps have been completed. The gold has been released to the customer.
+                                All closure steps have been completed. The gold ornaments have been safely handed back to the customer.
                             </p>
-                            <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
-                                Note: The loan status is not yet automatically changed to CLOSED — that requires the backend closure orchestration module.
-                                Please update the loan status manually or wait for the orchestration backend to be built.
+                            <div className="flex items-center justify-center gap-3 pt-2">
+                                <a
+                                    href={getClosureReceiptPdfUrl(loanId)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-xs transition-colors"
+                                >
+                                    <Printer className="w-4 h-4 text-amber-600" />
+                                    Print Release Voucher Again
+                                </a>
+                                <Link
+                                    href={`/loans/${loanId}`}
+                                    className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-5 py-2 text-sm font-semibold text-white hover:bg-amber-700 shadow-xs transition-colors"
+                                >
+                                    Go to Loan Profile
+                                </Link>
                             </div>
-                            <Link href={`/loans/${loanId}`}
-                                className="inline-block mt-4 rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-600 transition-colors">
-                                Go to Loan Profile
-                            </Link>
                         </div>
                     )}
                 </div>

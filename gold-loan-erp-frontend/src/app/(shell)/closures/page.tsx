@@ -21,9 +21,11 @@ import {
     Package,
     Gem,
     AlertCircle,
-    ArrowRight
+    ArrowRight,
+    Printer,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { getClosureReceiptPdfUrl } from '@/lib/api/documents';
 
 const CLOSURE_FILTERS = [
     { label: 'Active Loans (Ready for Closure)', value: 'ACTIVE' },
@@ -293,17 +295,31 @@ export default function ClosuresPage() {
                                             </td>
 
                                             <td className="px-5 py-3.5 text-right">
-                                                <Link
-                                                    href={`/closures/${loan.id}`}
-                                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-all ${
-                                                        isClosed
-                                                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                            : 'bg-amber-600 text-white hover:bg-amber-700'
-                                                    }`}
-                                                >
-                                                    {isClosed ? 'View Closure' : 'Close Loan & Release'}
-                                                    <ArrowRight className="w-3.5 h-3.5" />
-                                                </Link>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {isClosed && (
+                                                        <a
+                                                            href={getClosureReceiptPdfUrl(loan.id)}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            title="Print Official Gold Release Voucher"
+                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-semibold shadow-2xs transition-colors"
+                                                        >
+                                                            <Printer className="w-3.5 h-3.5 text-emerald-700" />
+                                                            <span>Voucher</span>
+                                                        </a>
+                                                    )}
+                                                    <Link
+                                                        href={`/closures/${loan.id}`}
+                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-all ${
+                                                            isClosed
+                                                                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                : 'bg-amber-600 text-white hover:bg-amber-700'
+                                                        }`}
+                                                    >
+                                                        {isClosed ? 'View Closure' : 'Close Loan & Release'}
+                                                        <ArrowRight className="w-3.5 h-3.5" />
+                                                    </Link>
+                                                </div>
                                             </td>
                                         </tr>
                                     );

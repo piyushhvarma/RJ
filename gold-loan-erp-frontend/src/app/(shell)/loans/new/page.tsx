@@ -45,10 +45,20 @@ import {
     Clock,
     Sparkles,
     RotateCcw,
-    CheckCircle2
+    CheckCircle2,
+    Printer,
+    ExternalLink,
+    FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import type { Loan, JewelleryItem, Appraisal, Packet, Customer } from '@/lib/api/types';
+import {
+    getPledgeAgreementPdfUrl,
+    getJewelleryAnnexurePdfUrl,
+    getLoanDocuments,
+    markDocumentSigned,
+    markDocumentPrinted,
+} from '@/lib/api/documents';
 
 const WIZARD_KEY = 'gl_loan_wizard';
 
@@ -1324,50 +1334,180 @@ function StorageStep({
     );
 }
 
-// Step 8: Document stub
+// Step 8: Document Generation & Physical Signing Station
 function DocumentStep({ loanId }: { loanId: string }) {
+    const router = useRouter();
+    const qc = useQueryClient();
+    const [signedConfirmed, setSignedConfirmed] = useState(false);
+    const [sealingConfirmed, setSealingConfirmed] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    const { data: documents, refetch: refetchDocs } = useQuery({
+        queryKey: ['loan-documents', loanId],
+        queryFn: () => getLoanDocuments(loanId),
+    });
+
+    async function handleComplete() {
+        setSubmitting(true);
+        try {
+            const agreementDoc = documents?.find(d => d.type === 'PLEDGE_AGREEMENT');
+            if (agreementDoc) {
+                await markDocumentSigned(agreementDoc.id);
+            }
+        } catch (e) {
+            console.error('Document sign record error:', e);
+        } finally {
+            if (typeof window !== 'undefined') localStorage.removeItem(WIZARD_KEY);
+            qc.invalidateQueries({ queryKey: ['loan', loanId] });
+            router.push(`/loans/${loanId}`);
+            setSubmitting(false);
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div className="border-b border-gray-100 pb-4">
-                <h2 className="text-lg font-bold text-gray-950">Loan Completion & Agreement</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Pledge agreement, jewellery schedule, and final receipt</p>
-            </div>
-
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 space-y-2">
-                <div className="flex items-center gap-2 text-amber-900 font-bold text-sm">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                    Loan Application Successfully Completed
+                <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                        Physical Counter Protocol
+                    </span>
                 </div>
-                <p className="text-xs text-amber-800 leading-relaxed">
-                    Physical pledge documentation and customer receipt can be viewed and printed directly from the loan profile. Ensure the physical signed copy is placed in the branch archives.
+                <h2 className="text-xl font-bold text-gray-950 mt-1">Print Pledge Documents & Obtain Wet-Ink Signature</h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                    Generate the official Pawn Ticket and Jewellery Schedule for physical customer signing and safe custody packet sealing.
                 </p>
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-700">Custody Handover Checklist</p>
-                <div className="space-y-2 text-xs text-gray-600">
-                    <div className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Tamper-evident packet sealed and marked with security barcode</span>
+            {/* Document Action Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Pledge Agreement Card */}
+                <div className="rounded-2xl border-2 border-amber-200 bg-amber-50/40 p-5 flex flex-col justify-between space-y-4 hover:border-amber-300 transition-all">
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded">
+                                Legal Contract
+                            </span>
+                            <FileText className="w-4 h-4 text-amber-700" />
+                        </div>
+                        <h3 className="text-base font-bold text-gray-950 mt-2">Pledge Agreement (गिरवी पावती)</h3>
+                        <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                            Official Pawn Ticket containing statutory lending disclosures, interest rate calculation, default notice rules, and dual signature lines.
+                        </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Packet placed in allocated vault safe locker</span>
+
+                    <div className="pt-3 border-t border-amber-200/60 flex items-center gap-2">
+                        <a
+                            href={getPledgeAgreementPdfUrl(loanId)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-amber-700 transition"
+                        >
+                            <Printer className="w-3.5 h-3.5" />
+                            Print Agreement PDF
+                        </a>
+                        <a
+                            href={getPledgeAgreementPdfUrl(loanId)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
+                        >
+                            <ExternalLink className="w-3 h-3 text-gray-400" />
+                            Preview
+                        </a>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Cash or bank transfer disburse confirmed by customer</span>
+                </div>
+
+                {/* Jewellery Annexure Card */}
+                <div className="rounded-2xl border-2 border-gray-200 bg-gray-50/50 p-5 flex flex-col justify-between space-y-4 hover:border-gray-300 transition-all">
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-700 bg-gray-200/80 px-2 py-0.5 rounded">
+                                Schedule A
+                            </span>
+                            <Gem className="w-4 h-4 text-amber-600" />
+                        </div>
+                        <h3 className="text-base font-bold text-gray-950 mt-2">Jewellery Annexure (आभूषण अनुसूची)</h3>
+                        <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                            Itemized ornament schedule detailing gross weight, stone deductions, net gold weight, purity karat, hallmark stamps, and valuation.
+                        </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-gray-200 flex items-center gap-2">
+                        <a
+                            href={getJewelleryAnnexurePdfUrl(loanId)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-black transition"
+                        >
+                            <Printer className="w-3.5 h-3.5" />
+                            Print Annexure PDF
+                        </a>
+                        <a
+                            href={getJewelleryAnnexurePdfUrl(loanId)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
+                        >
+                            <ExternalLink className="w-3 h-3 text-gray-400" />
+                            Preview
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <div className="pt-2">
+            {/* Mandatory Physical Signing Checklist */}
+            <div className="rounded-2xl border border-amber-200 bg-white p-5 space-y-3.5">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-amber-600" />
+                    Physical Dual-Custody Handover Verification
+                </p>
+
+                <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer p-2.5 rounded-xl border border-gray-100 hover:bg-gray-50/80 transition-colors">
+                        <input
+                            type="checkbox"
+                            checked={signedConfirmed}
+                            onChange={(e) => setSignedConfirmed(e.target.checked)}
+                            className="w-4 h-4 mt-0.5 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                        />
+                        <div className="text-xs text-gray-700">
+                            <span className="font-bold text-gray-900 block">Borrower Physical Wet-Ink Signature Obtained</span>
+                            Customer has signed both copies of the Pledge Agreement and Jewellery Schedule in person at the branch counter.
+                        </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer p-2.5 rounded-xl border border-gray-100 hover:bg-gray-50/80 transition-colors">
+                        <input
+                            type="checkbox"
+                            checked={sealingConfirmed}
+                            onChange={(e) => setSealingConfirmed(e.target.checked)}
+                            className="w-4 h-4 mt-0.5 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                        />
+                        <div className="text-xs text-gray-700">
+                            <span className="font-bold text-gray-900 block">Ornaments Sealed & Deposited in Allocated Vault Locker</span>
+                            Gold ornaments verified against schedule, sealed in tamper-evident pouch, and placed in the registered vault safe position.
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            {/* Completion Button */}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <Link
                     href={`/loans/${loanId}`}
-                    className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-6 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-amber-700 transition"
+                    className="text-xs font-semibold text-gray-500 hover:text-gray-900 transition"
                 >
-                    View Loan Profile & Sanction Letter <ArrowRight className="w-4 h-4" />
+                    Skip & Review in Profile →
                 </Link>
+
+                <button
+                    onClick={handleComplete}
+                    disabled={!signedConfirmed || !sealingConfirmed || submitting}
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-2.5 text-sm font-bold text-white shadow-xs hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                >
+                    {submitting ? 'Finalizing Loan...' : 'Mark Signed & Finalize Loan'}
+                    <CheckCircle2 className="w-4 h-4" />
+                </button>
             </div>
         </div>
     );
