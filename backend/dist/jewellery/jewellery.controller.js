@@ -19,6 +19,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { JewelleryService } from './jewellery.service.js';
 import { CreateJewelleryItemDto } from './dto/create-jewellery-item.dto.js';
 import { AddJewelleryPhotoDto } from './dto/add-jewellery-photo.dto.js';
+import { ListJewelleryDto } from './dto/list-jewellery.dto.js';
 let JewelleryController = class JewelleryController {
     jewelleryService;
     constructor(jewelleryService) {
@@ -30,8 +31,11 @@ let JewelleryController = class JewelleryController {
     addPhoto(id, dto, user) {
         return this.jewelleryService.addPhoto(id, dto, user);
     }
-    findByLoan(loanId) {
-        return this.jewelleryService.findByLoan(loanId);
+    findAllAppraisals(page, limit) {
+        return this.jewelleryService.findAllAppraisals({ page, limit });
+    }
+    findAll(query) {
+        return this.jewelleryService.findAll(query);
     }
 };
 __decorate([
@@ -54,12 +58,20 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], JewelleryController.prototype, "addPhoto", null);
 __decorate([
-    Get(),
-    __param(0, Query('loanId')),
+    Get('appraisals'),
+    __param(0, Query('page')),
+    __param(1, Query('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Number, Number]),
     __metadata("design:returntype", void 0)
-], JewelleryController.prototype, "findByLoan", null);
+], JewelleryController.prototype, "findAllAppraisals", null);
+__decorate([
+    Get(),
+    __param(0, Query()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [ListJewelleryDto]),
+    __metadata("design:returntype", void 0)
+], JewelleryController.prototype, "findAll", null);
 JewelleryController = __decorate([
     UseGuards(JwtAuthGuard, RolesGuard),
     Controller('jewellery'),
