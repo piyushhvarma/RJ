@@ -26,8 +26,8 @@ let PaymentsController = class PaymentsController {
     receive(dto, user) {
         return this.paymentsService.receive(dto, user);
     }
-    findByLoan(loanId) {
-        return this.paymentsService.findByLoan(loanId);
+    findAll(loanId, q, page, limit) {
+        return this.paymentsService.findAll({ loanId, q, page, limit });
     }
 };
 __decorate([
@@ -42,10 +42,13 @@ __decorate([
 __decorate([
     Get(),
     __param(0, Query('loanId')),
+    __param(1, Query('q')),
+    __param(2, Query('page')),
+    __param(3, Query('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String, Number, Number]),
     __metadata("design:returntype", void 0)
-], PaymentsController.prototype, "findByLoan", null);
+], PaymentsController.prototype, "findAll", null);
 PaymentsController = __decorate([
     UseGuards(JwtAuthGuard, RolesGuard),
     Controller('payments'),
