@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -34,6 +34,9 @@ let PacketsController = class PacketsController {
     }
     release(id, user) {
         return this.packetsService.release(id, user);
+    }
+    findAll(q, status, page, limit) {
+        return this.packetsService.findAll({ q, status, page, limit });
     }
     findOne(id) {
         return this.packetsService.findById(id);
@@ -77,6 +80,16 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], PacketsController.prototype, "release", null);
+__decorate([
+    Get(),
+    __param(0, Query('q')),
+    __param(1, Query('status')),
+    __param(2, Query('page')),
+    __param(3, Query('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Number, Number]),
+    __metadata("design:returntype", void 0)
+], PacketsController.prototype, "findAll", null);
 __decorate([
     Get(':id'),
     __param(0, Param('id')),

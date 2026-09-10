@@ -69,15 +69,15 @@ export declare class PacketsService {
             status: import("@prisma/client").$Enums.LoanStatus;
             createdById: string;
             customerId: string;
+            loanCode: string;
             schemeId: string | null;
             principalAmount: number | null;
             interestRate: number | null;
             interestType: import("@prisma/client").$Enums.InterestType | null;
             processingCharges: number | null;
-            maturityDate: Date | null;
-            loanCode: string;
             otherCharges: number | null;
             sanctionedDate: Date | null;
+            maturityDate: Date | null;
             holdReason: import("@prisma/client").$Enums.HoldReason | null;
             holdNotes: string | null;
         };
@@ -112,5 +112,54 @@ export declare class PacketsService {
         storageLocationId: string | null;
         sealedAt: Date | null;
         storedAt: Date | null;
+    }>;
+    findAll(query?: {
+        q?: string;
+        status?: string;
+        page?: number;
+        limit?: number;
+    }): Promise<{
+        items: ({
+            loan: {
+                customer: {
+                    id: string;
+                    fullName: string;
+                    mobile: string;
+                    customerCode: string;
+                };
+                id: string;
+                status: import("@prisma/client").$Enums.LoanStatus;
+                _count: {
+                    jewelleryItems: number;
+                };
+                loanCode: string;
+                principalAmount: number | null;
+            };
+            storageLocation: {
+                id: string;
+                branch: string;
+                safe: string;
+                locker: string;
+                shelf: string;
+                position: string;
+                label: string;
+            } | null;
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import("@prisma/client").$Enums.PacketStatus;
+            createdById: string;
+            loanId: string;
+            releasedAt: Date | null;
+            packetCode: string;
+            storageLocationId: string | null;
+            sealedAt: Date | null;
+            storedAt: Date | null;
+        })[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
     }>;
 }
