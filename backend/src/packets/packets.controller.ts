@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -40,11 +40,19 @@ export class PacketsController {
   }
 
   @Post(':id/release')
-  // Gold release is one of the most sensitive actions in the whole system —
-  // owner/manager only (§7.2/§7.4, TC-002: cashier attempting release must be denied).
   @Roles(UserRole.OWNER, UserRole.MANAGER)
   release(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.packetsService.release(id, user);
+  }
+
+  @Get()
+  findAll(
+    @Query('q') q?: string,
+    @Query('status') status?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.packetsService.findAll({ q, status, page, limit });
   }
 
   @Get(':id')

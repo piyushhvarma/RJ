@@ -207,4 +207,66 @@ export class PacketsService {
     if (!packet) throw new NotFoundException('Packet not found');
     return packet;
   }
+
+  async findAll(query?: { q?: string; status?: string; page?: number; limit?: number }) {
+    const page = query?.page && query.page > 0 ? Number(query.page) : 1;
+    const limit = query?.limit && query.limit > 0 ? Math.min(Number(query.limit), 100) : 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (query?.status && query.status !== 'ALL') {
+      where.status = query.status;
+    }
+    if (query?.q) {
+      const q = query.q.trim();
+      where.OR = [
+        { packetCode: { contains: q, mode: 'insensitive' } },
+        { storageLocation: { label: { contains: q, mode: 'insensitive' } } },
+        { loan: { loanCode: { contains: q, mode: 'insensitive' } } },
+        { loan: { customer: { fullName: { contains: q, mode: 'insensitive' } } } },
+      ];
+    }
+
+    const [total, items] = await Promise.all([
+      this.prisma.packet.count({ where }),
+      this.prisma.packet.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          storageLocation: true,
+          loan: {
+            select: {
+              id: true,
+              loanCode: true,
+              status: true,
+              principalAmount: true,
+              customer: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  customerCode: true,
+                  mobile: true,
+                },
+              },
+              _count: {
+                select: {
+                  jewelleryItems: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 }
