@@ -8,6 +8,7 @@ import type { AuthenticatedUser } from '../common/decorators/current-user.decora
 import { JewelleryService } from './jewellery.service.js';
 import { CreateJewelleryItemDto } from './dto/create-jewellery-item.dto.js';
 import { AddJewelleryPhotoDto } from './dto/add-jewellery-photo.dto.js';
+import { ListJewelleryDto } from './dto/list-jewellery.dto.js';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('jewellery')
@@ -15,7 +16,6 @@ export class JewelleryController {
   constructor(private readonly jewelleryService: JewelleryService) {}
 
   @Post()
-  // Appraiser is the primary actor (§7.3); owner/manager can also enter items.
   @Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.APPRAISER)
   create(@Body() dto: CreateJewelleryItemDto, @CurrentUser() user: AuthenticatedUser) {
     return this.jewelleryService.create(dto, user);
@@ -31,8 +31,13 @@ export class JewelleryController {
     return this.jewelleryService.addPhoto(id, dto, user);
   }
 
+  @Get('appraisals')
+  findAllAppraisals(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.jewelleryService.findAllAppraisals({ page, limit });
+  }
+
   @Get()
-  findByLoan(@Query('loanId') loanId: string) {
-    return this.jewelleryService.findByLoan(loanId);
+  findAll(@Query() query: ListJewelleryDto) {
+    return this.jewelleryService.findAll(query);
   }
 }
