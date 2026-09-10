@@ -149,4 +149,160 @@ export class PaymentsService {
   async findByLoan(loanId: string) {
     return this.prisma.payment.findMany({ where: { loanId }, orderBy: { paymentDate: 'desc' } });
   }
+
+  async findAll(query?: { loanId?: string; q?: string; page?: number; limit?: number }) {
+    if (query?.loanId) {
+      const items = await this.findByLoan(query.loanId);
+      return {
+        items,
+        total: items.length,
+        page: 1,
+        limit: items.length,
+        totalPages: 1,
+        aggregates: {
+          totalAmount: items.reduce((acc, p) => acc + p.amount, 0),
+          totalPrincipal: items.reduce((acc, p) => acc + p.principalComponent, 0),
+          totalInterest: items.reduce((acc, p) => acc + p.interestComponent, 0),
+        },
+      };
+    }
+
+    const page = query?.page && query.page > 0 ? Number(query.page) : 1;
+    const limit = query?.limit && query.limit > 0 ? Math.min(Number(query.limit), 100) : 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (query?.q) {
+      const q = query.q.trim();
+      where.OR = [
+        { paymentCode: { contains: q, mode: 'insensitive' } },
+        { receiptNumber: { contains: q, mode: 'insensitive' } },
+        { loan: { loanCode: { contains: q, mode: 'insensitive' } } },
+        { loan: { customer: { fullName: { contains: q, mode: 'insensitive' } } } },
+        { loan: { customer: { mobile: { contains: q } } } },
+      ];
+    }
+
+    const [total, items, totalAmount] = await Promise.all([
+      this.prisma.payment.count({ where }),
+      this.prisma.payment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { paymentDate: 'desc' },
+        include: {
+          loan: {
+            select: {
+              id: true,
+              loanCode: true,
+              status: true,
+              customer: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  customerCode: true,
+                  mobile: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.payment.aggregate({
+        where,
+        _sum: {
+          amount: true,
+          principalComponent: true,
+          interestComponent: true,
+        },
+      }),
+    ]);
+
+    if (total === 0) {
+      const ledgerWhere: any = { type: 'PAYMENT' };
+      if (query?.q) {
+        const q = query.q.trim();
+        ledgerWhere.OR = [
+          { loan: { loanCode: { contains: q, mode: 'insensitive' } } },
+          { loan: { customer: { fullName: { contains: q, mode: 'insensitive' } } } },
+          { loan: { customer: { mobile: { contains: q } } } },
+        ];
+      }
+
+      const [ledgerTotal, ledgerItems, ledgerSum] = await Promise.all([
+        this.prisma.ledgerEntry.count({ where: ledgerWhere }),
+        this.prisma.ledgerEntry.findMany({
+          where: ledgerWhere,
+          skip,
+          take: limit,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            loan: {
+              select: {
+                id: true,
+                loanCode: true,
+                status: true,
+                customer: {
+                  select: {
+                    id: true,
+                    fullName: true,
+                    customerCode: true,
+                    mobile: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+        this.prisma.ledgerEntry.aggregate({
+          where: ledgerWhere,
+          _sum: { amount: true },
+        }),
+      ]);
+
+      const mappedItems = ledgerItems.map((e) => ({
+        id: e.id,
+        paymentCode: `PAY-${e.id.slice(0, 8).toUpperCase()}`,
+        loanId: e.loanId,
+        receiptNumber: `RCP-${e.id.slice(0, 8).toUpperCase()}`,
+        amount: e.amount,
+        principalComponent: e.amount,
+        interestComponent: 0,
+        penaltyComponent: 0,
+        otherCharges: 0,
+        mode: 'CASH' as const,
+        paymentDate: e.createdAt,
+        notes: 'Legacy settlement payment ledger',
+        createdById: e.createdById,
+        createdAt: e.createdAt,
+        loan: e.loan,
+      }));
+
+      return {
+        items: mappedItems,
+        total: ledgerTotal,
+        page,
+        limit,
+        totalPages: Math.ceil(ledgerTotal / limit),
+        aggregates: {
+          totalAmount: ledgerSum._sum.amount ?? 0,
+          totalPrincipal: ledgerSum._sum.amount ?? 0,
+          totalInterest: 0,
+        },
+      };
+    }
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      aggregates: {
+        totalAmount: totalAmount._sum.amount ?? 0,
+        totalPrincipal: totalAmount._sum.principalComponent ?? 0,
+        totalInterest: totalAmount._sum.interestComponent ?? 0,
+      },
+    };
+  }
 }

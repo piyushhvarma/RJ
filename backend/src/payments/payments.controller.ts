@@ -20,7 +20,12 @@ export class PaymentsController {
   }
 
   @Get()
-  findByLoan(@Query('loanId') loanId: string) {
-    return this.paymentsService.findByLoan(loanId);
+  findAll(
+    @Query('loanId') loanId?: string,
+    @Query('q') q?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.paymentsService.findAll({ loanId, q, page, limit });
   }
 }
