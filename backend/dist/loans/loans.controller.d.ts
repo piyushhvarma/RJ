@@ -11,7 +11,7 @@ export declare class LoansController {
             customer: {
                 id: string;
                 fullName: string;
-                mobile: string;
+                mobile: string | null;
                 customerCode: string;
                 kycStatus: import("@prisma/client").$Enums.VerificationStatus;
             };
@@ -58,6 +58,7 @@ export declare class LoansController {
         maturityDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
+        legacyPledgeNo: string | null;
     }>;
     findOne(id: string): Promise<{
         customer: {
@@ -67,7 +68,7 @@ export declare class LoansController {
             fullName: string;
             guardianName: string | null;
             dateOfBirth: Date | null;
-            mobile: string;
+            mobile: string | null;
             alternateMobile: string | null;
             address: string | null;
             city: string | null;
@@ -81,6 +82,7 @@ export declare class LoansController {
             biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
             status: import("@prisma/client").$Enums.RecordLifecycle;
             createdById: string;
+            legacySourceRef: string | null;
         };
         packet: ({
             storageLocation: {
@@ -133,6 +135,7 @@ export declare class LoansController {
             loanId: string;
             itemCode: string;
             category: string;
+            metalType: import("@prisma/client").$Enums.MetalType;
             description: string;
             grossWeight: number;
             stoneWeight: number;
@@ -210,6 +213,7 @@ export declare class LoansController {
         maturityDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
+        legacyPledgeNo: string | null;
     }>;
     disburse(id: string, dto: DisburseLoanDto, user: AuthenticatedUser): Promise<{
         id: string;
@@ -230,5 +234,6 @@ export declare class LoansController {
         maturityDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
+        legacyPledgeNo: string | null;
     }>;
 }

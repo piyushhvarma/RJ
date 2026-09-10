@@ -44,7 +44,7 @@ export declare class DashboardController {
             customer: {
                 id: string;
                 fullName: string;
-                mobile: string;
+                mobile: string | null;
                 customerCode: string;
             };
             id: string;
@@ -57,7 +57,7 @@ export declare class DashboardController {
             id: string;
             createdAt: Date;
             fullName: string;
-            mobile: string;
+            mobile: string | null;
             customerCode: string;
             kycStatus: import("@prisma/client").$Enums.VerificationStatus;
         }[];

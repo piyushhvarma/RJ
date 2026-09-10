@@ -18,6 +18,7 @@ export declare class JewelleryService {
         loanId: string;
         itemCode: string;
         category: string;
+        metalType: import("@prisma/client").$Enums.MetalType;
         description: string;
         grossWeight: number;
         stoneWeight: number;
@@ -58,6 +59,7 @@ export declare class JewelleryService {
         loanId: string;
         itemCode: string;
         category: string;
+        metalType: import("@prisma/client").$Enums.MetalType;
         description: string;
         grossWeight: number;
         stoneWeight: number;
@@ -91,6 +93,7 @@ export declare class JewelleryService {
             loanId: string;
             itemCode: string;
             category: string;
+            metalType: import("@prisma/client").$Enums.MetalType;
             description: string;
             grossWeight: number;
             stoneWeight: number;
@@ -123,7 +126,7 @@ export declare class JewelleryService {
                 customer: {
                     id: string;
                     fullName: string;
-                    mobile: string;
+                    mobile: string | null;
                     customerCode: string;
                 };
                 id: string;
@@ -146,6 +149,7 @@ export declare class JewelleryService {
             loanId: string;
             itemCode: string;
             category: string;
+            metalType: import("@prisma/client").$Enums.MetalType;
             description: string;
             grossWeight: number;
             stoneWeight: number;

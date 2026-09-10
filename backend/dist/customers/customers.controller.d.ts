@@ -14,7 +14,7 @@ export declare class CustomersController {
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
-        mobile: string;
+        mobile: string | null;
         alternateMobile: string | null;
         address: string | null;
         city: string | null;
@@ -28,6 +28,7 @@ export declare class CustomersController {
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
         status: import("@prisma/client").$Enums.RecordLifecycle;
         createdById: string;
+        legacySourceRef: string | null;
     }>;
     updatePhoto(id: string, dto: UpdateCustomerPhotoDto, user: AuthenticatedUser): Promise<{
         id: string;
@@ -36,7 +37,7 @@ export declare class CustomersController {
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
-        mobile: string;
+        mobile: string | null;
         alternateMobile: string | null;
         address: string | null;
         city: string | null;
@@ -50,6 +51,7 @@ export declare class CustomersController {
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
         status: import("@prisma/client").$Enums.RecordLifecycle;
         createdById: string;
+        legacySourceRef: string | null;
     }>;
     addDocument(id: string, dto: AddCustomerDocumentDto, user: AuthenticatedUser): Promise<{
         id: string;
@@ -72,7 +74,7 @@ export declare class CustomersController {
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
-        mobile: string;
+        mobile: string | null;
         alternateMobile: string | null;
         address: string | null;
         city: string | null;
@@ -86,6 +88,7 @@ export declare class CustomersController {
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
         status: import("@prisma/client").$Enums.RecordLifecycle;
         createdById: string;
+        legacySourceRef: string | null;
     }[]>;
     findOne(id: string): Promise<{
         documents: {
@@ -131,6 +134,7 @@ export declare class CustomersController {
             maturityDate: Date | null;
             holdReason: import("@prisma/client").$Enums.HoldReason | null;
             holdNotes: string | null;
+            legacyPledgeNo: string | null;
         }[];
     } & {
         id: string;
@@ -139,7 +143,7 @@ export declare class CustomersController {
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
-        mobile: string;
+        mobile: string | null;
         alternateMobile: string | null;
         address: string | null;
         city: string | null;
@@ -153,5 +157,6 @@ export declare class CustomersController {
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
         status: import("@prisma/client").$Enums.RecordLifecycle;
         createdById: string;
+        legacySourceRef: string | null;
     }>;
 }

@@ -16,7 +16,7 @@ export declare class CustomersService {
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
-        mobile: string;
+        mobile: string | null;
         alternateMobile: string | null;
         address: string | null;
         city: string | null;
@@ -30,6 +30,7 @@ export declare class CustomersService {
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
         status: import("@prisma/client").$Enums.RecordLifecycle;
         createdById: string;
+        legacySourceRef: string | null;
     }>;
     updatePhoto(id: string, photoUrl: string, actor: AuthenticatedUser): Promise<{
         id: string;
@@ -38,7 +39,7 @@ export declare class CustomersService {
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
-        mobile: string;
+        mobile: string | null;
         alternateMobile: string | null;
         address: string | null;
         city: string | null;
@@ -52,6 +53,7 @@ export declare class CustomersService {
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
         status: import("@prisma/client").$Enums.RecordLifecycle;
         createdById: string;
+        legacySourceRef: string | null;
     }>;
     addDocument(id: string, dto: AddCustomerDocumentDto, actor: AuthenticatedUser): Promise<{
         id: string;
@@ -111,6 +113,7 @@ export declare class CustomersService {
             maturityDate: Date | null;
             holdReason: import("@prisma/client").$Enums.HoldReason | null;
             holdNotes: string | null;
+            legacyPledgeNo: string | null;
         }[];
     } & {
         id: string;
@@ -119,7 +122,7 @@ export declare class CustomersService {
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
-        mobile: string;
+        mobile: string | null;
         alternateMobile: string | null;
         address: string | null;
         city: string | null;
@@ -133,6 +136,7 @@ export declare class CustomersService {
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
         status: import("@prisma/client").$Enums.RecordLifecycle;
         createdById: string;
+        legacySourceRef: string | null;
     }>;
     search(query?: string): Promise<{
         id: string;
@@ -141,7 +145,7 @@ export declare class CustomersService {
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
-        mobile: string;
+        mobile: string | null;
         alternateMobile: string | null;
         address: string | null;
         city: string | null;
@@ -155,5 +159,6 @@ export declare class CustomersService {
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
         status: import("@prisma/client").$Enums.RecordLifecycle;
         createdById: string;
+        legacySourceRef: string | null;
     }[]>;
 }

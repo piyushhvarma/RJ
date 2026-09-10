@@ -62,7 +62,7 @@ export declare class PacketsController {
                 customer: {
                     id: string;
                     fullName: string;
-                    mobile: string;
+                    mobile: string | null;
                     customerCode: string;
                 };
                 id: string;
@@ -120,6 +120,7 @@ export declare class PacketsController {
             maturityDate: Date | null;
             holdReason: import("@prisma/client").$Enums.HoldReason | null;
             holdNotes: string | null;
+            legacyPledgeNo: string | null;
         };
         storageLocation: {
             id: string;

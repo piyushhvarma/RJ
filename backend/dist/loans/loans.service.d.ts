@@ -29,6 +29,7 @@ export declare class LoansService {
         maturityDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
+        legacyPledgeNo: string | null;
     }>;
     findById(id: string): Promise<{
         customer: {
@@ -38,7 +39,7 @@ export declare class LoansService {
             fullName: string;
             guardianName: string | null;
             dateOfBirth: Date | null;
-            mobile: string;
+            mobile: string | null;
             alternateMobile: string | null;
             address: string | null;
             city: string | null;
@@ -52,6 +53,7 @@ export declare class LoansService {
             biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
             status: import("@prisma/client").$Enums.RecordLifecycle;
             createdById: string;
+            legacySourceRef: string | null;
         };
         packet: ({
             storageLocation: {
@@ -104,6 +106,7 @@ export declare class LoansService {
             loanId: string;
             itemCode: string;
             category: string;
+            metalType: import("@prisma/client").$Enums.MetalType;
             description: string;
             grossWeight: number;
             stoneWeight: number;
@@ -181,6 +184,7 @@ export declare class LoansService {
         maturityDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
+        legacyPledgeNo: string | null;
     }>;
     disburse(id: string, dto: DisburseLoanDto, actor: AuthenticatedUser): Promise<{
         id: string;
@@ -201,13 +205,14 @@ export declare class LoansService {
         maturityDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
+        legacyPledgeNo: string | null;
     }>;
     findAll(dto: ListLoansDto): Promise<{
         items: {
             customer: {
                 id: string;
                 fullName: string;
-                mobile: string;
+                mobile: string | null;
                 customerCode: string;
                 kycStatus: import("@prisma/client").$Enums.VerificationStatus;
             };

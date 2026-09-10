@@ -70,7 +70,7 @@ export declare class PaymentsController {
                 customer: {
                     id: string;
                     fullName: string;
-                    mobile: string;
+                    mobile: string | null;
                     customerCode: string;
                 };
                 id: string;
