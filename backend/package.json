@@ -22,7 +22,9 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "migrate:wipe-legacy": "tsx scripts/wipe-migrated-data.ts",
+    "migrate:legacy-jsoft": "tsx scripts/migrate-legacy-jsoft.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
