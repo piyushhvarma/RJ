@@ -37,19 +37,19 @@ export declare class JewelleryService {
     addPhoto(itemId: string, dto: AddJewelleryPhotoDto, actor: AuthenticatedUser): Promise<{
         id: string;
         fileUrl: string;
-        jewelleryItemId: string;
         angle: string;
         capturedById: string;
         capturedAt: Date;
+        jewelleryItemId: string;
     }>;
     findByLoan(loanId: string): Promise<({
         photos: {
             id: string;
             fileUrl: string;
-            jewelleryItemId: string;
             angle: string;
             capturedById: string;
             capturedAt: Date;
+            jewelleryItemId: string;
         }[];
     } & {
         id: string;
@@ -80,10 +80,10 @@ export declare class JewelleryService {
             photos: {
                 id: string;
                 fileUrl: string;
-                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
+                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -136,10 +136,10 @@ export declare class JewelleryService {
             photos: {
                 id: string;
                 fileUrl: string;
-                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
+                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -203,8 +203,8 @@ export declare class JewelleryService {
                 _count: {
                     jewelleryItems: number;
                 };
-                loanCode: string;
                 principalAmount: number | null;
+                loanCode: string;
             };
         } & {
             id: string;
