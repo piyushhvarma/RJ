@@ -92,10 +92,10 @@ export declare class DocumentsService {
             photos: {
                 id: string;
                 fileUrl: string;
-                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
+                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -154,15 +154,15 @@ export declare class DocumentsService {
         status: import("@prisma/client").$Enums.LoanStatus;
         createdById: string;
         customerId: string;
-        loanCode: string;
         schemeId: string | null;
         principalAmount: number | null;
         interestRate: number | null;
         interestType: import("@prisma/client").$Enums.InterestType | null;
         processingCharges: number | null;
+        maturityDate: Date | null;
+        loanCode: string;
         otherCharges: number | null;
         sanctionedDate: Date | null;
-        maturityDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
         legacyPledgeNo: string | null;
@@ -278,15 +278,15 @@ export declare class DocumentsService {
             status: import("@prisma/client").$Enums.LoanStatus;
             createdById: string;
             customerId: string;
-            loanCode: string;
             schemeId: string | null;
             principalAmount: number | null;
             interestRate: number | null;
             interestType: import("@prisma/client").$Enums.InterestType | null;
             processingCharges: number | null;
+            maturityDate: Date | null;
+            loanCode: string;
             otherCharges: number | null;
             sanctionedDate: Date | null;
-            maturityDate: Date | null;
             holdReason: import("@prisma/client").$Enums.HoldReason | null;
             holdNotes: string | null;
             legacyPledgeNo: string | null;
