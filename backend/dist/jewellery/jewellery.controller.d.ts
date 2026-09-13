@@ -33,10 +33,10 @@ export declare class JewelleryController {
     addPhoto(id: string, dto: AddJewelleryPhotoDto, user: AuthenticatedUser): Promise<{
         id: string;
         fileUrl: string;
-        jewelleryItemId: string;
         angle: string;
         capturedById: string;
         capturedAt: Date;
+        jewelleryItemId: string;
     }>;
     findAllAppraisals(page?: number, limit?: number): Promise<{
         items: ({
@@ -51,8 +51,8 @@ export declare class JewelleryController {
                 _count: {
                     jewelleryItems: number;
                 };
-                loanCode: string;
                 principalAmount: number | null;
+                loanCode: string;
             };
         } & {
             id: string;
@@ -78,10 +78,10 @@ export declare class JewelleryController {
             photos: {
                 id: string;
                 fileUrl: string;
-                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
+                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -134,10 +134,10 @@ export declare class JewelleryController {
             photos: {
                 id: string;
                 fileUrl: string;
-                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
+                jewelleryItemId: string;
             }[];
         } & {
             id: string;
