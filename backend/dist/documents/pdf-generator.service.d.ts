@@ -5,4 +5,5 @@ export declare class PdfGeneratorService {
     generateJewelleryAnnexure(loan: any): Promise<Buffer>;
     generatePaymentReceipt(payment: any): Promise<Buffer>;
     generateClosureReceipt(loan: any): Promise<Buffer>;
+    generateRenewalReceipt(loan: any, renewalData?: any): Promise<Buffer>;
 }

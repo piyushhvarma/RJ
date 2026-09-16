@@ -11,14 +11,18 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service.js';
 import { IdGeneratorService } from '../common/services/id-generator.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { InterestService } from '../interest/interest.service.js';
+import { TopUpMode } from './dto/topup-loan.dto.js';
 let LoansService = class LoansService {
     prisma;
     ids;
     audit;
-    constructor(prisma, ids, audit) {
+    interestService;
+    constructor(prisma, ids, audit, interestService) {
         this.prisma = prisma;
         this.ids = ids;
         this.audit = audit;
+        this.interestService = interestService;
     }
     async create(dto, actor) {
         const customer = await this.prisma.customer.findUnique({ where: { id: dto.customerId } });
@@ -189,12 +193,189 @@ let LoansService = class LoansService {
             totalPages: Math.ceil(total / limit),
         };
     }
+    async topupOrRenew(id, dto, actor) {
+        const loan = await this.prisma.loan.findUnique({
+            where: { id },
+            include: {
+                customer: true,
+                scheme: true,
+                jewelleryItems: true,
+                ledgerEntries: { orderBy: { createdAt: 'asc' } },
+            },
+        });
+        if (!loan)
+            throw new NotFoundException('Loan not found');
+        if (!['ACTIVE', 'OVERDUE', 'NOTICE'].includes(loan.status)) {
+            throw new BadRequestException(`Cannot top up or renew a loan with status ${loan.status}`);
+        }
+        const currentPrincipal = loan.ledgerEntries.reduce((balance, entry) => {
+            if (entry.type === 'DISBURSEMENT')
+                return balance + entry.amount;
+            if (entry.type === 'PRINCIPAL_PAID')
+                return balance - entry.amount;
+            if (entry.type === 'REVERSAL')
+                return balance - entry.amount;
+            return balance;
+        }, 0);
+        const newPrincipal = currentPrincipal + dto.topupAmount;
+        const isRenew = dto.mode === TopUpMode.RENEW_WITH_INTEREST_DEDUCTED;
+        const interestDeducted = dto.interestDeducted ?? 0;
+        const now = new Date();
+        return this.prisma.$transaction(async (tx) => {
+            if (dto.customerPhotoUrl && (!loan.customer.photoUrl || loan.customer.photoUrl.length < 50)) {
+                await tx.customer.update({
+                    where: { id: loan.customerId },
+                    data: { photoUrl: dto.customerPhotoUrl },
+                });
+            }
+            if (dto.customerSignatureUrl && (!loan.customer.signatureUrl || loan.customer.signatureUrl.length < 50)) {
+                await tx.customer.update({
+                    where: { id: loan.customerId },
+                    data: { signatureUrl: dto.customerSignatureUrl },
+                });
+            }
+            let paymentRecord = null;
+            if (isRenew && interestDeducted > 0) {
+                const paymentCode = await this.ids.next('PAY', tx);
+                paymentRecord = await tx.payment.create({
+                    data: {
+                        paymentCode,
+                        loanId: id,
+                        amount: interestDeducted,
+                        mode: dto.paymentMode ?? 'CASH',
+                        principalComponent: 0,
+                        interestComponent: interestDeducted,
+                        penaltyComponent: 0,
+                        otherCharges: 0,
+                        cashierId: actor.id,
+                        receiptNumber: paymentCode,
+                        notes: `Renewal interest settlement (deducted from top-up of ₹${dto.topupAmount}). ${dto.notes ?? ''}`.trim(),
+                    },
+                });
+                await tx.ledgerEntry.create({
+                    data: {
+                        loanId: id,
+                        type: 'PAYMENT',
+                        amount: interestDeducted,
+                        balanceAfter: currentPrincipal,
+                        relatedPaymentId: paymentRecord.id,
+                        createdById: actor.id,
+                        reason: 'Renewal interest settled from top-up proceeds',
+                    },
+                });
+                await tx.ledgerEntry.create({
+                    data: {
+                        loanId: id,
+                        type: 'INTEREST_PAID',
+                        amount: interestDeducted,
+                        balanceAfter: currentPrincipal,
+                        relatedPaymentId: paymentRecord.id,
+                        createdById: actor.id,
+                        reason: 'Accrued interest cleared for renewal',
+                    },
+                });
+            }
+            await tx.ledgerEntry.create({
+                data: {
+                    loanId: id,
+                    type: 'DISBURSEMENT',
+                    amount: dto.topupAmount,
+                    balanceAfter: newPrincipal,
+                    createdById: actor.id,
+                    reason: isRenew
+                        ? `Renewal Top-Up (+₹${dto.topupAmount}, Net Disbursed: ₹${dto.netDisbursed})`
+                        : `Direct Top-Up (+₹${dto.topupAmount}, Full Cash Disbursed: ₹${dto.netDisbursed})`,
+                },
+            });
+            const tenureMonths = dto.tenureMonths ?? 12;
+            const newMaturity = new Date(now);
+            newMaturity.setMonth(newMaturity.getMonth() + tenureMonths);
+            const updateData = {
+                principalAmount: newPrincipal,
+            };
+            if (isRenew) {
+                updateData.sanctionedDate = now;
+                updateData.maturityDate = newMaturity;
+                updateData.status = 'ACTIVE';
+            }
+            const updatedLoan = await tx.loan.update({
+                where: { id },
+                data: updateData,
+                include: {
+                    customer: true,
+                    jewelleryItems: true,
+                    payments: { orderBy: { paymentDate: 'desc' }, take: 5 },
+                    ledgerEntries: { orderBy: { createdAt: 'desc' }, take: 5 },
+                },
+            });
+            const docCode = await this.ids.next('DOC', tx);
+            const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+            const verificationCode = `RNW-${randomSuffix}`;
+            const doc = await tx.document.create({
+                data: {
+                    documentCode: docCode,
+                    loanId: id,
+                    type: 'RENEWAL',
+                    status: 'GENERATED',
+                    verificationCode,
+                },
+            });
+            await tx.documentVersion.create({
+                data: {
+                    documentId: doc.id,
+                    versionNumber: 1,
+                    fileUrl: `/documents/renewal-receipt/${id}/pdf`,
+                    reason: isRenew ? 'Renewal with Top-Up Agreement' : 'Direct Top-Up Addendum',
+                    createdById: actor.id,
+                },
+            });
+            await this.audit.log({
+                entityType: 'Loan',
+                entityId: id,
+                action: isRenew ? 'LOAN_RENEWED' : 'LOAN_TOPPED_UP',
+                userId: actor.id,
+                roleAtTime: actor.role,
+                oldValue: {
+                    principalAmount: currentPrincipal,
+                    sanctionedDate: loan.sanctionedDate,
+                    status: loan.status,
+                },
+                newValue: {
+                    principalAmount: newPrincipal,
+                    topupAmount: dto.topupAmount,
+                    interestDeducted,
+                    netDisbursed: dto.netDisbursed,
+                    sanctionedDate: updatedLoan.sanctionedDate,
+                    mode: dto.mode,
+                },
+                reason: dto.notes ?? (isRenew ? 'Renewal with interest settlement' : 'Direct principal top-up'),
+                result: 'SUCCESS',
+            }, tx);
+            return {
+                loan: updatedLoan,
+                documentId: doc.id,
+                paymentId: paymentRecord?.id,
+                summary: {
+                    mode: dto.mode,
+                    previousPrincipal: currentPrincipal,
+                    topupAmount: dto.topupAmount,
+                    interestDeducted,
+                    netDisbursed: dto.netDisbursed,
+                    newPrincipal,
+                    sanctionedDate: updatedLoan.sanctionedDate,
+                    customerPhotoUrl: dto.customerPhotoUrl,
+                    customerSignatureUrl: dto.customerSignatureUrl,
+                },
+            };
+        });
+    }
 };
 LoansService = __decorate([
     Injectable(),
     __metadata("design:paramtypes", [PrismaService,
         IdGeneratorService,
-        AuditService])
+        AuditService,
+        InterestService])
 ], LoansService);
 export { LoansService };
 //# sourceMappingURL=loans.service.js.map

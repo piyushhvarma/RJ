@@ -62,6 +62,15 @@ let DocumentsController = class DocumentsController {
         });
         res.end(buffer);
     }
+    async getRenewalReceiptPdf(loanId, res, user) {
+        const { buffer, filename } = await this.documentsService.getRenewalReceiptPdf(loanId, user);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="${filename}"`,
+            'Content-Length': buffer.length,
+        });
+        res.end(buffer);
+    }
     markPrinted(id, user) {
         return this.documentsService.markPrinted(id, user);
     }
@@ -121,6 +130,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], DocumentsController.prototype, "getClosureReceiptPdf", null);
+__decorate([
+    Get('renewal-receipt/:loanId/pdf'),
+    __param(0, Param('loanId')),
+    __param(1, Res()),
+    __param(2, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], DocumentsController.prototype, "getRenewalReceiptPdf", null);
 __decorate([
     UseGuards(JwtAuthGuard, RolesGuard),
     Post(':id/print'),

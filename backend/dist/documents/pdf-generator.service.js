@@ -375,6 +375,110 @@ let PdfGeneratorService = class PdfGeneratorService {
         doc.end();
         return bufferPromise;
     }
+    async generateRenewalReceipt(loan, renewalData) {
+        const doc = new PDFDocument({ margin: 40, size: 'A4' });
+        const bufferPromise = this.streamToBuffer(doc);
+        const isRenew = renewalData?.mode === 'RENEW_WITH_INTEREST_DEDUCTED';
+        const title = isRenew
+            ? 'PLEDGE RENEWAL & TOP-UP VOUCHER'
+            : 'ADDITIONAL LOAN / TOP-UP VOUCHER';
+        this.drawHeader(doc, title, `RNW-${loan.loanCode}`);
+        let y = 125;
+        const bannerBg = isRenew ? '#ecfdf5' : '#eff6ff';
+        const bannerBorder = isRenew ? '#a7f3d0' : '#bfdbfe';
+        const bannerTextColor = isRenew ? '#065f46' : '#1e40af';
+        const bannerSubColor = isRenew ? '#047857' : '#1d4ed8';
+        doc.rect(40, y, 532, 45).fill(bannerBg).strokeColor(bannerBorder).lineWidth(1).stroke();
+        doc.fillColor(bannerTextColor).fontSize(11).font('Helvetica-Bold')
+            .text(isRenew
+            ? 'LOAN RENEWED — ACCRUED INTEREST CLEARED & START DATE RESET'
+            : 'DIRECT TOP-UP DISBURSED — ADDED TO RUNNING PRINCIPAL', 48, y + 10);
+        doc.fontSize(8.5).font('Helvetica').fillColor(bannerSubColor)
+            .text(`Loan Code: ${loan.loanCode} | Effective Date: ${formatDate(loan.sanctionedDate || new Date())} | Rate: ${loan.interestRate || 3}% p.m.`, 48, y + 26);
+        y += 55;
+        const cust = loan.customer;
+        doc.rect(40, y, 260, 95).strokeColor('#e5e7eb').lineWidth(1).stroke();
+        doc.rect(40, y, 260, 18).fill('#f3f4f6');
+        doc.fillColor('#111827').fontSize(8.5).font('Helvetica-Bold').text('BORROWER PARTICULARS', 48, y + 5);
+        doc.fontSize(8).font('Helvetica').fillColor('#374151');
+        doc.text(`Customer Code: `, 48, y + 25).font('Helvetica-Bold').text(cust?.customerCode || 'N/A', 120, y + 25);
+        doc.font('Helvetica').text(`Full Name: `, 48, y + 40).font('Helvetica-Bold').text(cust?.fullName || 'N/A', 120, y + 40);
+        doc.font('Helvetica').text(`Mobile: `, 48, y + 55).text(cust?.mobile || 'N/A', 120, y + 55);
+        doc.text(`Transaction Date: `, 48, y + 70).text(formatDate(new Date()), 120, y + 70);
+        doc.rect(312, y, 260, 95).strokeColor('#e5e7eb').lineWidth(1).stroke();
+        doc.rect(312, y, 260, 18).fill('#fef3c7');
+        doc.fillColor('#92400e').fontSize(8.5).font('Helvetica-Bold').text('COLLATERAL CUSTODY DETAILS', 320, y + 5);
+        doc.fontSize(8).font('Helvetica').fillColor('#374151');
+        doc.text(`Packet Code: `, 320, y + 25).font('Helvetica-Bold').text(loan.packet?.packetCode || 'PKT-ON-FILE', 400, y + 25);
+        doc.font('Helvetica').text(`Storage Vault: `, 320, y + 40).font('Helvetica-Bold').fillColor('#b45309')
+            .text(loan.packet?.storageLocation?.label ?? 'Main Branch Safe', 400, y + 40);
+        doc.fillColor('#374151').font('Helvetica').text(`Packet Status: `, 320, y + 55).font('Helvetica-Bold').fillColor('#059669').text('SEALED IN VAULT', 400, y + 55);
+        doc.fillColor('#374151').font('Helvetica').text(`Collateral Count: `, 320, y + 70).text(`${loan.jewelleryItems?.length || 0} Ornaments (Pledged)`, 400, y + 70);
+        y += 105;
+        const topupAmt = renewalData?.topupAmount || 0;
+        const intDeducted = renewalData?.interestDeducted || 0;
+        const netDisbursed = renewalData?.netDisbursed || (topupAmt - intDeducted);
+        const newPrincipal = loan.principalAmount || 0;
+        const prevPrincipal = renewalData?.previousPrincipal || (newPrincipal - topupAmt);
+        doc.rect(40, y, 532, 22).fill('#1e293b');
+        doc.fillColor('#ffffff').fontSize(8.5).font('Helvetica-Bold');
+        doc.text('TRANSACTION BREAKDOWN & PRINCIPAL REVISION', 48, y + 7);
+        y += 22;
+        doc.rect(40, y, 532, 65).strokeColor('#e2e8f0').lineWidth(1).stroke();
+        const colWidth = 532 / 4;
+        doc.rect(40, y, colWidth, 65).fill('#f8fafc').strokeColor('#e2e8f0').stroke();
+        doc.fillColor('#64748b').fontSize(7.5).font('Helvetica').text('PREVIOUS PRINCIPAL', 48, y + 12);
+        doc.fillColor('#334155').fontSize(12).font('Helvetica-Bold').text(`Rs. ${prevPrincipal.toLocaleString('en-IN')}`, 48, y + 28);
+        doc.rect(40 + colWidth, y, colWidth, 65).fill('#f0fdf4').strokeColor('#e2e8f0').stroke();
+        doc.fillColor('#166534').fontSize(7.5).font('Helvetica').text('TOP-UP ADDED (+)', 40 + colWidth + 8, y + 12);
+        doc.fillColor('#15803d').fontSize(12).font('Helvetica-Bold').text(`Rs. ${topupAmt.toLocaleString('en-IN')}`, 40 + colWidth + 8, y + 28);
+        doc.rect(40 + colWidth * 2, y, colWidth, 65).fill(intDeducted > 0 ? '#fffbeb' : '#f8fafc').strokeColor('#e2e8f0').stroke();
+        doc.fillColor(intDeducted > 0 ? '#92400e' : '#64748b').fontSize(7.5).font('Helvetica')
+            .text('INTEREST DEDUCTED (-)', 40 + colWidth * 2 + 8, y + 12);
+        doc.fillColor(intDeducted > 0 ? '#b45309' : '#475569').fontSize(12).font('Helvetica-Bold')
+            .text(`Rs. ${intDeducted.toLocaleString('en-IN')}`, 40 + colWidth * 2 + 8, y + 28);
+        doc.rect(40 + colWidth * 3, y, colWidth, 65).fill('#eff6ff').strokeColor('#e2e8f0').stroke();
+        doc.fillColor('#1e40af').fontSize(7.5).font('Helvetica').text('NET CASH DISBURSED', 40 + colWidth * 3 + 8, y + 12);
+        doc.fillColor('#1d4ed8').fontSize(13).font('Helvetica-Bold').text(`Rs. ${netDisbursed.toLocaleString('en-IN')}`, 40 + colWidth * 3 + 8, y + 28);
+        y += 75;
+        doc.rect(40, y, 532, 38).fill('#f1f5f9').strokeColor('#cbd5e1').lineWidth(1).stroke();
+        doc.fillColor('#0f172a').fontSize(9).font('Helvetica-Bold')
+            .text(`NEW TOTAL PRINCIPAL DEBT: Rs. ${newPrincipal.toLocaleString('en-IN')}`, 48, y + 10);
+        doc.fillColor('#475569').fontSize(7.5).font('Helvetica')
+            .text(`In Words: ${numberToIndianWords(newPrincipal)} | Next Due / Maturity: ${formatDate(loan.maturityDate)}`, 48, y + 23);
+        y += 50;
+        const items = loan.jewelleryItems || [];
+        let totalGross = 0;
+        let totalNet = 0;
+        for (const it of items) {
+            totalGross += it.grossWeight || 0;
+            totalNet += it.netWeight || 0;
+        }
+        doc.rect(40, y, 532, 18).fill('#475569');
+        doc.fillColor('#ffffff').fontSize(7.5).font('Helvetica-Bold');
+        doc.text('Pledged Collateral Retained in Custody', 48, y + 5);
+        doc.text(`Gross Wt: ${totalGross.toFixed(3)}g`, 350, y + 5);
+        doc.text(`Net Pure Wt: ${totalNet.toFixed(3)}g`, 450, y + 5);
+        y += 24;
+        doc.rect(40, y, 532, 50).fill('#fffbeb').strokeColor('#fde68a').lineWidth(1).stroke();
+        doc.fillColor('#92400e').fontSize(8).font('Helvetica-Bold')
+            .text('BORROWER ACKNOWLEDGEMENT & UNDERTAKING:', 48, y + 6);
+        doc.fontSize(7).font('Helvetica').fillColor('#78350f')
+            .text('I hereby confirm the receipt of the Net Disbursed amount in cash/transfer as detailed above. I agree to the revised principal loan balance and terms and conditions of the pledge agreement. The pledged gold ornaments remain securely deposited with Radhika Jewellers / Silveransh as collateral.', 48, y + 18, { width: 516, lineGap: 1.5 });
+        y += 75;
+        doc.lineCap('butt').moveTo(55, y + 35).lineTo(225, y + 35).strokeColor('#9ca3af').stroke();
+        doc.fontSize(8).fillColor('#1f2937').font('Helvetica-Bold')
+            .text("Borrower Signature / Thumb Impression", 55, y + 40, { width: 170, align: 'center' });
+        doc.fontSize(7).fillColor('#6b7280').font('Helvetica')
+            .text(`${cust?.fullName || 'Borrower'}`, 55, y + 52, { width: 170, align: 'center' });
+        doc.lineCap('butt').moveTo(385, y + 35).lineTo(555, y + 35).strokeColor('#9ca3af').stroke();
+        doc.fontSize(8).fillColor('#1f2937').font('Helvetica-Bold')
+            .text("Authorized Cashier & Seal", 385, y + 40, { width: 170, align: 'center' });
+        doc.fontSize(7).fillColor('#6b7280').font('Helvetica')
+            .text("For Radhika Jewellers / Silveransh", 385, y + 52, { width: 170, align: 'center' });
+        doc.end();
+        return bufferPromise;
+    }
 };
 PdfGeneratorService = __decorate([
     Injectable()

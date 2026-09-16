@@ -11,9 +11,9 @@ export declare class DocumentsController {
             reason: string | null;
             fileUrl: string;
             createdById: string;
+            documentId: string;
             versionNumber: number;
             scannedSignedCopyUrl: string | null;
-            documentId: string;
         }[];
     } & {
         id: string;
@@ -115,15 +115,15 @@ export declare class DocumentsController {
             status: import("@prisma/client").$Enums.LoanStatus;
             createdById: string;
             customerId: string;
+            loanCode: string;
             schemeId: string | null;
             principalAmount: number | null;
             interestRate: number | null;
             interestType: import("@prisma/client").$Enums.InterestType | null;
             processingCharges: number | null;
-            maturityDate: Date | null;
-            loanCode: string;
             otherCharges: number | null;
             sanctionedDate: Date | null;
+            maturityDate: Date | null;
             holdReason: import("@prisma/client").$Enums.HoldReason | null;
             holdNotes: string | null;
             legacyPledgeNo: string | null;
@@ -134,9 +134,9 @@ export declare class DocumentsController {
             reason: string | null;
             fileUrl: string;
             createdById: string;
+            documentId: string;
             versionNumber: number;
             scannedSignedCopyUrl: string | null;
-            documentId: string;
         }[];
     } & {
         id: string;
@@ -153,6 +153,7 @@ export declare class DocumentsController {
     getJewelleryAnnexurePdf(loanId: string, res: Response, user?: AuthenticatedUser): Promise<void>;
     getPaymentReceiptPdf(paymentId: string, res: Response, user?: AuthenticatedUser): Promise<void>;
     getClosureReceiptPdf(loanId: string, res: Response, user?: AuthenticatedUser): Promise<void>;
+    getRenewalReceiptPdf(loanId: string, res: Response, user?: AuthenticatedUser): Promise<void>;
     markPrinted(id: string, user: AuthenticatedUser): Promise<{
         id: string;
         createdAt: Date;

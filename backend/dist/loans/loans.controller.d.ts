@@ -1,11 +1,14 @@
 import type { AuthenticatedUser } from '../common/decorators/current-user.decorator.js';
 import { LoansService } from './loans.service.js';
+import { InterestService } from '../interest/interest.service.js';
 import { CreateLoanDto } from './dto/create-loan.dto.js';
 import { DisburseLoanDto } from './dto/disburse-loan.dto.js';
 import { ListLoansDto } from './dto/list-loans.dto.js';
+import { TopUpLoanDto } from './dto/topup-loan.dto.js';
 export declare class LoansController {
     private readonly loansService;
-    constructor(loansService: LoansService);
+    private readonly interestService;
+    constructor(loansService: LoansService, interestService: InterestService);
     findAll(query: ListLoansDto): Promise<{
         items: {
             customer: {
@@ -27,12 +30,12 @@ export declare class LoansController {
                 jewelleryItems: number;
                 payments: number;
             };
+            loanCode: string;
             principalAmount: number | null;
             interestRate: number | null;
             interestType: import("@prisma/client").$Enums.InterestType | null;
-            maturityDate: Date | null;
-            loanCode: string;
             sanctionedDate: Date | null;
+            maturityDate: Date | null;
         }[];
         total: number;
         page: number;
@@ -47,15 +50,15 @@ export declare class LoansController {
         status: import("@prisma/client").$Enums.LoanStatus;
         createdById: string;
         customerId: string;
+        loanCode: string;
         schemeId: string | null;
         principalAmount: number | null;
         interestRate: number | null;
         interestType: import("@prisma/client").$Enums.InterestType | null;
         processingCharges: number | null;
-        maturityDate: Date | null;
-        loanCode: string;
         otherCharges: number | null;
         sanctionedDate: Date | null;
+        maturityDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
         legacyPledgeNo: string | null;
@@ -122,10 +125,10 @@ export declare class LoansController {
             photos: {
                 id: string;
                 fileUrl: string;
+                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
-                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -158,8 +161,8 @@ export declare class LoansController {
             approvedById: string | null;
             status: import("@prisma/client").$Enums.AppraisalStatus;
             loanId: string;
-            appraiserId: string;
             notes: string | null;
+            appraiserId: string;
             approvedAt: Date | null;
             goldRateSource: string | null;
             goldRateValue: number | null;
@@ -169,19 +172,19 @@ export declare class LoansController {
             id: string;
             createdAt: Date;
             mode: import("@prisma/client").$Enums.PaymentMode;
-            loanId: string;
             otherCharges: number;
-            notes: string | null;
+            loanId: string;
+            lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
+            paymentDate: Date;
             amount: number;
+            paymentCode: string;
             principalComponent: number;
             interestComponent: number;
             penaltyComponent: number;
-            transactionRef: string | null;
-            paymentCode: string;
-            paymentDate: Date;
             cashierId: string;
             receiptNumber: string;
-            lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
+            transactionRef: string | null;
+            notes: string | null;
         }[];
         ledgerEntries: {
             id: string;
@@ -202,19 +205,21 @@ export declare class LoansController {
         status: import("@prisma/client").$Enums.LoanStatus;
         createdById: string;
         customerId: string;
+        loanCode: string;
         schemeId: string | null;
         principalAmount: number | null;
         interestRate: number | null;
         interestType: import("@prisma/client").$Enums.InterestType | null;
         processingCharges: number | null;
-        maturityDate: Date | null;
-        loanCode: string;
         otherCharges: number | null;
         sanctionedDate: Date | null;
+        maturityDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
         legacyPledgeNo: string | null;
     }>;
+    getSettlementQuote(id: string, asOfDate?: string): Promise<import("../interest/interest.service.js").SettlementQuote>;
+    allocatePayment(id: string, amount: string, asOfDate?: string): Promise<import("../interest/interest.service.js").PaymentAllocation>;
     disburse(id: string, dto: DisburseLoanDto, user: AuthenticatedUser): Promise<{
         id: string;
         createdAt: Date;
@@ -223,17 +228,130 @@ export declare class LoansController {
         status: import("@prisma/client").$Enums.LoanStatus;
         createdById: string;
         customerId: string;
+        loanCode: string;
         schemeId: string | null;
         principalAmount: number | null;
         interestRate: number | null;
         interestType: import("@prisma/client").$Enums.InterestType | null;
         processingCharges: number | null;
-        maturityDate: Date | null;
-        loanCode: string;
         otherCharges: number | null;
         sanctionedDate: Date | null;
+        maturityDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
         legacyPledgeNo: string | null;
+    }>;
+    topupOrRenew(id: string, dto: TopUpLoanDto, user: AuthenticatedUser): Promise<{
+        loan: {
+            customer: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                fullName: string;
+                guardianName: string | null;
+                dateOfBirth: Date | null;
+                mobile: string | null;
+                alternateMobile: string | null;
+                address: string | null;
+                city: string | null;
+                state: string | null;
+                pincode: string | null;
+                occupation: string | null;
+                photoUrl: string | null;
+                customerCode: string;
+                signatureUrl: string | null;
+                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
+                biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
+                status: import("@prisma/client").$Enums.RecordLifecycle;
+                createdById: string;
+                legacySourceRef: string | null;
+            };
+            jewelleryItems: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                status: import("@prisma/client").$Enums.JewelleryStatus;
+                loanId: string;
+                itemCode: string;
+                category: string;
+                metalType: import("@prisma/client").$Enums.MetalType;
+                description: string;
+                grossWeight: number;
+                stoneWeight: number;
+                netWeight: number;
+                purityKarat: string;
+                fineness: number | null;
+                valuationRate: number;
+                valuation: number;
+                hallmarkDetails: string | null;
+                identifyingMarks: string | null;
+                condition: string | null;
+                ownershipDeclaration: boolean;
+                appraisalRemarks: string | null;
+                releasedAt: Date | null;
+            }[];
+            payments: {
+                id: string;
+                createdAt: Date;
+                mode: import("@prisma/client").$Enums.PaymentMode;
+                otherCharges: number;
+                loanId: string;
+                lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
+                paymentDate: Date;
+                amount: number;
+                paymentCode: string;
+                principalComponent: number;
+                interestComponent: number;
+                penaltyComponent: number;
+                cashierId: string;
+                receiptNumber: string;
+                transactionRef: string | null;
+                notes: string | null;
+            }[];
+            ledgerEntries: {
+                id: string;
+                createdAt: Date;
+                reason: string | null;
+                createdById: string;
+                loanId: string;
+                type: import("@prisma/client").$Enums.LedgerEntryType;
+                amount: number;
+                balanceAfter: number;
+                relatedPaymentId: string | null;
+            }[];
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            approvedById: string | null;
+            status: import("@prisma/client").$Enums.LoanStatus;
+            createdById: string;
+            customerId: string;
+            loanCode: string;
+            schemeId: string | null;
+            principalAmount: number | null;
+            interestRate: number | null;
+            interestType: import("@prisma/client").$Enums.InterestType | null;
+            processingCharges: number | null;
+            otherCharges: number | null;
+            sanctionedDate: Date | null;
+            maturityDate: Date | null;
+            holdReason: import("@prisma/client").$Enums.HoldReason | null;
+            holdNotes: string | null;
+            legacyPledgeNo: string | null;
+        };
+        documentId: string;
+        paymentId: any;
+        summary: {
+            mode: import("./dto/topup-loan.dto.js").TopUpMode;
+            previousPrincipal: number;
+            topupAmount: number;
+            interestDeducted: number;
+            netDisbursed: number;
+            newPrincipal: number;
+            sanctionedDate: Date | null;
+            customerPhotoUrl: string | undefined;
+            customerSignatureUrl: string | undefined;
+        };
     }>;
 }

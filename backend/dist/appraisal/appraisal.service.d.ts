@@ -13,8 +13,8 @@ export declare class AppraisalService {
         approvedById: string | null;
         status: import("@prisma/client").$Enums.AppraisalStatus;
         loanId: string;
-        appraiserId: string;
         notes: string | null;
+        appraiserId: string;
         approvedAt: Date | null;
         goldRateSource: string | null;
         goldRateValue: number | null;
@@ -27,8 +27,8 @@ export declare class AppraisalService {
         approvedById: string | null;
         status: import("@prisma/client").$Enums.AppraisalStatus;
         loanId: string;
-        appraiserId: string;
         notes: string | null;
+        appraiserId: string;
         approvedAt: Date | null;
         goldRateSource: string | null;
         goldRateValue: number | null;
@@ -41,8 +41,8 @@ export declare class AppraisalService {
         approvedById: string | null;
         status: import("@prisma/client").$Enums.AppraisalStatus;
         loanId: string;
-        appraiserId: string;
         notes: string | null;
+        appraiserId: string;
         approvedAt: Date | null;
         goldRateSource: string | null;
         goldRateValue: number | null;

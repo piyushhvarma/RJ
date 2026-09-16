@@ -33,10 +33,10 @@ export declare class JewelleryController {
     addPhoto(id: string, dto: AddJewelleryPhotoDto, user: AuthenticatedUser): Promise<{
         id: string;
         fileUrl: string;
+        jewelleryItemId: string;
         angle: string;
         capturedById: string;
         capturedAt: Date;
-        jewelleryItemId: string;
     }>;
     findAllAppraisals(page?: number, limit?: number): Promise<{
         items: ({
@@ -51,8 +51,8 @@ export declare class JewelleryController {
                 _count: {
                     jewelleryItems: number;
                 };
-                principalAmount: number | null;
                 loanCode: string;
+                principalAmount: number | null;
             };
         } & {
             id: string;
@@ -61,8 +61,8 @@ export declare class JewelleryController {
             approvedById: string | null;
             status: import("@prisma/client").$Enums.AppraisalStatus;
             loanId: string;
-            appraiserId: string;
             notes: string | null;
+            appraiserId: string;
             approvedAt: Date | null;
             goldRateSource: string | null;
             goldRateValue: number | null;
@@ -78,10 +78,10 @@ export declare class JewelleryController {
             photos: {
                 id: string;
                 fileUrl: string;
+                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
-                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -134,10 +134,10 @@ export declare class JewelleryController {
             photos: {
                 id: string;
                 fileUrl: string;
+                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
-                jewelleryItemId: string;
             }[];
         } & {
             id: string;

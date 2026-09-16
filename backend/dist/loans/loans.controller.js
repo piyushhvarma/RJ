@@ -17,13 +17,17 @@ import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { LoansService } from './loans.service.js';
+import { InterestService } from '../interest/interest.service.js';
 import { CreateLoanDto } from './dto/create-loan.dto.js';
 import { DisburseLoanDto } from './dto/disburse-loan.dto.js';
 import { ListLoansDto } from './dto/list-loans.dto.js';
+import { TopUpLoanDto } from './dto/topup-loan.dto.js';
 let LoansController = class LoansController {
     loansService;
-    constructor(loansService) {
+    interestService;
+    constructor(loansService, interestService) {
         this.loansService = loansService;
+        this.interestService = interestService;
     }
     findAll(query) {
         return this.loansService.findAll(query);
@@ -34,8 +38,20 @@ let LoansController = class LoansController {
     findOne(id) {
         return this.loansService.findById(id);
     }
+    getSettlementQuote(id, asOfDate) {
+        const targetDate = asOfDate ? new Date(asOfDate) : new Date();
+        return this.interestService.calculateSettlementQuote(id, targetDate);
+    }
+    allocatePayment(id, amount, asOfDate) {
+        const amt = parseFloat(amount) || 0;
+        const targetDate = asOfDate ? new Date(asOfDate) : new Date();
+        return this.interestService.allocatePayment(id, amt, targetDate);
+    }
     disburse(id, dto, user) {
         return this.loansService.disburse(id, dto, user);
+    }
+    topupOrRenew(id, dto, user) {
+        return this.loansService.topupOrRenew(id, dto, user);
     }
 };
 __decorate([
@@ -62,6 +78,23 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], LoansController.prototype, "findOne", null);
 __decorate([
+    Get(':id/settlement-quote'),
+    __param(0, Param('id')),
+    __param(1, Query('asOfDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], LoansController.prototype, "getSettlementQuote", null);
+__decorate([
+    Get(':id/allocate-payment'),
+    __param(0, Param('id')),
+    __param(1, Query('amount')),
+    __param(2, Query('asOfDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], LoansController.prototype, "allocatePayment", null);
+__decorate([
     Post(':id/disburse'),
     Roles(UserRole.OWNER, UserRole.MANAGER),
     __param(0, Param('id')),
@@ -71,10 +104,21 @@ __decorate([
     __metadata("design:paramtypes", [String, DisburseLoanDto, Object]),
     __metadata("design:returntype", void 0)
 ], LoansController.prototype, "disburse", null);
+__decorate([
+    Post(':id/topup'),
+    Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.CASHIER),
+    __param(0, Param('id')),
+    __param(1, Body()),
+    __param(2, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, TopUpLoanDto, Object]),
+    __metadata("design:returntype", void 0)
+], LoansController.prototype, "topupOrRenew", null);
 LoansController = __decorate([
     UseGuards(JwtAuthGuard, RolesGuard),
     Controller('loans'),
-    __metadata("design:paramtypes", [LoansService])
+    __metadata("design:paramtypes", [LoansService,
+        InterestService])
 ], LoansController);
 export { LoansController };
 //# sourceMappingURL=loans.controller.js.map

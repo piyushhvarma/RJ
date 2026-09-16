@@ -64,9 +64,9 @@ export declare class DocumentsService {
                 reason: string | null;
                 fileUrl: string;
                 createdById: string;
+                documentId: string;
                 versionNumber: number;
                 scannedSignedCopyUrl: string | null;
-                documentId: string;
             }[];
         } & {
             id: string;
@@ -92,10 +92,10 @@ export declare class DocumentsService {
             photos: {
                 id: string;
                 fileUrl: string;
+                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
-                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -128,12 +128,30 @@ export declare class DocumentsService {
             approvedById: string | null;
             status: import("@prisma/client").$Enums.AppraisalStatus;
             loanId: string;
-            appraiserId: string;
             notes: string | null;
+            appraiserId: string;
             approvedAt: Date | null;
             goldRateSource: string | null;
             goldRateValue: number | null;
             goldRateAt: Date | null;
+        }[];
+        payments: {
+            id: string;
+            createdAt: Date;
+            mode: import("@prisma/client").$Enums.PaymentMode;
+            otherCharges: number;
+            loanId: string;
+            lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
+            paymentDate: Date;
+            amount: number;
+            paymentCode: string;
+            principalComponent: number;
+            interestComponent: number;
+            penaltyComponent: number;
+            cashierId: string;
+            receiptNumber: string;
+            transactionRef: string | null;
+            notes: string | null;
         }[];
         ledgerEntries: {
             id: string;
@@ -154,15 +172,15 @@ export declare class DocumentsService {
         status: import("@prisma/client").$Enums.LoanStatus;
         createdById: string;
         customerId: string;
+        loanCode: string;
         schemeId: string | null;
         principalAmount: number | null;
         interestRate: number | null;
         interestType: import("@prisma/client").$Enums.InterestType | null;
         processingCharges: number | null;
-        maturityDate: Date | null;
-        loanCode: string;
         otherCharges: number | null;
         sanctionedDate: Date | null;
+        maturityDate: Date | null;
         holdReason: import("@prisma/client").$Enums.HoldReason | null;
         holdNotes: string | null;
         legacyPledgeNo: string | null;
@@ -174,9 +192,9 @@ export declare class DocumentsService {
             reason: string | null;
             fileUrl: string;
             createdById: string;
+            documentId: string;
             versionNumber: number;
             scannedSignedCopyUrl: string | null;
-            documentId: string;
         }[];
     } & {
         id: string;
@@ -278,15 +296,15 @@ export declare class DocumentsService {
             status: import("@prisma/client").$Enums.LoanStatus;
             createdById: string;
             customerId: string;
+            loanCode: string;
             schemeId: string | null;
             principalAmount: number | null;
             interestRate: number | null;
             interestType: import("@prisma/client").$Enums.InterestType | null;
             processingCharges: number | null;
-            maturityDate: Date | null;
-            loanCode: string;
             otherCharges: number | null;
             sanctionedDate: Date | null;
+            maturityDate: Date | null;
             holdReason: import("@prisma/client").$Enums.HoldReason | null;
             holdNotes: string | null;
             legacyPledgeNo: string | null;
@@ -297,9 +315,9 @@ export declare class DocumentsService {
             reason: string | null;
             fileUrl: string;
             createdById: string;
+            documentId: string;
             versionNumber: number;
             scannedSignedCopyUrl: string | null;
-            documentId: string;
         }[];
     } & {
         id: string;
@@ -325,6 +343,10 @@ export declare class DocumentsService {
         filename: string;
     }>;
     getClosureReceiptPdf(loanId: string, user?: AuthenticatedUser): Promise<{
+        buffer: Buffer;
+        filename: string;
+    }>;
+    getRenewalReceiptPdf(loanId: string, user?: AuthenticatedUser): Promise<{
         buffer: Buffer;
         filename: string;
     }>;

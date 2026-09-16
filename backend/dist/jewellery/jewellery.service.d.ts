@@ -37,19 +37,19 @@ export declare class JewelleryService {
     addPhoto(itemId: string, dto: AddJewelleryPhotoDto, actor: AuthenticatedUser): Promise<{
         id: string;
         fileUrl: string;
+        jewelleryItemId: string;
         angle: string;
         capturedById: string;
         capturedAt: Date;
-        jewelleryItemId: string;
     }>;
     findByLoan(loanId: string): Promise<({
         photos: {
             id: string;
             fileUrl: string;
+            jewelleryItemId: string;
             angle: string;
             capturedById: string;
             capturedAt: Date;
-            jewelleryItemId: string;
         }[];
     } & {
         id: string;
@@ -80,10 +80,10 @@ export declare class JewelleryService {
             photos: {
                 id: string;
                 fileUrl: string;
+                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
-                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -136,10 +136,10 @@ export declare class JewelleryService {
             photos: {
                 id: string;
                 fileUrl: string;
+                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
-                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -203,8 +203,8 @@ export declare class JewelleryService {
                 _count: {
                     jewelleryItems: number;
                 };
-                principalAmount: number | null;
                 loanCode: string;
+                principalAmount: number | null;
             };
         } & {
             id: string;
@@ -213,8 +213,8 @@ export declare class JewelleryService {
             approvedById: string | null;
             status: import("@prisma/client").$Enums.AppraisalStatus;
             loanId: string;
-            appraiserId: string;
             notes: string | null;
+            appraiserId: string;
             approvedAt: Date | null;
             goldRateSource: string | null;
             goldRateValue: number | null;

@@ -50,8 +50,8 @@ export declare class DashboardService {
             id: string;
             createdAt: Date;
             status: import("@prisma/client").$Enums.LoanStatus;
-            principalAmount: number | null;
             loanCode: string;
+            principalAmount: number | null;
         }[];
         recentCustomers: {
             id: string;

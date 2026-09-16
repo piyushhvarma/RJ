@@ -52,6 +52,10 @@ let DocumentsService = class DocumentsService {
                 documents: {
                     include: { versions: true },
                 },
+                payments: {
+                    orderBy: { paymentDate: 'desc' },
+                    take: 10,
+                },
             },
         });
         if (!loan)
@@ -144,6 +148,25 @@ let DocumentsService = class DocumentsService {
         return {
             buffer,
             filename: `CLOSURE_VOUCHER_${loan.loanCode}.pdf`,
+        };
+    }
+    async getRenewalReceiptPdf(loanId, user) {
+        const loan = await this.getLoanFullDetails(loanId);
+        const lastDisbursement = loan.ledgerEntries?.filter((e) => e.type === 'DISBURSEMENT').slice(-1)[0];
+        const lastPayment = loan.payments?.slice(-1)[0];
+        const renewalData = {
+            mode: 'RENEW_WITH_INTEREST_DEDUCTED',
+            topupAmount: lastDisbursement ? lastDisbursement.amount : 0,
+            interestDeducted: lastPayment?.interestComponent || 0,
+            netDisbursed: (lastDisbursement?.amount || 0) - (lastPayment?.interestComponent || 0),
+        };
+        const buffer = await this.pdfGenerator.generateRenewalReceipt(loan, renewalData);
+        if (user) {
+            await this.recordDocumentGeneration(loan.id, 'RENEWAL', `renewal-voucher-${loan.loanCode}.pdf`, user);
+        }
+        return {
+            buffer,
+            filename: `RENEWAL_VOUCHER_${loan.loanCode}.pdf`,
         };
     }
     async recordDocumentGeneration(loanId, type, fileName, user) {
