@@ -68,3 +68,7 @@ export function getPaymentReceiptPdfUrl(paymentId: string): string {
 export function getClosureReceiptPdfUrl(loanId: string): string {
   return `${API_BASE_URL}/documents/closure-receipt/${loanId}/pdf`;
 }
+
+export function getRenewalReceiptPdfUrl(loanId: string): string {
+  return `${API_BASE_URL}/documents/renewal-receipt/${loanId}/pdf`;
+}

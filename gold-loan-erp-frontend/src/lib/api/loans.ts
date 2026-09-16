@@ -69,3 +69,41 @@ export async function createLoan(data: Record<string, unknown>): Promise<Loan> {
 export async function disburseLoan(id: string, data: Record<string, unknown>): Promise<Loan> {
     return apiFetch<Loan>(`/loans/${id}/disburse`, { method: 'POST', body: JSON.stringify(data) });
 }
+
+export type TopUpMode = 'RENEW_WITH_INTEREST_DEDUCTED' | 'DIRECT_TOPUP';
+
+export interface TopUpLoanDto {
+    mode: TopUpMode;
+    topupAmount: number;
+    interestDeducted?: number;
+    netDisbursed: number;
+    paymentMode?: 'CASH' | 'UPI' | 'BANK_TRANSFER' | 'OTHER';
+    notes?: string;
+    customerPhotoUrl?: string;
+    customerSignatureUrl?: string;
+    tenureMonths?: number;
+}
+
+export interface TopUpResponse {
+    loan: Loan;
+    documentId: string;
+    paymentId?: string;
+    summary: {
+        mode: TopUpMode;
+        previousPrincipal: number;
+        topupAmount: number;
+        interestDeducted: number;
+        netDisbursed: number;
+        newPrincipal: number;
+        sanctionedDate: string;
+        customerPhotoUrl?: string;
+        customerSignatureUrl?: string;
+    };
+}
+
+export async function topupLoan(id: string, data: TopUpLoanDto): Promise<TopUpResponse> {
+    return apiFetch<TopUpResponse>(`/loans/${id}/topup`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
