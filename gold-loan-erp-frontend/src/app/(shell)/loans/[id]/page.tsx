@@ -7,18 +7,21 @@ import { addJewelleryPhoto } from '@/lib/api/jewellery';
 import { LoanStatusBadge, PacketStatusBadge, AppraisalStatusBadge } from '@/components/shared/StatusBadge';
 import { RoleGate } from '@/components/shared/RoleGate';
 import { PhotoCaptureModal } from '@/components/shared/PhotoCaptureModal';
-import { ArrowLeft, Package, CreditCard, Gem, FileText, Camera, Maximize2, X, Printer, FileCheck2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Package, CreditCard, Gem, FileText, Camera, Maximize2, X, Printer, FileCheck2, ExternalLink, Calculator, TrendingUp, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Coins } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { getSettlementQuote, type SettlementQuote } from '@/lib/api/interest';
 import {
     getPledgeAgreementPdfUrl,
     getJewelleryAnnexurePdfUrl,
     getPaymentReceiptPdfUrl,
     getClosureReceiptPdfUrl,
+    getRenewalReceiptPdfUrl,
     getLoanDocuments,
     markDocumentPrinted,
     markDocumentSigned,
 } from '@/lib/api/documents';
+import { TopUpRenewalModal } from '@/components/loans/TopUpRenewalModal';
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
     return (
@@ -39,10 +42,18 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
     const qc = useQueryClient();
     const [activeItemForPhoto, setActiveItemForPhoto] = useState<{ id: string; code: string } | null>(null);
     const [enlargedPhoto, setEnlargedPhoto] = useState<{ url: string; title: string; angle?: string } | null>(null);
+    const [showEpochs, setShowEpochs] = useState(false);
+    const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
 
     const { data: loan, isLoading, error } = useQuery({
         queryKey: ['loan', id],
         queryFn: () => getLoan(id),
+    });
+
+    const { data: quote, isLoading: quoteLoading } = useQuery({
+        queryKey: ['settlement-quote', id],
+        queryFn: () => getSettlementQuote(id),
+        enabled: !!loan && loan.status !== 'DRAFT',
     });
 
     const { data: documents, refetch: refetchDocs } = useQuery({
@@ -115,6 +126,18 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
                             <Printer className="w-4 h-4 text-amber-700" />
                             <span>Print Agreement</span>
                         </a>
+                        <RoleGate roles={['OWNER', 'MANAGER', 'CASHIER']}>
+                            {(loan.status === 'ACTIVE' || loan.status === 'OVERDUE') && (
+                                <button
+                                    onClick={() => setIsTopUpModalOpen(true)}
+                                    className="rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:from-amber-700 hover:to-amber-800 transition-all inline-flex items-center gap-1.5"
+                                    title="Process Top-Up or Loan Renewal"
+                                >
+                                    <Coins className="w-4 h-4" />
+                                    <span>Top-Up / Renew</span>
+                                </button>
+                            )}
+                        </RoleGate>
                         <RoleGate roles={['OWNER', 'MANAGER']}>
                             {(loan.status === 'DRAFT' || loan.status === 'APPROVED') && (
                                 <Link
@@ -156,6 +179,126 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
                     <InfoRow label="Processing Charges" value={fmt(loan.processingCharges)} />
                 </div>
             </div>
+
+            {/* Real-time Settlement & Interest Engine Status */}
+            {loan.status !== 'DRAFT' && quote && (
+                <div className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white rounded-2xl border border-amber-200/80 p-6 shadow-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-amber-200/60">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-xs">
+                                <Calculator className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-base font-bold text-gray-900">Interest Accrual & Settlement Quote</h2>
+                                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300/60">
+                                        Reducing Balance
+                                    </span>
+                                    {quote.isOverdue && (
+                                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
+                                            {quote.overdueDays}d Overdue
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-xs text-gray-600 mt-0.5">
+                                    {quote.daysElapsed} active calendar days · {quote.interestRate}% p.a. ({quote.monthlyInterestRate}% p.m. simple)
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href={`/payments/new?loanId=${loan.id}`}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 shadow-xs transition-colors"
+                            >
+                                <CreditCard className="w-3.5 h-3.5" />
+                                Receive Payment
+                            </Link>
+                            {loan.status === 'ACTIVE' && (
+                                <Link
+                                    href={`/closures/${loan.id}`}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-amber-600 text-amber-800 text-xs font-semibold hover:bg-amber-100/60 transition-colors"
+                                >
+                                    Settle & Close
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Breakdown metrics */}
+                    <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="bg-white/80 backdrop-blur rounded-xl p-3.5 border border-amber-100 shadow-2xs">
+                            <p className="text-xs text-gray-500 font-medium">Principal Balance</p>
+                            <p className="text-lg font-bold text-gray-900 mt-1">{fmt(quote.principalOutstanding)}</p>
+                        </div>
+                        <div className="bg-white/80 backdrop-blur rounded-xl p-3.5 border border-amber-100 shadow-2xs">
+                            <p className="text-xs text-gray-500 font-medium">Net Interest Due</p>
+                            <p className="text-lg font-bold text-amber-700 mt-1">{fmt(quote.interestDue)}</p>
+                            <p className="text-[10px] text-gray-600 mt-0.5 font-medium">
+                                Accrued {fmt(quote.totalInterestAccrued)} (Paid {fmt(quote.totalInterestPaid)})
+                            </p>
+                        </div>
+                        <div className="bg-white/80 backdrop-blur rounded-xl p-3.5 border border-amber-100 shadow-2xs">
+                            <p className="text-xs text-gray-500 font-medium">Overdue Penalty</p>
+                            <p className={`text-lg font-bold mt-1 ${quote.penaltyDue > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                                {fmt(quote.penaltyDue)}
+                            </p>
+                            <p className="text-[10px] text-gray-600 mt-0.5 font-medium">
+                                {quote.penaltyDue > 0 ? `${quote.penaltyRate}% p.a. on overdue days` : 'No penalty charges'}
+                            </p>
+                        </div>
+                        <div className="bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-xl p-3.5 shadow-sm">
+                            <p className="text-xs text-amber-100 font-medium">Total Settlement Payoff</p>
+                            <p className="text-xl font-extrabold mt-1">{fmt(quote.totalDue)}</p>
+                            <p className="text-[10px] text-amber-200 mt-0.5 font-medium">Full payoff as of today</p>
+                        </div>
+                    </div>
+
+                    {/* Accrual Epochs Drawer Toggle */}
+                    {quote.epochs?.length > 0 && (
+                        <div className="mt-4 pt-3 border-t border-amber-200/50">
+                            <button
+                                onClick={() => setShowEpochs(v => !v)}
+                                className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-900 hover:text-amber-950 transition-colors"
+                            >
+                                <span>{showEpochs ? 'Hide' : 'View'} Reducing Balance Calculation Periods ({quote.epochs.length})</span>
+                                {showEpochs ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            </button>
+
+                            {showEpochs && (
+                                <div className="mt-3 overflow-x-auto rounded-xl border border-amber-200/70 bg-white">
+                                    <table className="w-full text-left text-xs">
+                                        <thead className="bg-amber-50/70 text-gray-600 border-b border-amber-200/50 font-medium">
+                                            <tr>
+                                                <th className="px-3 py-2">Period</th>
+                                                <th className="px-3 py-2">Days</th>
+                                                <th className="px-3 py-2">Active Principal</th>
+                                                <th className="px-3 py-2">Annual Rate</th>
+                                                <th className="px-3 py-2 text-right">Accrued Interest</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 text-gray-700">
+                                            {quote.epochs.map((ep, idx) => (
+                                                <tr key={idx} className="hover:bg-amber-50/20">
+                                                    <td className="px-3 py-2 font-mono text-[11px]">
+                                                        {format(new Date(ep.from), 'd MMM yyyy')} → {format(new Date(ep.to), 'd MMM yyyy')}
+                                                    </td>
+                                                    <td className="px-3 py-2">{ep.days} days</td>
+                                                    <td className="px-3 py-2 font-semibold">{fmt(ep.principal)}</td>
+                                                    <td className="px-3 py-2">{ep.annualRate}%</td>
+                                                    <td className="px-3 py-2 text-right font-semibold text-amber-700">
+                                                        {fmt(ep.accruedInterest)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Jewellery */}
@@ -566,6 +709,15 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Top-Up & Loan Renewal Counter Modal */}
+            {loan && (
+                <TopUpRenewalModal
+                    isOpen={isTopUpModalOpen}
+                    onClose={() => setIsTopUpModalOpen(false)}
+                    loan={loan}
+                />
             )}
         </div>
     );

@@ -8,10 +8,11 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPaymentSchema, type CreatePaymentDto } from '@/lib/schemas';
 import { createPayment } from '@/lib/api/payments';
-import { ArrowLeft, AlertTriangle } from 'lucide-react';
+import { getSettlementQuote } from '@/lib/api/interest';
+import { ArrowLeft, AlertTriangle, Calculator, Sparkles, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 import { useState } from 'react';
@@ -54,6 +55,15 @@ function NewPaymentPageContent() {
         },
     });
 
+    const loanId = useWatch({ control, name: 'loanId' });
+
+    // Fetch real-time settlement quote whenever loanId is present
+    const { data: quote, isLoading: quoteLoading } = useQuery({
+        queryKey: ['settlement-quote', loanId],
+        queryFn: () => getSettlementQuote(loanId),
+        enabled: !!loanId && loanId.length > 5,
+    });
+
     // Watch all component fields for live total
     const [amount, principal, interest, penalty, other] = useWatch({
         control,
@@ -62,13 +72,58 @@ function NewPaymentPageContent() {
 
     const componentSum = (principal ?? 0) + (interest ?? 0) + (penalty ?? 0) + (other ?? 0);
     const sumMatchesTotal = amount ? Math.abs(componentSum - amount) < 0.01 : false;
-    const loanId = useWatch({ control, name: 'loanId' });
+
+    const handlePayInterestOnly = () => {
+        if (!quote) return;
+        const interestAmt = quote.interestDue;
+        const penaltyAmt = quote.penaltyDue;
+        const otherAmt = quote.otherChargesDue;
+        const total = Math.round((interestAmt + penaltyAmt + otherAmt) * 100) / 100;
+
+        setValue('amount', total, { shouldValidate: true });
+        setValue('principalComponent', 0, { shouldValidate: true });
+        setValue('interestComponent', interestAmt, { shouldValidate: true });
+        setValue('penaltyComponent', penaltyAmt, { shouldValidate: true });
+        setValue('otherCharges', otherAmt, { shouldValidate: true });
+    };
+
+    const handleFullSettlement = () => {
+        if (!quote) return;
+        setValue('amount', quote.totalDue, { shouldValidate: true });
+        setValue('principalComponent', quote.principalOutstanding, { shouldValidate: true });
+        setValue('interestComponent', quote.interestDue, { shouldValidate: true });
+        setValue('penaltyComponent', quote.penaltyDue, { shouldValidate: true });
+        setValue('otherCharges', quote.otherChargesDue, { shouldValidate: true });
+    };
+
+    const handleAutoAllocate = () => {
+        if (!quote || !amount || amount <= 0) return;
+        let rem = amount;
+
+        const otherAlloc = Math.min(rem, quote.otherChargesDue);
+        rem -= otherAlloc;
+
+        const penaltyAlloc = Math.min(rem, quote.penaltyDue);
+        rem -= penaltyAlloc;
+
+        const interestAlloc = Math.min(rem, quote.interestDue);
+        rem -= interestAlloc;
+
+        const principalAlloc = Math.min(rem, quote.principalOutstanding);
+        rem -= principalAlloc;
+
+        setValue('otherCharges', Math.round(otherAlloc * 100) / 100, { shouldValidate: true });
+        setValue('penaltyComponent', Math.round(penaltyAlloc * 100) / 100, { shouldValidate: true });
+        setValue('interestComponent', Math.round(interestAlloc * 100) / 100, { shouldValidate: true });
+        setValue('principalComponent', Math.round(principalAlloc * 100) / 100, { shouldValidate: true });
+    };
 
     const mutation = useMutation({
         mutationFn: (data: CreatePaymentDto) => createPayment(data as Record<string, unknown>),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['loan', loanId] });
             qc.invalidateQueries({ queryKey: ['payments', loanId] });
+            qc.invalidateQueries({ queryKey: ['settlement-quote', loanId] });
             router.push(`/loans/${loanId}`);
         },
         onError: (err: Error) => setServerError(err.message),
@@ -127,6 +182,75 @@ function NewPaymentPageContent() {
                         <input type="text" className={inputCls} disabled={isSubmitting} {...register('transactionRef')} />
                     </div>
                 </div>
+
+                {/* Real-time Settlement Status & Auto-Allocation Bar */}
+                {loanId && quote && (
+                    <div className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white rounded-xl border border-amber-200 p-5 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-lg bg-amber-600 text-white flex items-center justify-center shadow-2xs">
+                                    <Calculator className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-gray-900">Current Loan Payoff / Due Summary</p>
+                                    <p className="text-[11px] text-gray-500 font-medium">
+                                        {quote.daysElapsed} days active · {quote.interestRate}% p.a.
+                                        {quote.isOverdue && <span className="text-red-600 font-bold ml-1.5">({quote.overdueDays}d overdue)</span>}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs text-gray-500 font-medium">Total Settlement Payoff</p>
+                                <p className="text-base font-extrabold text-amber-700">{fmt(quote.totalDue)}</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2.5 text-center text-xs">
+                            <div className="bg-white/80 rounded-lg p-2 border border-amber-100/80">
+                                <p className="text-[11px] text-gray-500">Principal Bal</p>
+                                <p className="font-bold text-gray-900 mt-0.5">{fmt(quote.principalOutstanding)}</p>
+                            </div>
+                            <div className="bg-white/80 rounded-lg p-2 border border-amber-100/80">
+                                <p className="text-[11px] text-gray-500">Net Interest Due</p>
+                                <p className="font-bold text-amber-700 mt-0.5">{fmt(quote.interestDue)}</p>
+                            </div>
+                            <div className="bg-white/80 rounded-lg p-2 border border-amber-100/80">
+                                <p className="text-[11px] text-gray-500">Penalty Due</p>
+                                <p className={`font-bold mt-0.5 ${quote.penaltyDue > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                                    {fmt(quote.penaltyDue)}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Quick Allocation Action Buttons */}
+                        <div className="pt-2 border-t border-amber-200/60 flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={handlePayInterestOnly}
+                                className="px-3 py-1.5 rounded-lg bg-white border border-amber-300 text-amber-800 text-xs font-semibold hover:bg-amber-50 transition-colors shadow-2xs"
+                            >
+                                Pay Interest Only ({fmt(quote.interestDue + quote.penaltyDue + quote.otherChargesDue)})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleFullSettlement}
+                                className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors shadow-2xs"
+                            >
+                                Full Settlement ({fmt(quote.totalDue)})
+                            </button>
+                            {amount && amount > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={handleAutoAllocate}
+                                    className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-2xs inline-flex items-center gap-1"
+                                >
+                                    <Sparkles className="w-3 h-3" />
+                                    Auto-Allocate {fmt(amount)}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Component breakdown */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">

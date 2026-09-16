@@ -21,10 +21,11 @@ import { createPaymentSchema, type CreatePaymentDto } from '@/lib/schemas';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { RoleGate } from '@/components/shared/RoleGate';
-import { ArrowLeft, Shield, AlertTriangle, Check, Printer, FileCheck2 } from 'lucide-react';
+import { ArrowLeft, Shield, AlertTriangle, Check, Printer, FileCheck2, Calculator, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { getClosureReceiptPdfUrl } from '@/lib/api/documents';
+import { getSettlementQuote } from '@/lib/api/interest';
 
 type Step =
     | 'identify'
@@ -107,12 +108,27 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
         : loan?.principalAmount ?? 0;
 
     const {
-        register, handleSubmit, control,
+        register, handleSubmit, control, setValue,
         formState: { isSubmitting: paymentSubmitting },
     } = useForm<CreatePaymentDto>({
         resolver: zodResolver(createPaymentSchema),
         defaultValues: { loanId, principalComponent: 0, interestComponent: 0, penaltyComponent: 0, otherCharges: 0 },
     });
+
+    const { data: quote } = useQuery({
+        queryKey: ['settlement-quote', loanId],
+        queryFn: () => getSettlementQuote(loanId),
+        enabled: !!loanId,
+    });
+
+    const fillSettlementValues = () => {
+        if (!quote) return;
+        setValue('amount', quote.totalDue, { shouldValidate: true });
+        setValue('principalComponent', quote.principalOutstanding, { shouldValidate: true });
+        setValue('interestComponent', quote.interestDue, { shouldValidate: true });
+        setValue('penaltyComponent', quote.penaltyDue, { shouldValidate: true });
+        setValue('otherCharges', quote.otherChargesDue, { shouldValidate: true });
+    };
 
     const [payAmt, payPrincipal, payInterest, payPenalty, payOther] = useWatch({
         control,
@@ -332,14 +348,51 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
                     {/* Step 4: Payment */}
                     {step === 'payment' && (
                         <div className="space-y-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Final Settlement</h2>
-                            <div className="rounded-lg bg-gray-50 border border-gray-200 px-5 py-4 grid grid-cols-3 gap-4">
-                                <div><p className="text-xs text-gray-500">Principal Outstanding</p><p className="text-base font-bold text-gray-900">{fmt(outstanding)}</p></div>
-                                <div><p className="text-xs text-gray-500">Interest</p><p className="text-base font-bold text-gray-900 text-amber-700">Enter below ↓</p></div>
-                                <div><p className="text-xs text-gray-500">Total Payable</p><p className="text-base font-bold text-gray-900">— (no interest engine yet)</p></div>
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-lg font-semibold text-gray-900">Final Settlement</h2>
+                                {quote && (
+                                    <button
+                                        type="button"
+                                        onClick={fillSettlementValues}
+                                        className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 shadow-2xs transition-colors inline-flex items-center gap-1.5"
+                                    >
+                                        <Sparkles className="w-3.5 h-3.5" />
+                                        Auto-Fill Full Payoff ({fmt(quote.totalDue)})
+                                    </button>
+                                )}
                             </div>
-                            <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-amber-800">
-                                ⚠ The interest engine is not yet built. Enter the interest component manually based on the agreed amount with the customer.
+
+                            <div className="rounded-xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white border border-amber-200 p-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Calculator className="w-4 h-4 text-amber-700" />
+                                    <span className="text-xs font-bold text-gray-900">Calculated Payoff Quote (Reducing Balance)</span>
+                                    {quote && (
+                                        <span className="text-[11px] text-gray-500">
+                                            · {quote.daysElapsed} days active · {quote.interestRate}% p.a.
+                                            {quote.isOverdue && <span className="text-red-600 font-bold ml-1">({quote.overdueDays}d overdue)</span>}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                                    <div className="bg-white rounded-lg p-2.5 border border-amber-100 shadow-2xs">
+                                        <p className="text-gray-500 text-[11px]">Principal</p>
+                                        <p className="font-bold text-gray-900 mt-0.5">{fmt(quote?.principalOutstanding ?? outstanding)}</p>
+                                    </div>
+                                    <div className="bg-white rounded-lg p-2.5 border border-amber-100 shadow-2xs">
+                                        <p className="text-gray-500 text-[11px]">Accrued Interest</p>
+                                        <p className="font-bold text-amber-700 mt-0.5">{fmt(quote?.interestDue ?? 0)}</p>
+                                    </div>
+                                    <div className="bg-white rounded-lg p-2.5 border border-amber-100 shadow-2xs">
+                                        <p className="text-gray-500 text-[11px]">Overdue Penalty</p>
+                                        <p className={`font-bold mt-0.5 ${(quote?.penaltyDue ?? 0) > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                                            {fmt(quote?.penaltyDue ?? 0)}
+                                        </p>
+                                    </div>
+                                    <div className="bg-amber-600 text-white rounded-lg p-2.5 shadow-xs">
+                                        <p className="text-amber-100 text-[11px] font-medium">Total Settlement</p>
+                                        <p className="font-extrabold text-sm mt-0.5">{fmt(quote?.totalDue ?? outstanding)}</p>
+                                    </div>
+                                </div>
                             </div>
 
                             <form
