@@ -102,6 +102,24 @@ export class DocumentsController {
     res.end(buffer);
   }
 
+  /**
+   * PDF Stream: Renewal / Top-Up Receipt Voucher
+   */
+  @Get('renewal-receipt/:loanId/pdf')
+  async getRenewalReceiptPdf(
+    @Param('loanId') loanId: string,
+    @Res() res: Response,
+    @CurrentUser() user?: AuthenticatedUser,
+  ) {
+    const { buffer, filename } = await this.documentsService.getRenewalReceiptPdf(loanId, user);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Post(':id/print')
   markPrinted(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {

@@ -45,6 +45,10 @@ export class DocumentsService {
         documents: {
           include: { versions: true },
         },
+        payments: {
+          orderBy: { paymentDate: 'desc' },
+          take: 10,
+        },
       },
     });
     if (!loan) throw new NotFoundException(`Loan ${loanId} not found`);
@@ -182,6 +186,40 @@ export class DocumentsService {
     return {
       buffer,
       filename: `CLOSURE_VOUCHER_${loan.loanCode}.pdf`,
+    };
+  }
+
+  /**
+   * Generates or fetches Renewal / Top-Up Receipt PDF
+   */
+  async getRenewalReceiptPdf(loanId: string, user?: AuthenticatedUser): Promise<{ buffer: Buffer; filename: string }> {
+    const loan = await this.getLoanFullDetails(loanId);
+    
+    // Find latest renewal ledger / payment data if available
+    const lastDisbursement = loan.ledgerEntries?.filter((e: any) => e.type === 'DISBURSEMENT').slice(-1)[0];
+    const lastPayment = loan.payments?.slice(-1)[0];
+
+    const renewalData = {
+      mode: 'RENEW_WITH_INTEREST_DEDUCTED',
+      topupAmount: lastDisbursement ? lastDisbursement.amount : 0,
+      interestDeducted: lastPayment?.interestComponent || 0,
+      netDisbursed: (lastDisbursement?.amount || 0) - (lastPayment?.interestComponent || 0),
+    };
+
+    const buffer = await this.pdfGenerator.generateRenewalReceipt(loan, renewalData);
+
+    if (user) {
+      await this.recordDocumentGeneration(
+        loan.id,
+        'RENEWAL',
+        `renewal-voucher-${loan.loanCode}.pdf`,
+        user,
+      );
+    }
+
+    return {
+      buffer,
+      filename: `RENEWAL_VOUCHER_${loan.loanCode}.pdf`,
     };
   }
 
