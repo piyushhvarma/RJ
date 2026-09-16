@@ -20,6 +20,7 @@ import { PaymentsModule } from './payments/payments.module.js';
 import { DashboardModule } from './dashboard/dashboard.module.js';
 import { ReportsModule } from './reports/reports.module.js';
 import { DocumentsModule } from './documents/documents.module.js';
+import { InterestModule } from './interest/interest.module.js';
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
@@ -40,6 +41,7 @@ AppModule = __decorate([
             DashboardModule,
             ReportsModule,
             DocumentsModule,
+            InterestModule,
         ],
     })
 ], AppModule);
