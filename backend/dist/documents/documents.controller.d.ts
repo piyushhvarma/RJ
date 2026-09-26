@@ -89,9 +89,8 @@ export declare class DocumentsController {
                 updatedAt: Date;
                 status: import("@prisma/client").$Enums.JewelleryStatus;
                 loanId: string;
-                itemCode: string;
-                category: string;
                 metalType: import("@prisma/client").$Enums.MetalType;
+                category: string;
                 description: string;
                 grossWeight: number;
                 stoneWeight: number;
@@ -100,6 +99,7 @@ export declare class DocumentsController {
                 fineness: number | null;
                 valuationRate: number;
                 valuation: number;
+                itemCode: string;
                 hallmarkDetails: string | null;
                 identifyingMarks: string | null;
                 condition: string | null;
