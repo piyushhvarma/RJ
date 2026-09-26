@@ -7,6 +7,8 @@ import { CreateLoanDto } from './dto/create-loan.dto.js';
 import { DisburseLoanDto } from './dto/disburse-loan.dto.js';
 import { ListLoansDto } from './dto/list-loans.dto.js';
 import { TopUpLoanDto, TopUpMode } from './dto/topup-loan.dto.js';
+import { CloseLoanDto } from './dto/close-loan.dto.js';
+import { CounterOriginationDto } from './dto/counter-origination.dto.js';
 export declare class LoansService {
     private readonly prisma;
     private readonly ids;
@@ -96,10 +98,10 @@ export declare class LoansService {
             photos: {
                 id: string;
                 fileUrl: string;
-                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
+                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -107,9 +109,8 @@ export declare class LoansService {
             updatedAt: Date;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
-            itemCode: string;
-            category: string;
             metalType: import("@prisma/client").$Enums.MetalType;
+            category: string;
             description: string;
             grossWeight: number;
             stoneWeight: number;
@@ -118,6 +119,7 @@ export declare class LoansService {
             fineness: number | null;
             valuationRate: number;
             valuation: number;
+            itemCode: string;
             hallmarkDetails: string | null;
             identifyingMarks: string | null;
             condition: string | null;
@@ -274,9 +276,8 @@ export declare class LoansService {
                 updatedAt: Date;
                 status: import("@prisma/client").$Enums.JewelleryStatus;
                 loanId: string;
-                itemCode: string;
-                category: string;
                 metalType: import("@prisma/client").$Enums.MetalType;
+                category: string;
                 description: string;
                 grossWeight: number;
                 stoneWeight: number;
@@ -285,6 +286,7 @@ export declare class LoansService {
                 fineness: number | null;
                 valuationRate: number;
                 valuation: number;
+                itemCode: string;
                 hallmarkDetails: string | null;
                 identifyingMarks: string | null;
                 condition: string | null;
@@ -355,5 +357,44 @@ export declare class LoansService {
             customerPhotoUrl: string | undefined;
             customerSignatureUrl: string | undefined;
         };
+    }>;
+    getClosureChecklist(id: string): Promise<{
+        loanId: string;
+        loanCode: string;
+        status: import("@prisma/client").$Enums.LoanStatus;
+        canClose: boolean;
+        outstandingPrincipal: number;
+        isSettled: boolean;
+        packetStatus: import("@prisma/client").$Enums.PacketStatus | null;
+        packetRetrieved: boolean;
+        storageLocation: string | null;
+        biometricVerified: boolean;
+        jewelleryItemCount: number;
+        totalGrossWeight: number;
+        totalNetWeight: number;
+        blockers: string[];
+    }>;
+    closeLoan(id: string, dto: CloseLoanDto, actor: AuthenticatedUser): Promise<{
+        success: boolean;
+        loanId: string;
+        loanCode: string;
+        status: import("@prisma/client").$Enums.LoanStatus;
+        closedAt: string;
+        releasedItemsCount: number;
+        packetCode: string;
+        message: string;
+    }>;
+    counterOriginate(dto: CounterOriginationDto, actor: AuthenticatedUser): Promise<{
+        success: boolean;
+        loanId: string;
+        loanCode: string;
+        packetCode: string;
+        storageLocation: string;
+        principalAmount: number;
+        netCashDisbursed: number;
+        totalNetWeight: number;
+        totalGrossWeight: number;
+        totalValuation: number;
+        message: string;
     }>;
 }
