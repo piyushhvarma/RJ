@@ -22,6 +22,8 @@ import { CreateLoanDto } from './dto/create-loan.dto.js';
 import { DisburseLoanDto } from './dto/disburse-loan.dto.js';
 import { ListLoansDto } from './dto/list-loans.dto.js';
 import { TopUpLoanDto } from './dto/topup-loan.dto.js';
+import { CloseLoanDto } from './dto/close-loan.dto.js';
+import { CounterOriginationDto } from './dto/counter-origination.dto.js';
 let LoansController = class LoansController {
     loansService;
     interestService;
@@ -52,6 +54,15 @@ let LoansController = class LoansController {
     }
     topupOrRenew(id, dto, user) {
         return this.loansService.topupOrRenew(id, dto, user);
+    }
+    getClosureChecklist(id) {
+        return this.loansService.getClosureChecklist(id);
+    }
+    close(id, dto, user) {
+        return this.loansService.closeLoan(id, dto, user);
+    }
+    counterOriginate(dto, user) {
+        return this.loansService.counterOriginate(dto, user);
     }
 };
 __decorate([
@@ -114,6 +125,32 @@ __decorate([
     __metadata("design:paramtypes", [String, TopUpLoanDto, Object]),
     __metadata("design:returntype", void 0)
 ], LoansController.prototype, "topupOrRenew", null);
+__decorate([
+    Get(':id/closure-checklist'),
+    __param(0, Param('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], LoansController.prototype, "getClosureChecklist", null);
+__decorate([
+    Post(':id/close'),
+    Roles(UserRole.OWNER, UserRole.MANAGER),
+    __param(0, Param('id')),
+    __param(1, Body()),
+    __param(2, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, CloseLoanDto, Object]),
+    __metadata("design:returntype", void 0)
+], LoansController.prototype, "close", null);
+__decorate([
+    Post('counter-origination'),
+    Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF),
+    __param(0, Body()),
+    __param(1, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [CounterOriginationDto, Object]),
+    __metadata("design:returntype", void 0)
+], LoansController.prototype, "counterOriginate", null);
 LoansController = __decorate([
     UseGuards(JwtAuthGuard, RolesGuard),
     Controller('loans'),
