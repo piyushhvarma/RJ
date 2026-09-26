@@ -16,9 +16,8 @@ export declare class JewelleryService {
         updatedAt: Date;
         status: import("@prisma/client").$Enums.JewelleryStatus;
         loanId: string;
-        itemCode: string;
-        category: string;
         metalType: import("@prisma/client").$Enums.MetalType;
+        category: string;
         description: string;
         grossWeight: number;
         stoneWeight: number;
@@ -27,6 +26,7 @@ export declare class JewelleryService {
         fineness: number | null;
         valuationRate: number;
         valuation: number;
+        itemCode: string;
         hallmarkDetails: string | null;
         identifyingMarks: string | null;
         condition: string | null;
@@ -37,19 +37,19 @@ export declare class JewelleryService {
     addPhoto(itemId: string, dto: AddJewelleryPhotoDto, actor: AuthenticatedUser): Promise<{
         id: string;
         fileUrl: string;
-        jewelleryItemId: string;
         angle: string;
         capturedById: string;
         capturedAt: Date;
+        jewelleryItemId: string;
     }>;
     findByLoan(loanId: string): Promise<({
         photos: {
             id: string;
             fileUrl: string;
-            jewelleryItemId: string;
             angle: string;
             capturedById: string;
             capturedAt: Date;
+            jewelleryItemId: string;
         }[];
     } & {
         id: string;
@@ -57,9 +57,8 @@ export declare class JewelleryService {
         updatedAt: Date;
         status: import("@prisma/client").$Enums.JewelleryStatus;
         loanId: string;
-        itemCode: string;
-        category: string;
         metalType: import("@prisma/client").$Enums.MetalType;
+        category: string;
         description: string;
         grossWeight: number;
         stoneWeight: number;
@@ -68,6 +67,7 @@ export declare class JewelleryService {
         fineness: number | null;
         valuationRate: number;
         valuation: number;
+        itemCode: string;
         hallmarkDetails: string | null;
         identifyingMarks: string | null;
         condition: string | null;
@@ -80,10 +80,10 @@ export declare class JewelleryService {
             photos: {
                 id: string;
                 fileUrl: string;
-                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
+                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -91,9 +91,8 @@ export declare class JewelleryService {
             updatedAt: Date;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
-            itemCode: string;
-            category: string;
             metalType: import("@prisma/client").$Enums.MetalType;
+            category: string;
             description: string;
             grossWeight: number;
             stoneWeight: number;
@@ -102,6 +101,7 @@ export declare class JewelleryService {
             fineness: number | null;
             valuationRate: number;
             valuation: number;
+            itemCode: string;
             hallmarkDetails: string | null;
             identifyingMarks: string | null;
             condition: string | null;
@@ -136,10 +136,10 @@ export declare class JewelleryService {
             photos: {
                 id: string;
                 fileUrl: string;
-                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
+                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -147,9 +147,8 @@ export declare class JewelleryService {
             updatedAt: Date;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
-            itemCode: string;
-            category: string;
             metalType: import("@prisma/client").$Enums.MetalType;
+            category: string;
             description: string;
             grossWeight: number;
             stoneWeight: number;
@@ -158,6 +157,7 @@ export declare class JewelleryService {
             fineness: number | null;
             valuationRate: number;
             valuation: number;
+            itemCode: string;
             hallmarkDetails: string | null;
             identifyingMarks: string | null;
             condition: string | null;
