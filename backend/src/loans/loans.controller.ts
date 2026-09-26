@@ -11,6 +11,8 @@ import { CreateLoanDto } from './dto/create-loan.dto.js';
 import { DisburseLoanDto } from './dto/disburse-loan.dto.js';
 import { ListLoansDto } from './dto/list-loans.dto.js';
 import { TopUpLoanDto } from './dto/topup-loan.dto.js';
+import { CloseLoanDto } from './dto/close-loan.dto.js';
+import { CounterOriginationDto } from './dto/counter-origination.dto.js';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('loans')
@@ -74,5 +76,29 @@ export class LoansController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.loansService.topupOrRenew(id, dto, user);
+  }
+
+  @Get(':id/closure-checklist')
+  getClosureChecklist(@Param('id') id: string) {
+    return this.loansService.getClosureChecklist(id);
+  }
+
+  @Post(':id/close')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  close(
+    @Param('id') id: string,
+    @Body() dto: CloseLoanDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.loansService.closeLoan(id, dto, user);
+  }
+
+  @Post('counter-origination')
+  @Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF)
+  counterOriginate(
+    @Body() dto: CounterOriginationDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.loansService.counterOriginate(dto, user);
   }
 }
