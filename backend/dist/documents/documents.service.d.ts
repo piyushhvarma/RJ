@@ -92,10 +92,10 @@ export declare class DocumentsService {
             photos: {
                 id: string;
                 fileUrl: string;
-                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
+                jewelleryItemId: string;
             }[];
         } & {
             id: string;
@@ -103,9 +103,8 @@ export declare class DocumentsService {
             updatedAt: Date;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
-            itemCode: string;
-            category: string;
             metalType: import("@prisma/client").$Enums.MetalType;
+            category: string;
             description: string;
             grossWeight: number;
             stoneWeight: number;
@@ -114,6 +113,7 @@ export declare class DocumentsService {
             fineness: number | null;
             valuationRate: number;
             valuation: number;
+            itemCode: string;
             hallmarkDetails: string | null;
             identifyingMarks: string | null;
             condition: string | null;
@@ -270,9 +270,8 @@ export declare class DocumentsService {
                 updatedAt: Date;
                 status: import("@prisma/client").$Enums.JewelleryStatus;
                 loanId: string;
-                itemCode: string;
-                category: string;
                 metalType: import("@prisma/client").$Enums.MetalType;
+                category: string;
                 description: string;
                 grossWeight: number;
                 stoneWeight: number;
@@ -281,6 +280,7 @@ export declare class DocumentsService {
                 fineness: number | null;
                 valuationRate: number;
                 valuation: number;
+                itemCode: string;
                 hallmarkDetails: string | null;
                 identifyingMarks: string | null;
                 condition: string | null;
