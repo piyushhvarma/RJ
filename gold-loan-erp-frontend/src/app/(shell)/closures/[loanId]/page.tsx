@@ -13,7 +13,7 @@
 
 import { use, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getLoan } from '@/lib/api/loans';
+import { getLoan, getClosureChecklist, closeLoan } from '@/lib/api/loans';
 import { verifyBiometric, biometricFallback } from '@/lib/api/biometric';
 import { createPayment } from '@/lib/api/payments';
 import { retrievePacket, releasePacket } from '@/lib/api/packets';
@@ -21,7 +21,7 @@ import { createPaymentSchema, type CreatePaymentDto } from '@/lib/schemas';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { RoleGate } from '@/components/shared/RoleGate';
-import { ArrowLeft, Shield, AlertTriangle, Check, Printer, FileCheck2, Calculator, Sparkles } from 'lucide-react';
+import { ArrowLeft, Shield, AlertTriangle, Check, Printer, FileCheck2, Calculator, Sparkles, Lock, ShieldCheck, CheckCircle2, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { getClosureReceiptPdfUrl } from '@/lib/api/documents';
@@ -96,11 +96,19 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
     const [step, setStep] = useState<Step>('identify');
     const [bioResult, setBioResult] = useState<string | null>(null);
     const [bioFallback, setBioFallback] = useState(false);
+    const [closureNotes, setClosureNotes] = useState('');
+    const [isClosing, setIsClosing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const { data: loan, isLoading } = useQuery({
         queryKey: ['loan', loanId],
         queryFn: () => getLoan(loanId),
+    });
+
+    const { data: checklist, refetch: refetchChecklist } = useQuery({
+        queryKey: ['closure-checklist', loanId],
+        queryFn: () => getClosureChecklist(loanId),
+        enabled: !!loanId,
     });
 
     const outstanding = loan?.ledgerEntries?.length
@@ -137,13 +145,17 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
     const componentSum = (payPrincipal ?? 0) + (payInterest ?? 0) + (payPenalty ?? 0) + (payOther ?? 0);
     const sumOk = payAmt ? Math.abs(componentSum - payAmt) < 0.01 : false;
 
-    async function advance() { setStep(s => STEP_ORDER[STEP_ORDER.indexOf(s) + 1] as Step); }
+    async function advance() {
+        refetchChecklist();
+        setStep(s => STEP_ORDER[STEP_ORDER.indexOf(s) + 1] as Step);
+    }
     async function doVerify() {
         setError(null);
         if (!loan?.customer?.id) return;
         try {
             const r = await verifyBiometric(loan.customer.id, loanId);
             setBioResult(r.result);
+            refetchChecklist();
             if (r.result === 'MATCH') { setTimeout(advance, 1000); }
         } catch (e: any) { setError(e.message); }
     }
@@ -153,19 +165,33 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
         if (!loan?.packet?.id) return;
         try {
             await retrievePacket(loan.packet.id, 'Loan closure — packet retrieved for release');
-            qc.invalidateQueries({ queryKey: ['loan', loanId] });
+            await Promise.all([
+                qc.invalidateQueries({ queryKey: ['loan', loanId] }),
+                qc.invalidateQueries({ queryKey: ['closure-checklist', loanId] }),
+            ]);
             advance();
         } catch (e: any) { setError(e.message); }
     }
 
     async function doRelease() {
         setError(null);
-        if (!loan?.packet?.id) return;
+        setIsClosing(true);
         try {
-            await releasePacket(loan.packet.id);
-            qc.invalidateQueries({ queryKey: ['loan', loanId] });
+            await closeLoan(loanId, {
+                verifiedJewelleryCount: true,
+                notes: closureNotes || 'Full loan closure and physical gold handover to borrower',
+                biometricOverrideReason: bioFallback ? 'Authorized manager manual override' : undefined,
+            });
+            await Promise.all([
+                qc.invalidateQueries({ queryKey: ['loan', loanId] }),
+                qc.invalidateQueries({ queryKey: ['closure-checklist', loanId] }),
+            ]);
             advance();
-        } catch (e: any) { setError(e.message); }
+        } catch (e: any) {
+            setError(e.message);
+        } finally {
+            setIsClosing(false);
+        }
     }
 
     if (isLoading) {
@@ -179,15 +205,35 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
     return (
         <div className="p-8 max-w-5xl mx-auto">
             {/* Warning header */}
-            <div className="rounded-xl bg-amber-600 text-white px-6 py-4 mb-6 flex items-center gap-3">
-                <Shield className="w-5 h-5 flex-shrink-0" />
-                <div>
-                    <p className="font-bold">CLOSURE IN PROGRESS — HIGH RISK WORKFLOW</p>
-                    <p className="text-sm text-amber-100 mt-0.5">
-                        This process has permanent consequences. Do not advance a step until the corresponding physical action has been completed.
-                        {' '}<span className="font-semibold">[Provisional: backend closure orchestration not yet built — step-gating is frontend-only]</span>
-                    </p>
+            <div className="rounded-xl bg-amber-600 text-white px-6 py-4 mb-6 flex items-center justify-between gap-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <Shield className="w-6 h-6 flex-shrink-0 text-amber-200" />
+                    <div>
+                        <p className="font-bold flex items-center gap-2">
+                            <span>LOAN CLOSURE & GOLD RELEASE WORKFLOW</span>
+                            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-amber-700/80 text-amber-100 uppercase tracking-wider">
+                                High Risk
+                            </span>
+                        </p>
+                        <p className="text-xs text-amber-100 mt-0.5">
+                            Server-enforced closure transaction: validates zero financial debt, vault packet retrieval, customer biometric verification, and physical jewellery verification.
+                        </p>
+                    </div>
                 </div>
+                {checklist && (
+                    <div className="hidden sm:flex items-center gap-2 text-xs">
+                        <span className={`px-2.5 py-1 rounded-full font-semibold border ${
+                            checklist.isSettled ? 'bg-emerald-500/20 border-emerald-300 text-emerald-100' : 'bg-rose-500/20 border-rose-300 text-rose-100'
+                        }`}>
+                            {checklist.isSettled ? '✓ Zero Balance' : `Debt: ₹${checklist.outstandingPrincipal.toLocaleString('en-IN')}`}
+                        </span>
+                        <span className={`px-2.5 py-1 rounded-full font-semibold border ${
+                            checklist.packetRetrieved ? 'bg-emerald-500/20 border-emerald-300 text-emerald-100' : 'bg-amber-500/20 border-amber-300 text-amber-100'
+                        }`}>
+                            {checklist.packetRetrieved ? '✓ Retrieved from Safe' : checklist.packetStatus}
+                        </span>
+                    </div>
+                )}
             </div>
 
             <Link href={`/loans/${loanId}`} className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-6 group">
@@ -539,22 +585,108 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
 
                     {/* Step 7: Gold release */}
                     {step === 'release' && (
-                        <div className="space-y-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Gold Release</h2>
-                            <div className="rounded-xl bg-red-50 border-2 border-red-300 p-5">
-                                <p className="text-sm font-bold text-red-900">⚠ Point of No Return</p>
-                                <p className="text-sm text-red-800 mt-1">
-                                    Releasing the gold is a permanent action. Ensure all previous steps (biometric verified, payment received, packet retrieved, jewellery counted) have been physically completed before clicking below.
+                        <div className="space-y-5">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                    <Lock className="w-5 h-5 text-amber-600" />
+                                    <span>Gold Release & Permanent Loan Closure</span>
+                                </h2>
+                                <span className="text-xs font-mono bg-red-100 text-red-800 font-semibold px-2.5 py-1 rounded-full">
+                                    Manager Sign-Off Required
+                                </span>
+                            </div>
+
+                            {/* Pre-flight Audit Summary */}
+                            <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4 space-y-3">
+                                <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    Pre-Flight Release Verification Checklist
+                                </p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                    <div className={`p-3 rounded-lg border flex items-center gap-2.5 ${
+                                        checklist?.isSettled
+                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                            : 'bg-rose-50 border-rose-200 text-rose-900 font-semibold'
+                                    }`}>
+                                        <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${checklist?.isSettled ? 'text-emerald-600' : 'text-rose-600'}`} />
+                                        <span>
+                                            {checklist?.isSettled ? 'Zero Balance Confirmed (₹0 Debt)' : `Debt Outstanding: ₹${checklist?.outstandingPrincipal}`}
+                                        </span>
+                                    </div>
+
+                                    <div className={`p-3 rounded-lg border flex items-center gap-2.5 ${
+                                        checklist?.packetRetrieved
+                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                            : 'bg-amber-50 border-amber-200 text-amber-900 font-semibold'
+                                    }`}>
+                                        <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${checklist?.packetRetrieved ? 'text-emerald-600' : 'text-amber-600'}`} />
+                                        <span>
+                                            {checklist?.packetRetrieved ? 'Pouch Retrieved from Safe Vault' : `Pouch Status: ${checklist?.packetStatus}`}
+                                        </span>
+                                    </div>
+
+                                    <div className={`p-3 rounded-lg border flex items-center gap-2.5 ${
+                                        checklist?.biometricVerified || bioFallback
+                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                            : 'bg-rose-50 border-rose-200 text-rose-900 font-semibold'
+                                    }`}>
+                                        <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${checklist?.biometricVerified || bioFallback ? 'text-emerald-600' : 'text-rose-600'}`} />
+                                        <span>
+                                            {checklist?.biometricVerified ? 'Customer Biometric Matched' : bioFallback ? 'Manager Override Authorized' : 'Biometric Not Verified'}
+                                        </span>
+                                    </div>
+
+                                    <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900 flex items-center gap-2.5">
+                                        <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+                                        <span>
+                                            Jewellery Verified ({loan.jewelleryItems?.length ?? 0} items · {loan.jewelleryItems?.reduce((s, i) => s + i.netWeight, 0).toFixed(2) ?? '0'}g net)
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {checklist?.blockers && checklist.blockers.length > 0 && !checklist.isSettled && (
+                                    <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs space-y-1">
+                                        <p className="font-bold">Closure Blockers Detected:</p>
+                                        <ul className="list-disc pl-4 space-y-0.5">
+                                            {checklist.blockers.map((b, i) => (
+                                                <li key={i}>{b}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="rounded-xl bg-amber-50 border-2 border-amber-300 p-4">
+                                <p className="text-sm font-bold text-amber-900">⚠ Irreversible Production Action</p>
+                                <p className="text-xs text-amber-800 mt-1">
+                                    Clicking below permanently updates the database: <strong>Loan Status $\rightarrow$ CLOSED</strong>, <strong>Packet Status $\rightarrow$ RELEASED</strong>, and all pledged collateral items are marked released. Immutable audit log records will be posted.
                                 </p>
                             </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                                    Handover & Closure Notes (Optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={closureNotes}
+                                    onChange={(e) => setClosureNotes(e.target.value)}
+                                    placeholder="e.g. Pledged ornaments verified on scale, handed over in good condition"
+                                    className={inputCls}
+                                />
+                            </div>
+
                             <RoleGate roles={['OWNER', 'MANAGER']} fallback={
-                                <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">Only Manager or Owner can authorize gold release.</p>
+                                <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">
+                                    Only Manager or Owner can authorize gold release and close the loan.
+                                </p>
                             }>
                                 <button
                                     onClick={doRelease}
-                                    className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition-colors"
+                                    disabled={isClosing || (checklist ? !checklist.isSettled : false)}
+                                    className="rounded-lg bg-red-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
                                 >
-                                    Release Gold to Customer
+                                    {isClosing && <RefreshCw className="w-4 h-4 animate-spin" />}
+                                    <span>{isClosing ? 'Closing Loan in DB...' : 'Authorize Gold Handover & Formally Close Loan'}</span>
                                 </button>
                             </RoleGate>
                             {error && <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
