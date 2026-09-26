@@ -107,3 +107,104 @@ export async function topupLoan(id: string, data: TopUpLoanDto): Promise<TopUpRe
         body: JSON.stringify(data),
     });
 }
+
+export interface ClosureChecklistResponse {
+    loanId: string;
+    loanCode: string;
+    status: LoanStatus;
+    canClose: boolean;
+    outstandingPrincipal: number;
+    isSettled: boolean;
+    packetStatus: string | null;
+    packetRetrieved: boolean;
+    storageLocation: string | null;
+    biometricVerified: boolean;
+    jewelleryItemCount: number;
+    totalGrossWeight: number;
+    totalNetWeight: number;
+    blockers: string[];
+}
+
+export interface CloseLoanDto {
+    notes?: string;
+    customerSignatureUrl?: string;
+    verifiedJewelleryCount: boolean;
+    biometricOverrideReason?: string;
+}
+
+export interface CloseLoanResponse {
+    success: boolean;
+    loanId: string;
+    loanCode: string;
+    status: LoanStatus;
+    closedAt: string;
+    releasedItemsCount: number;
+    packetCode: string;
+    message: string;
+}
+
+export async function getClosureChecklist(id: string): Promise<ClosureChecklistResponse> {
+    return apiFetch<ClosureChecklistResponse>(`/loans/${id}/closure-checklist`);
+}
+
+export async function closeLoan(id: string, data: CloseLoanDto): Promise<CloseLoanResponse> {
+    return apiFetch<CloseLoanResponse>(`/loans/${id}/close`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export interface CounterJewelleryItemDto {
+    metalType: 'GOLD' | 'SILVER';
+    category: string;
+    description: string;
+    quantity: number;
+    grossWeight: number;
+    stoneWeight?: number;
+    netWeight: number;
+    purityKarat: string;
+    fineness?: number;
+    valuationRate: number;
+    valuation: number;
+    photos?: string[];
+}
+
+export interface CounterOriginationDto {
+    customerId: string;
+    customerPhotoUrl?: string;
+    customerSignatureUrl?: string;
+    principalAmount: number;
+    interestRate: number;
+    interestType?: 'MONTHLY_SIMPLE' | 'DAILY_SIMPLE' | 'ANNUAL_SIMPLE';
+    sanctionedDate?: string;
+    tenureMonths?: number;
+    deductFirstMonthInterest?: boolean;
+    storageLocationLabel?: string;
+    paymentMode?: 'CASH' | 'UPI' | 'BANK_TRANSFER';
+    transactionRef?: string;
+    notes?: string;
+    jewelleryItems: CounterJewelleryItemDto[];
+}
+
+export interface CounterOriginationResponse {
+    success: boolean;
+    loanId: string;
+    loanCode: string;
+    packetCode: string;
+    storageLocation: string;
+    principalAmount: number;
+    netCashDisbursed: number;
+    totalNetWeight: number;
+    totalGrossWeight: number;
+    totalValuation: number;
+    message: string;
+}
+
+export async function counterOriginateLoan(data: CounterOriginationDto): Promise<CounterOriginationResponse> {
+    return apiFetch<CounterOriginationResponse>('/loans/counter-origination', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+
