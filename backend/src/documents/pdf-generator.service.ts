@@ -104,13 +104,27 @@ export class PdfGeneratorService {
     doc.rect(312, y, 260, 18).fill('#f3f4f6');
     doc.fillColor('#111827').fontSize(9).font('Helvetica-Bold').text('BORROWER (PLEDGER) DETAILS', 320, y + 5);
 
+    const hasPhoto = Boolean(cust.photoUrl && cust.photoUrl.length > 50);
+
     doc.fontSize(8).font('Helvetica').fillColor('#374151');
     doc.text(`Customer Code: `, 320, y + 25).font('Helvetica-Bold').text(cust.customerCode, 395, y + 25);
-    doc.font('Helvetica').text(`Full Name: `, 320, y + 40).font('Helvetica-Bold').text(cust.fullName, 395, y + 40);
-    doc.font('Helvetica').text(`Father/Spouse: `, 320, y + 55).text(cust.guardianName || 'N/A', 395, y + 55);
+    doc.font('Helvetica').text(`Full Name: `, 320, y + 40).font('Helvetica-Bold').text(cust.fullName.slice(0, 18), 395, y + 40);
+    doc.font('Helvetica').text(`Father/Spouse: `, 320, y + 55).text((cust.guardianName || 'N/A').slice(0, 16), 395, y + 55);
     doc.text(`Mobile: `, 320, y + 70).text(cust.mobile || 'Not on Record', 395, y + 70);
     const addr = [cust.address, cust.city, cust.state].filter(Boolean).join(', ') || 'N/A';
-    doc.text(`Address: `, 320, y + 85).text(addr.slice(0, 42), 395, y + 85);
+    doc.text(`Gaon / Addr: `, 320, y + 85).text(addr.slice(0, 20), 395, y + 85);
+
+    // Draw Customer Photo if available
+    if (hasPhoto && cust.photoUrl.startsWith('data:image/')) {
+      try {
+        const base64 = cust.photoUrl.split(';base64,').pop();
+        if (base64) {
+          const imgBuf = Buffer.from(base64, 'base64');
+          doc.rect(508, y + 24, 58, 72).strokeColor('#cbd5e1').lineWidth(0.75).stroke();
+          doc.image(imgBuf, 509, y + 25, { fit: [56, 70], align: 'center', valign: 'center' });
+        }
+      } catch {}
+    }
 
     y += 115;
 
@@ -144,19 +158,22 @@ export class PdfGeneratorService {
     const totalGross = items.reduce((acc: number, it: any) => acc + (it.grossWeight || 0), 0);
     const totalNet = items.reduce((acc: number, it: any) => acc + (it.netWeight || 0), 0);
     const totalVal = items.reduce((acc: number, it: any) => acc + (it.valuation || 0), 0);
-    const ltv = totalVal > 0 ? ((pAmt / totalVal) * 100).toFixed(1) : '0';
+    const itemDescriptions = items.map((it: any) => it.description || it.category).join(', ') || 'Gold Ornaments';
 
-    doc.rect(40, y, 532, 38).fill('#f8fafc').strokeColor('#e2e8f0').lineWidth(1).stroke();
+    doc.rect(40, y, 532, 42).fill('#f8fafc').strokeColor('#e2e8f0').lineWidth(1).stroke();
     doc.fillColor('#334155').fontSize(8).font('Helvetica-Bold')
-      .text('PLEDGED COLLATERAL SUMMARY (Details in Schedule A):', 48, y + 6);
+      .text('PLEDGED COLLATERAL SUMMARY (Details in Schedule A):', 48, y + 5);
+
+    doc.fontSize(8).font('Helvetica').fillColor('#b45309')
+      .text(`Articles: ${itemDescriptions.slice(0, 60)}`, 48, y + 17);
 
     doc.fontSize(8).font('Helvetica').fillColor('#1e293b')
-      .text(`Total Items: ${items.length} Article(s)`, 48, y + 20)
-      .text(`Gross Weight: ${totalGross.toFixed(3)} g`, 180, y + 20)
-      .text(`Net Pure Weight: ${totalNet.toFixed(3)} g`, 310, y + 20)
-      .text(`Assessed Valuation: Rs. ${totalVal.toLocaleString('en-IN')}`, 430, y + 20);
+      .text(`Items: ${items.length}`, 48, y + 29)
+      .text(`Gross: ${totalGross.toFixed(3)}g`, 140, y + 29)
+      .text(`Net Pure: ${totalNet.toFixed(3)}g (${items[0]?.purityKarat || '22K'})`, 250, y + 29)
+      .text(`Valuation: Rs. ${totalVal.toLocaleString('en-IN')}`, 410, y + 29);
 
-    y += 48;
+    y += 50;
 
     // Terms & Conditions Block
     doc.rect(40, y, 532, 175).strokeColor('#e5e7eb').lineWidth(1).stroke();
@@ -184,6 +201,17 @@ export class PdfGeneratorService {
     // Signatures
     doc.rect(40, y, 532, 95).strokeColor('#d1d5db').lineWidth(1).stroke();
 
+    // Embed customer digital signature if available
+    if (cust.signatureUrl && cust.signatureUrl.startsWith('data:image/')) {
+      try {
+        const base64 = cust.signatureUrl.split(';base64,').pop();
+        if (base64) {
+          const sigBuf = Buffer.from(base64, 'base64');
+          doc.image(sigBuf, 65, y + 20, { fit: [110, 42], align: 'center', valign: 'center' });
+        }
+      } catch {}
+    }
+
     doc.fillColor('#374151').fontSize(7.5).font('Helvetica');
     
     // Sig 1: Customer
@@ -204,6 +232,174 @@ export class PdfGeneratorService {
     // Footer note
     doc.fontSize(6.5).fillColor('#9ca3af')
       .text(`Generated on: ${new Date().toLocaleString('en-IN')} | System Ver: ERP-V2.1 | Secure Verification Token: ${loan.id.slice(0, 8).toUpperCase()}`, 40, 785, { align: 'center' });
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PAGE 2: REVERSE SIDE — FOLDABLE PANNI CHITTHI (5cm x 8.5cm) & BYAAJ CARD
+    // ─────────────────────────────────────────────────────────────────────────
+    doc.addPage({ margin: 40, size: 'A4' });
+
+    // Header on Back Page
+    doc.rect(40, 30, 532, 20).fill('#0f172a');
+    doc.fillColor('#ffffff').fontSize(8.5).font('Helvetica-Bold')
+      .text('REVERSE SIDE — POUCH CUSTODY SLIP (PANNI CHITTHI) & COUNTER LEDGER', 40, 36, { align: 'center' });
+
+    // Fold guide instructions
+    doc.fontSize(7).font('Helvetica-Oblique').fillColor('#64748b')
+      .text('Fold along the dashed lines below: the top-left box forms the exterior Panni Chitthi visible through the pouch.', 40, 54, { align: 'center' });
+
+    // Dashed fold guidelines across the page
+    doc.save();
+    doc.strokeColor('#94a3b8').lineWidth(0.75).dash(4, { space: 4 });
+    doc.moveTo(298, 70).lineTo(298, 800).stroke(); // vertical half
+    doc.moveTo(40, 275).lineTo(572, 275).stroke(); // horizontal quarter
+    doc.moveTo(40, 545).lineTo(572, 545).stroke(); // horizontal three-quarters
+    doc.restore();
+
+    // ── 1. THE FOLDABLE PANNI CHITTHI (Top-Left Quadrant, approx 8.5cm x 5.8cm) ──
+    const chitX = 40;
+    const chitY = 70;
+    const chitW = 250;
+    const chitH = 195;
+
+    // Solid border for the chitthi
+    doc.rect(chitX, chitY, chitW, chitH).fill('#ffffff').strokeColor('#0f172a').lineWidth(1.75).stroke();
+
+    // Chitthi Header Row: Shop Title on Left, Big Bold Ref on Right
+    doc.rect(chitX, chitY, chitW, 36).fill('#1e293b');
+    doc.fillColor('#f8fafc').fontSize(8).font('Helvetica-Bold')
+      .text('RADHIKA JEWELLERS / SILVERANSH', chitX + 8, chitY + 7);
+    doc.fontSize(6.5).font('Helvetica').fillColor('#cbd5e1')
+      .text('Gold Pouch Custody Chitthi', chitX + 8, chitY + 20);
+
+    const boxLabel = loan.packet?.storageLocation?.label ?? `BOX-${loan.loanCode.slice(-4)}`;
+    const refTagWidth = 100;
+    doc.rect(chitX + chitW - refTagWidth - 4, chitY + 4, refTagWidth, 28).fill('#f59e0b');
+    doc.fillColor('#000000').fontSize(10.5).font('Helvetica-Bold')
+      .text(`REF: ${boxLabel}`, chitX + chitW - refTagWidth - 4, chitY + 12, { width: refTagWidth, align: 'center' });
+
+    let cY = chitY + 44;
+
+    // Row 1: Name
+    doc.fillColor('#64748b').fontSize(7).font('Helvetica').text('NAME:', chitX + 8, cY);
+    doc.fillColor('#0f172a').fontSize(9.5).font('Helvetica-Bold')
+      .text(cust.fullName.toUpperCase().slice(0, 24), chitX + 50, cY - 1);
+
+    cY += 17;
+    // Row 2: Phone & Gaon
+    doc.fillColor('#64748b').fontSize(7).font('Helvetica').text('PHONE:', chitX + 8, cY);
+    doc.fillColor('#1e293b').fontSize(8.5).font('Helvetica-Bold')
+      .text(cust.mobile || 'N/A', chitX + 50, cY);
+
+    const gaon = cust.city || cust.address?.split(',')[0] || 'Local';
+    doc.fillColor('#64748b').fontSize(7).font('Helvetica').text('GAON:', chitX + 140, cY);
+    doc.fillColor('#1e293b').fontSize(8.5).font('Helvetica-Bold')
+      .text(gaon.slice(0, 16), chitX + 175, cY);
+
+    cY += 16;
+    doc.moveTo(chitX + 6, cY).lineTo(chitX + chitW - 6, cY).strokeColor('#e2e8f0').lineWidth(0.75).stroke();
+    cY += 6;
+
+    // Row 3: Ornaments / Items (e.g. 42 Mani, 1 Pendal Pot)
+    doc.fillColor('#64748b').fontSize(7).font('Helvetica').text('ITEMS:', chitX + 8, cY);
+    doc.fillColor('#b45309').fontSize(9).font('Helvetica-Bold')
+      .text(itemDescriptions.slice(0, 38), chitX + 50, cY, { width: 192 });
+
+    cY += doc.heightOfString(itemDescriptions.slice(0, 38), { width: 192 }) + 3;
+
+    // Row 4: Weight & Purity
+    doc.fillColor('#64748b').fontSize(7).font('Helvetica').text('WEIGHT:', chitX + 8, cY);
+    doc.fillColor('#1e293b').fontSize(8).font('Helvetica-Bold')
+      .text(`Gross: ${totalGross.toFixed(3)}g  |  Net: ${totalNet.toFixed(3)}g (${items[0]?.purityKarat || '22K'})`, chitX + 50, cY);
+
+    cY += 16;
+    doc.moveTo(chitX + 6, cY).lineTo(chitX + chitW - 6, cY).strokeColor('#e2e8f0').lineWidth(0.75).stroke();
+    cY += 6;
+
+    // Row 5: Amount & Date
+    doc.fillColor('#64748b').fontSize(7).font('Helvetica').text('AMOUNT:', chitX + 8, cY + 2);
+    doc.fillColor('#047857').fontSize(11.5).font('Helvetica-Bold')
+      .text(`Rs. ${pAmt.toLocaleString('en-IN')}`, chitX + 52, cY);
+
+    doc.fillColor('#64748b').fontSize(7).font('Helvetica').text('DATE:', chitX + 150, cY + 2);
+    doc.fillColor('#1e293b').fontSize(8.5).font('Helvetica-Bold')
+      .text(formatDate(loan.sanctionedDate), chitX + 180, cY + 1);
+
+    // Bottom strip of Chitthi
+    doc.rect(chitX, chitY + chitH - 16, chitW, 16).fill('#f1f5f9');
+    doc.fillColor('#475569').fontSize(6.5).font('Helvetica-Bold')
+      .text(`LOAN: ${loan.loanCode}  |  POUCH EXTERIOR FACE  |  RATE: ${loan.interestRate || 3}% p.m.`, chitX, chitY + chitH - 11, { width: chitW, align: 'center' });
+
+    // ── 2. TOP RIGHT QUADRANT: QUICK FOLDING DIAGRAM & CUSTODY CHECKS ──
+    const diagX = 308;
+    const diagY = 70;
+    doc.rect(diagX, diagY, 264, chitH).fill('#fafaf9').strokeColor('#e2e8f0').lineWidth(1).stroke();
+    doc.fillColor('#451a03').fontSize(8).font('Helvetica-Bold')
+      .text('HOW TO FOLD FOR CLEAR PANNI:', diagX + 12, diagY + 12);
+    doc.fontSize(7).font('Helvetica').fillColor('#78350f')
+      .text('1. Place this A4 sheet face-down on counter.', diagX + 12, diagY + 28)
+      .text('2. Fold bottom half upwards along the middle dashed line.', diagX + 12, diagY + 42)
+      .text('3. Fold left-to-right so the Panni Chitthi box is facing OUT.', diagX + 12, diagY + 56)
+      .text('4. Slide folded sheet into clear plastic pouch along with gold.', diagX + 12, diagY + 70)
+      .text('5. The REF number on top right will be visible through the pouch!', diagX + 12, diagY + 84);
+
+    doc.rect(diagX + 12, diagY + 105, 240, 78).fill('#ffffff').strokeColor('#cbd5e1').lineWidth(1).stroke();
+    doc.fillColor('#1e293b').fontSize(7.5).font('Helvetica-Bold')
+      .text('VAULT COLLATERAL VERIFICATION SEAL:', diagX + 20, diagY + 114);
+    doc.fontSize(7).font('Helvetica').fillColor('#475569')
+      .text(`Storage Safe / Locker Box: ${boxLabel}`, diagX + 20, diagY + 128)
+      .text(`Collateral Count: ${items.length} Ornaments sealed in panni`, diagX + 20, diagY + 140)
+      .text(`Borrower: ${cust.fullName} (${cust.customerCode})`, diagX + 20, diagY + 152)
+      .text(`Authorized by: Radhika Jewellers Custody Desk`, diagX + 20, diagY + 164);
+
+    // ── 3. BOTTOM HALF: MONTHLY BYAAJ (INTEREST) LEDGER CARD (12 MONTHS) ──
+    let tableY = 290;
+    doc.rect(40, tableY, 532, 20).fill('#1e293b');
+    doc.fillColor('#ffffff').fontSize(8).font('Helvetica-Bold')
+      .text('MONTHLY INTEREST (BYAAJ) PAYMENT RECORD — COUNTER CARD', 48, tableY + 6);
+
+    tableY += 20;
+
+    const colHeaders = ['Mth', 'Due Date', 'Byaaj (Rs.)', 'Date Paid', 'Amount Paid', 'Receipt / Mode', 'Sign & Seal'];
+    const colWidths = [32, 70, 75, 75, 80, 100, 100];
+
+    // Header row
+    doc.rect(40, tableY, 532, 16).fill('#f1f5f9').strokeColor('#cbd5e1').stroke();
+    let curX = 40;
+    for (let i = 0; i < colHeaders.length; i++) {
+      doc.fillColor('#334155').fontSize(7).font('Helvetica-Bold')
+        .text(colHeaders[i], curX + 4, tableY + 4, { width: colWidths[i] - 8, align: i === 0 ? 'center' : 'left' });
+      curX += colWidths[i];
+    }
+    tableY += 16;
+
+    // 12 monthly rows for counter notes
+    const monthlyInt = Math.round((pAmt * ((loan.interestRate || 30) / 100)) / 12);
+    const startD = loan.sanctionedDate ? new Date(loan.sanctionedDate) : new Date();
+
+    for (let m = 1; m <= 12; m++) {
+      const rowBg = m % 2 === 0 ? '#f8fafc' : '#ffffff';
+      doc.rect(40, tableY, 532, 20).fill(rowBg).strokeColor('#e2e8f0').lineWidth(0.5).stroke();
+
+      const dueDate = new Date(startD);
+      dueDate.setMonth(dueDate.getMonth() + m);
+
+      curX = 40;
+      doc.fillColor('#64748b').fontSize(7).font('Helvetica-Bold').text(`#${m}`, curX, tableY + 6, { width: colWidths[0], align: 'center' });
+      curX += colWidths[0];
+
+      doc.fillColor('#334155').fontSize(7).font('Helvetica').text(formatDate(dueDate), curX + 4, tableY + 6);
+      curX += colWidths[1];
+
+      doc.fillColor('#0f172a').fontSize(7.5).font('Helvetica-Bold').text(`Rs. ${monthlyInt.toLocaleString('en-IN')}`, curX + 4, tableY + 6);
+      curX += colWidths[2];
+
+      curX += colWidths[3];
+      curX += colWidths[4];
+      curX += colWidths[5];
+      curX += colWidths[6];
+
+      tableY += 20;
+    }
 
     doc.end();
     return bufferPromise;
