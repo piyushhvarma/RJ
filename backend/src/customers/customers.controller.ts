@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -7,6 +7,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import type { AuthenticatedUser } from '../common/decorators/current-user.decorator.js';
 import { CustomersService } from './customers.service.js';
 import { CreateCustomerDto } from './dto/create-customer.dto.js';
+import { UpdateCustomerDto } from './dto/update-customer.dto.js';
 import { SearchCustomersDto } from './dto/search-customers.dto.js';
 import { UpdateCustomerPhotoDto } from './dto/update-customer-photo.dto.js';
 import { AddCustomerDocumentDto } from './dto/add-customer-document.dto.js';
@@ -22,6 +23,16 @@ export class CustomersController {
   @Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF)
   create(@Body() dto: CreateCustomerDto, @CurrentUser() user: AuthenticatedUser) {
     return this.customersService.create(dto, user);
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF)
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateCustomerDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.customersService.update(id, dto, user);
   }
 
   @Post(':id/photo')
@@ -46,7 +57,7 @@ export class CustomersController {
 
   @Get()
   search(@Query() query: SearchCustomersDto) {
-    return this.customersService.search(query.q);
+    return this.customersService.search(query);
   }
 
   @Get(':id')
@@ -54,3 +65,4 @@ export class CustomersController {
     return this.customersService.findById(id);
   }
 }
+

@@ -1,9 +1,25 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsInt, Min, IsEnum } from 'class-validator';
+import { Type } from 'class-transformer';
+import { VerificationStatus } from '@prisma/client';
 
 export class SearchCustomersDto {
-  // Matches against name, mobile, or customer code — the "Global search"
-  // requirement in §54, scoped to customers for this endpoint.
   @IsOptional()
   @IsString()
   q?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number = 25;
+
+  @IsOptional()
+  @IsEnum(VerificationStatus)
+  kycStatus?: VerificationStatus;
 }

@@ -294,6 +294,7 @@ export default function NewCustomerPage() {
             <PhotoCaptureModal
                 isOpen={isPhotoModalOpen}
                 onClose={() => setIsPhotoModalOpen(false)}
+                captureTarget="customer"
                 title="Capture Customer Photo"
                 subtitle="Position customer in front of webcam or upload image file."
                 onConfirm={(capturedDataUrl) => {

@@ -8,6 +8,7 @@ import { RoleGate } from '@/components/shared/RoleGate';
 import { PhotoCaptureModal } from '@/components/shared/PhotoCaptureModal';
 import { BiometricScannerModal } from '@/components/shared/BiometricScannerModal';
 import { AadhaarKycModal } from '@/components/shared/AadhaarKycModal';
+import { EditCustomerModal } from '@/components/shared/EditCustomerModal';
 import {
     ArrowLeft,
     MapPin,
@@ -21,6 +22,7 @@ import {
     CheckCircle2,
     Calendar,
     Briefcase,
+    Edit3,
 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -34,6 +36,8 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     const [isBioModalOpen, setIsBioModalOpen] = useState(false);
     const [bioMode, setBioMode] = useState<'enroll' | 'verify'>('enroll');
     const [isAadhaarModalOpen, setIsAadhaarModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
 
     const { data: customer, isLoading, error } = useQuery({
         queryKey: ['customer', id],
@@ -119,7 +123,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                             {customer.guardianName && (
                                 <p className="text-sm text-gray-500 mt-0.5">S/o or W/o {customer.guardianName}</p>
                             )}
-                            <div className="flex items-center gap-2 mt-2">
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
                                 <button
                                     onClick={() => setIsPhotoModalOpen(true)}
                                     className="text-xs text-amber-700 hover:text-amber-800 font-medium inline-flex items-center gap-1 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded-md transition-colors"
@@ -127,6 +131,15 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                                     <Camera className="w-3 h-3" />
                                     {customer.photoUrl ? 'Update Photo' : 'Add Customer Photo'}
                                 </button>
+                                <RoleGate roles={['OWNER', 'MANAGER', 'STAFF']}>
+                                    <button
+                                        onClick={() => setIsEditModalOpen(true)}
+                                        className="text-xs text-gray-700 hover:text-gray-900 font-semibold inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-md transition-colors border border-gray-200"
+                                    >
+                                        <Edit3 className="w-3 h-3 text-gray-500" />
+                                        Edit Details
+                                    </button>
+                                </RoleGate>
                             </div>
                         </div>
                     </div>
@@ -159,17 +172,35 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-5 border-t border-gray-100">
                     <div className="flex items-center gap-2.5 text-sm text-gray-700">
                         <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="font-medium">{customer.mobile}</span>
-                        {customer.alternateMobile && (
-                            <span className="text-gray-400 text-xs">({customer.alternateMobile})</span>
+                        {customer.mobile ? (
+                            <>
+                                <span className="font-semibold text-gray-900 font-mono">{customer.mobile}</span>
+                                {customer.alternateMobile && (
+                                    <span className="text-gray-400 text-xs">({customer.alternateMobile})</span>
+                                )}
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => setIsEditModalOpen(true)}
+                                className="text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded border border-amber-200 transition-colors"
+                            >
+                                + Add Mobile Number
+                            </button>
                         )}
                     </div>
-                    {customer.address && (
-                        <div className="flex items-start gap-2.5 text-sm text-gray-700 col-span-1 sm:col-span-2">
-                            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-2.5 text-sm text-gray-700 col-span-1 sm:col-span-2">
+                        <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                        {customer.address || customer.city ? (
                             <span>{[customer.address, customer.city, customer.state, customer.pincode].filter(Boolean).join(', ')}</span>
-                        </div>
-                    )}
+                        ) : (
+                            <button
+                                onClick={() => setIsEditModalOpen(true)}
+                                className="text-xs text-gray-500 hover:text-amber-800 underline"
+                            >
+                                + Add address details
+                            </button>
+                        )}
+                    </div>
                     {customer.dateOfBirth && (
                         <div className="flex items-center gap-2.5 text-sm text-gray-700">
                             <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -393,6 +424,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             <PhotoCaptureModal
                 isOpen={isPhotoModalOpen}
                 onClose={() => setIsPhotoModalOpen(false)}
+                captureTarget="customer"
                 title="Customer Profile Photo"
                 subtitle="Take a live portrait with the webcam or upload a photo of the customer."
                 onConfirm={async (photoDataUrl) => {
@@ -420,6 +452,13 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                     qc.invalidateQueries({ queryKey: ['customer', id] });
                 }}
             />
+
+            <EditCustomerModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                customer={customer}
+            />
         </div>
     );
+
 }
