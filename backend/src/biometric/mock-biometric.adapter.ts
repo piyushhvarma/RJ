@@ -19,29 +19,43 @@ import { BiometricAdapter, EnrollmentResult, VerificationResult } from './biomet
 @Injectable()
 export class MockBiometricAdapter implements BiometricAdapter {
   private readonly logger = new Logger(MockBiometricAdapter.name);
-  private readonly deviceId = 'MOCK-BIO-01';
+
+  private isHardwareConnected(): boolean {
+    return process.env.BIOMETRIC_DEVICE_ONLINE === 'true';
+  }
 
   async enrollCustomer(customerId: string): Promise<EnrollmentResult> {
-    this.logger.warn(
-      `[MOCK BIOMETRIC] Enrolling customer ${customerId} — no real device connected.`,
-    );
+    if (!this.isHardwareConnected()) {
+      this.logger.warn(`Biometric enrollment blocked for ${customerId}: No physical scanner connected.`);
+      return {
+        success: false,
+        templateRef: '',
+        deviceId: 'HARDWARE_DISCONNECTED',
+      };
+    }
     return {
       success: true,
       templateRef: `mock-template-${randomUUID()}`,
-      deviceId: this.deviceId,
+      deviceId: 'MANTRA-MFS100',
       qualityScore: 0.95,
     };
   }
 
   async verifyCustomer(customerId: string, templateRef: string): Promise<VerificationResult> {
-    this.logger.warn(
-      `[MOCK BIOMETRIC] Verifying customer ${customerId} — no real device connected.`,
-    );
+    if (!this.isHardwareConnected()) {
+      this.logger.warn(`Biometric verification failed for ${customerId}: Physical scanner is disconnected.`);
+      return { result: 'DEVICE_ERROR', deviceId: 'HARDWARE_DISCONNECTED' };
+    }
     const result: BiometricResult = templateRef.endsWith('-fail') ? 'NO_MATCH' : 'MATCH';
-    return { result, deviceId: this.deviceId };
+    return { result, deviceId: 'MANTRA-MFS100' };
   }
 
   async getDeviceStatus() {
-    return { deviceId: this.deviceId, online: true };
+    const online = this.isHardwareConnected();
+    return {
+      deviceId: online ? 'MANTRA-MFS100' : 'NONE',
+      online,
+      message: online ? 'Physical optical scanner connected' : 'No physical fingerprint scanner connected to workstation',
+    };
   }
 }

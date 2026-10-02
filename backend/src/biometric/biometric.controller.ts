@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -12,6 +12,11 @@ import { VerifyBiometricDto, FallbackBiometricDto } from './dto/verify-biometric
 @Controller('customers/:customerId/biometric')
 export class BiometricController {
   constructor(private readonly biometricService: BiometricService) {}
+
+  @Get('status')
+  getStatus() {
+    return this.biometricService.getDeviceStatus();
+  }
 
   @Post('enroll')
   @Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF)

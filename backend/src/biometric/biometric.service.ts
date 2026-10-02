@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { IdGeneratorService } from '../common/services/id-generator.service.js';
 import { AuditService } from '../audit/audit.service.js';
@@ -17,11 +17,18 @@ export class BiometricService {
     private readonly audit: AuditService,
   ) {}
 
+  async getDeviceStatus() {
+    return this.adapter.getDeviceStatus();
+  }
+
   async enroll(customerId: string, actor: AuthenticatedUser) {
     const customer = await this.prisma.customer.findUnique({ where: { id: customerId } });
     if (!customer) throw new NotFoundException('Customer not found');
 
     const deviceResult = await this.adapter.enrollCustomer(customerId);
+    if (!deviceResult.success) {
+      throw new BadRequestException('Physical biometric scanner is disconnected. Please connect a supported optical scanner.');
+    }
     const enrollmentCode = await this.ids.next('BIO');
 
     const [enrollment] = await this.prisma.$transaction([
