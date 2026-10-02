@@ -43,8 +43,8 @@ export declare class DashboardService {
         recentLoans: {
             customer: {
                 id: string;
-                fullName: string;
                 mobile: string | null;
+                fullName: string;
                 customerCode: string;
             };
             id: string;
@@ -56,10 +56,10 @@ export declare class DashboardService {
         recentCustomers: {
             id: string;
             createdAt: Date;
-            fullName: string;
             mobile: string | null;
-            customerCode: string;
+            fullName: string;
             kycStatus: import("@prisma/client").$Enums.VerificationStatus;
+            customerCode: string;
         }[];
     }>;
 }

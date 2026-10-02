@@ -12,17 +12,20 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { IdGeneratorService } from '../common/services/id-generator.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { InterestService } from '../interest/interest.service.js';
+import { StorageService } from '../common/storage/storage.service.js';
 import { TopUpMode } from './dto/topup-loan.dto.js';
 let LoansService = class LoansService {
     prisma;
     ids;
     audit;
     interestService;
-    constructor(prisma, ids, audit, interestService) {
+    storage;
+    constructor(prisma, ids, audit, interestService, storage) {
         this.prisma = prisma;
         this.ids = ids;
         this.audit = audit;
         this.interestService = interestService;
+        this.storage = storage;
     }
     async create(dto, actor) {
         const customer = await this.prisma.customer.findUnique({ where: { id: dto.customerId } });
@@ -578,10 +581,10 @@ let LoansService = class LoansService {
                 throw new NotFoundException('Customer not found');
             const custUpdate = {};
             if (dto.customerPhotoUrl && dto.customerPhotoUrl.length > 50) {
-                custUpdate.photoUrl = dto.customerPhotoUrl;
+                custUpdate.photoUrl = (await this.storage.normalizeAndStore(dto.customerPhotoUrl, 'customers')) ?? dto.customerPhotoUrl;
             }
             if (dto.customerSignatureUrl && dto.customerSignatureUrl.length > 50) {
-                custUpdate.signatureUrl = dto.customerSignatureUrl;
+                custUpdate.signatureUrl = (await this.storage.normalizeAndStore(dto.customerSignatureUrl, 'signatures')) ?? dto.customerSignatureUrl;
             }
             if (Object.keys(custUpdate).length > 0) {
                 await tx.customer.update({
@@ -638,10 +641,11 @@ let LoansService = class LoansService {
                 if (it.photos && it.photos.length > 0) {
                     for (const photo of it.photos) {
                         if (photo && photo.length > 50) {
+                            const fileUrl = (await this.storage.normalizeAndStore(photo, 'jewellery')) ?? photo;
                             await tx.jewelleryPhoto.create({
                                 data: {
                                     jewelleryItemId: item.id,
-                                    fileUrl: photo,
+                                    fileUrl,
                                     angle: 'counter_capture',
                                     capturedById: actor.id,
                                 },
@@ -797,7 +801,8 @@ LoansService = __decorate([
     __metadata("design:paramtypes", [PrismaService,
         IdGeneratorService,
         AuditService,
-        InterestService])
+        InterestService,
+        StorageService])
 ], LoansService);
 export { LoansService };
 //# sourceMappingURL=loans.service.js.map

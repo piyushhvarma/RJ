@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -23,6 +23,9 @@ let BiometricController = class BiometricController {
     constructor(biometricService) {
         this.biometricService = biometricService;
     }
+    getStatus() {
+        return this.biometricService.getDeviceStatus();
+    }
     enroll(customerId, user) {
         return this.biometricService.enroll(customerId, user);
     }
@@ -33,6 +36,12 @@ let BiometricController = class BiometricController {
         return this.biometricService.recordFallback(customerId, user, dto.reason, dto.approvedById, dto.loanId);
     }
 };
+__decorate([
+    Get('status'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], BiometricController.prototype, "getStatus", null);
 __decorate([
     Post('enroll'),
     Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF),

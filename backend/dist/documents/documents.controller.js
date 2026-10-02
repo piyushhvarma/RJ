@@ -79,7 +79,6 @@ let DocumentsController = class DocumentsController {
     }
 };
 __decorate([
-    UseGuards(JwtAuthGuard, RolesGuard),
     Get('loan/:loanId'),
     __param(0, Param('loanId')),
     __metadata("design:type", Function),
@@ -87,7 +86,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], DocumentsController.prototype, "findByLoan", null);
 __decorate([
-    UseGuards(JwtAuthGuard, RolesGuard),
     Get('item/:id'),
     __param(0, Param('id')),
     __metadata("design:type", Function),
@@ -140,7 +138,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], DocumentsController.prototype, "getRenewalReceiptPdf", null);
 __decorate([
-    UseGuards(JwtAuthGuard, RolesGuard),
     Post(':id/print'),
     __param(0, Param('id')),
     __param(1, CurrentUser()),
@@ -149,7 +146,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], DocumentsController.prototype, "markPrinted", null);
 __decorate([
-    UseGuards(JwtAuthGuard, RolesGuard),
     Post(':id/sign'),
     __param(0, Param('id')),
     __param(1, CurrentUser()),
@@ -158,6 +154,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], DocumentsController.prototype, "markSigned", null);
 DocumentsController = __decorate([
+    UseGuards(JwtAuthGuard, RolesGuard),
     Controller('documents'),
     __metadata("design:paramtypes", [DocumentsService])
 ], DocumentsController);

@@ -11,14 +11,17 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service.js';
 import { IdGeneratorService } from '../common/services/id-generator.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { StorageService } from '../common/storage/storage.service.js';
 let JewelleryService = class JewelleryService {
     prisma;
     ids;
     audit;
-    constructor(prisma, ids, audit) {
+    storage;
+    constructor(prisma, ids, audit, storage) {
         this.prisma = prisma;
         this.ids = ids;
         this.audit = audit;
+        this.storage = storage;
     }
     async create(dto, actor) {
         const loan = await this.prisma.loan.findUnique({
@@ -77,11 +80,12 @@ let JewelleryService = class JewelleryService {
         const item = await this.prisma.jewelleryItem.findUnique({ where: { id: itemId } });
         if (!item)
             throw new NotFoundException('Jewellery item not found');
+        const fileUrl = (await this.storage.normalizeAndStore(dto.fileUrl, 'jewellery')) ?? dto.fileUrl;
         return this.prisma.jewelleryPhoto.create({
             data: {
                 jewelleryItemId: itemId,
                 angle: dto.angle,
-                fileUrl: dto.fileUrl,
+                fileUrl,
                 capturedById: actor.id,
             },
         });
@@ -260,7 +264,8 @@ JewelleryService = __decorate([
     Injectable(),
     __metadata("design:paramtypes", [PrismaService,
         IdGeneratorService,
-        AuditService])
+        AuditService,
+        StorageService])
 ], JewelleryService);
 export { JewelleryService };
 //# sourceMappingURL=jewellery.service.js.map

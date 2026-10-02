@@ -15,10 +15,10 @@ export declare class DocumentsService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            mobile: string | null;
             fullName: string;
             guardianName: string | null;
             dateOfBirth: Date | null;
-            mobile: string | null;
             alternateMobile: string | null;
             address: string | null;
             city: string | null;
@@ -26,9 +26,9 @@ export declare class DocumentsService {
             pincode: string | null;
             occupation: string | null;
             photoUrl: string | null;
+            kycStatus: import("@prisma/client").$Enums.VerificationStatus;
             customerCode: string;
             signatureUrl: string | null;
-            kycStatus: import("@prisma/client").$Enums.VerificationStatus;
             biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
             status: import("@prisma/client").$Enums.RecordLifecycle;
             createdById: string;
@@ -101,10 +101,10 @@ export declare class DocumentsService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            category: string;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
             metalType: import("@prisma/client").$Enums.MetalType;
-            category: string;
             description: string;
             grossWeight: number;
             stoneWeight: number;
@@ -138,13 +138,13 @@ export declare class DocumentsService {
         payments: {
             id: string;
             createdAt: Date;
-            mode: import("@prisma/client").$Enums.PaymentMode;
             otherCharges: number;
             loanId: string;
             lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
             paymentDate: Date;
-            amount: number;
             paymentCode: string;
+            amount: number;
+            mode: import("@prisma/client").$Enums.PaymentMode;
             principalComponent: number;
             interestComponent: number;
             penaltyComponent: number;
@@ -159,8 +159,8 @@ export declare class DocumentsService {
             reason: string | null;
             createdById: string;
             loanId: string;
-            type: import("@prisma/client").$Enums.LedgerEntryType;
             amount: number;
+            type: import("@prisma/client").$Enums.LedgerEntryType;
             balanceAfter: number;
             relatedPaymentId: string | null;
         }[];
@@ -213,10 +213,10 @@ export declare class DocumentsService {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
+                mobile: string | null;
                 fullName: string;
                 guardianName: string | null;
                 dateOfBirth: Date | null;
-                mobile: string | null;
                 alternateMobile: string | null;
                 address: string | null;
                 city: string | null;
@@ -224,9 +224,9 @@ export declare class DocumentsService {
                 pincode: string | null;
                 occupation: string | null;
                 photoUrl: string | null;
+                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
                 customerCode: string;
                 signatureUrl: string | null;
-                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
                 biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
                 status: import("@prisma/client").$Enums.RecordLifecycle;
                 createdById: string;
@@ -268,10 +268,10 @@ export declare class DocumentsService {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
+                category: string;
                 status: import("@prisma/client").$Enums.JewelleryStatus;
                 loanId: string;
                 metalType: import("@prisma/client").$Enums.MetalType;
-                category: string;
                 description: string;
                 grossWeight: number;
                 stoneWeight: number;

@@ -6,12 +6,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 import { Module } from '@nestjs/common';
 import { IdGeneratorService } from './services/id-generator.service.js';
+import { StorageService } from './storage/storage.service.js';
+import { StorageController } from './storage/storage.controller.js';
 let CommonModule = class CommonModule {
 };
 CommonModule = __decorate([
     Module({
-        providers: [IdGeneratorService],
-        exports: [IdGeneratorService],
+        controllers: [StorageController],
+        providers: [IdGeneratorService, StorageService],
+        exports: [IdGeneratorService, StorageService],
     })
 ], CommonModule);
 export { CommonModule };

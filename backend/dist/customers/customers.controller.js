@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -18,6 +18,7 @@ import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { CustomersService } from './customers.service.js';
 import { CreateCustomerDto } from './dto/create-customer.dto.js';
+import { UpdateCustomerDto } from './dto/update-customer.dto.js';
 import { SearchCustomersDto } from './dto/search-customers.dto.js';
 import { UpdateCustomerPhotoDto } from './dto/update-customer-photo.dto.js';
 import { AddCustomerDocumentDto } from './dto/add-customer-document.dto.js';
@@ -29,6 +30,9 @@ let CustomersController = class CustomersController {
     create(dto, user) {
         return this.customersService.create(dto, user);
     }
+    update(id, dto, user) {
+        return this.customersService.update(id, dto, user);
+    }
     updatePhoto(id, dto, user) {
         return this.customersService.updatePhoto(id, dto.photoUrl, user);
     }
@@ -36,7 +40,7 @@ let CustomersController = class CustomersController {
         return this.customersService.addDocument(id, dto, user);
     }
     search(query) {
-        return this.customersService.search(query.q);
+        return this.customersService.search(query);
     }
     findOne(id) {
         return this.customersService.findById(id);
@@ -51,6 +55,16 @@ __decorate([
     __metadata("design:paramtypes", [CreateCustomerDto, Object]),
     __metadata("design:returntype", void 0)
 ], CustomersController.prototype, "create", null);
+__decorate([
+    Patch(':id'),
+    Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF),
+    __param(0, Param('id')),
+    __param(1, Body()),
+    __param(2, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, UpdateCustomerDto, Object]),
+    __metadata("design:returntype", void 0)
+], CustomersController.prototype, "update", null);
 __decorate([
     Post(':id/photo'),
     Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF),

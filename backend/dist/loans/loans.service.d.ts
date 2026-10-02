@@ -2,6 +2,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { IdGeneratorService } from '../common/services/id-generator.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { InterestService } from '../interest/interest.service.js';
+import { StorageService } from '../common/storage/storage.service.js';
 import { AuthenticatedUser } from '../common/decorators/current-user.decorator.js';
 import { CreateLoanDto } from './dto/create-loan.dto.js';
 import { DisburseLoanDto } from './dto/disburse-loan.dto.js';
@@ -14,7 +15,8 @@ export declare class LoansService {
     private readonly ids;
     private readonly audit;
     private readonly interestService;
-    constructor(prisma: PrismaService, ids: IdGeneratorService, audit: AuditService, interestService: InterestService);
+    private readonly storage;
+    constructor(prisma: PrismaService, ids: IdGeneratorService, audit: AuditService, interestService: InterestService, storage: StorageService);
     create(dto: CreateLoanDto, actor: AuthenticatedUser): Promise<{
         id: string;
         createdAt: Date;
@@ -41,10 +43,10 @@ export declare class LoansService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            mobile: string | null;
             fullName: string;
             guardianName: string | null;
             dateOfBirth: Date | null;
-            mobile: string | null;
             alternateMobile: string | null;
             address: string | null;
             city: string | null;
@@ -52,9 +54,9 @@ export declare class LoansService {
             pincode: string | null;
             occupation: string | null;
             photoUrl: string | null;
+            kycStatus: import("@prisma/client").$Enums.VerificationStatus;
             customerCode: string;
             signatureUrl: string | null;
-            kycStatus: import("@prisma/client").$Enums.VerificationStatus;
             biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
             status: import("@prisma/client").$Enums.RecordLifecycle;
             createdById: string;
@@ -107,10 +109,10 @@ export declare class LoansService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            category: string;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
             metalType: import("@prisma/client").$Enums.MetalType;
-            category: string;
             description: string;
             grossWeight: number;
             stoneWeight: number;
@@ -144,13 +146,13 @@ export declare class LoansService {
         payments: {
             id: string;
             createdAt: Date;
-            mode: import("@prisma/client").$Enums.PaymentMode;
             otherCharges: number;
             loanId: string;
             lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
             paymentDate: Date;
-            amount: number;
             paymentCode: string;
+            amount: number;
+            mode: import("@prisma/client").$Enums.PaymentMode;
             principalComponent: number;
             interestComponent: number;
             penaltyComponent: number;
@@ -165,8 +167,8 @@ export declare class LoansService {
             reason: string | null;
             createdById: string;
             loanId: string;
-            type: import("@prisma/client").$Enums.LedgerEntryType;
             amount: number;
+            type: import("@prisma/client").$Enums.LedgerEntryType;
             balanceAfter: number;
             relatedPaymentId: string | null;
         }[];
@@ -216,10 +218,10 @@ export declare class LoansService {
         items: {
             customer: {
                 id: string;
-                fullName: string;
                 mobile: string | null;
-                customerCode: string;
+                fullName: string;
                 kycStatus: import("@prisma/client").$Enums.VerificationStatus;
+                customerCode: string;
             };
             packet: {
                 id: string;
@@ -251,10 +253,10 @@ export declare class LoansService {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
+                mobile: string | null;
                 fullName: string;
                 guardianName: string | null;
                 dateOfBirth: Date | null;
-                mobile: string | null;
                 alternateMobile: string | null;
                 address: string | null;
                 city: string | null;
@@ -262,9 +264,9 @@ export declare class LoansService {
                 pincode: string | null;
                 occupation: string | null;
                 photoUrl: string | null;
+                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
                 customerCode: string;
                 signatureUrl: string | null;
-                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
                 biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
                 status: import("@prisma/client").$Enums.RecordLifecycle;
                 createdById: string;
@@ -274,10 +276,10 @@ export declare class LoansService {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
+                category: string;
                 status: import("@prisma/client").$Enums.JewelleryStatus;
                 loanId: string;
                 metalType: import("@prisma/client").$Enums.MetalType;
-                category: string;
                 description: string;
                 grossWeight: number;
                 stoneWeight: number;
@@ -297,13 +299,13 @@ export declare class LoansService {
             payments: {
                 id: string;
                 createdAt: Date;
-                mode: import("@prisma/client").$Enums.PaymentMode;
                 otherCharges: number;
                 loanId: string;
                 lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
                 paymentDate: Date;
-                amount: number;
                 paymentCode: string;
+                amount: number;
+                mode: import("@prisma/client").$Enums.PaymentMode;
                 principalComponent: number;
                 interestComponent: number;
                 penaltyComponent: number;
@@ -318,8 +320,8 @@ export declare class LoansService {
                 reason: string | null;
                 createdById: string;
                 loanId: string;
-                type: import("@prisma/client").$Enums.LedgerEntryType;
                 amount: number;
+                type: import("@prisma/client").$Enums.LedgerEntryType;
                 balanceAfter: number;
                 relatedPaymentId: string | null;
             }[];

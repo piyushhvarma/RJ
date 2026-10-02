@@ -61,8 +61,8 @@ export declare class PacketsController {
             loan: {
                 customer: {
                     id: string;
-                    fullName: string;
                     mobile: string | null;
+                    fullName: string;
                     customerCode: string;
                 };
                 id: string;

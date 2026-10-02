@@ -32,10 +32,10 @@ export declare class DocumentsController {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
+                mobile: string | null;
                 fullName: string;
                 guardianName: string | null;
                 dateOfBirth: Date | null;
-                mobile: string | null;
                 alternateMobile: string | null;
                 address: string | null;
                 city: string | null;
@@ -43,9 +43,9 @@ export declare class DocumentsController {
                 pincode: string | null;
                 occupation: string | null;
                 photoUrl: string | null;
+                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
                 customerCode: string;
                 signatureUrl: string | null;
-                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
                 biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
                 status: import("@prisma/client").$Enums.RecordLifecycle;
                 createdById: string;
@@ -87,10 +87,10 @@ export declare class DocumentsController {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
+                category: string;
                 status: import("@prisma/client").$Enums.JewelleryStatus;
                 loanId: string;
                 metalType: import("@prisma/client").$Enums.MetalType;
-                category: string;
                 description: string;
                 grossWeight: number;
                 stoneWeight: number;

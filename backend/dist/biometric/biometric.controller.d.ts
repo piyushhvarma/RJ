@@ -4,6 +4,10 @@ import { VerifyBiometricDto, FallbackBiometricDto } from './dto/verify-biometric
 export declare class BiometricController {
     private readonly biometricService;
     constructor(biometricService: BiometricService);
+    getStatus(): Promise<{
+        deviceId: string;
+        online: boolean;
+    }>;
     enroll(customerId: string, user: AuthenticatedUser): Promise<{
         id: string;
         deviceId: string;

@@ -9,6 +9,10 @@ export declare class BiometricService {
     private readonly ids;
     private readonly audit;
     constructor(adapter: BiometricAdapter, prisma: PrismaService, ids: IdGeneratorService, audit: AuditService);
+    getDeviceStatus(): Promise<{
+        deviceId: string;
+        online: boolean;
+    }>;
     enroll(customerId: string, actor: AuthenticatedUser): Promise<{
         id: string;
         deviceId: string;

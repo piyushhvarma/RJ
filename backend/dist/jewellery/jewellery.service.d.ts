@@ -1,6 +1,7 @@
 import { PrismaService } from '../prisma/prisma.service.js';
 import { IdGeneratorService } from '../common/services/id-generator.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { StorageService } from '../common/storage/storage.service.js';
 import { AuthenticatedUser } from '../common/decorators/current-user.decorator.js';
 import { CreateJewelleryItemDto } from './dto/create-jewellery-item.dto.js';
 import { AddJewelleryPhotoDto } from './dto/add-jewellery-photo.dto.js';
@@ -9,15 +10,16 @@ export declare class JewelleryService {
     private readonly prisma;
     private readonly ids;
     private readonly audit;
-    constructor(prisma: PrismaService, ids: IdGeneratorService, audit: AuditService);
+    private readonly storage;
+    constructor(prisma: PrismaService, ids: IdGeneratorService, audit: AuditService, storage: StorageService);
     create(dto: CreateJewelleryItemDto, actor: AuthenticatedUser): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        category: string;
         status: import("@prisma/client").$Enums.JewelleryStatus;
         loanId: string;
         metalType: import("@prisma/client").$Enums.MetalType;
-        category: string;
         description: string;
         grossWeight: number;
         stoneWeight: number;
@@ -55,10 +57,10 @@ export declare class JewelleryService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        category: string;
         status: import("@prisma/client").$Enums.JewelleryStatus;
         loanId: string;
         metalType: import("@prisma/client").$Enums.MetalType;
-        category: string;
         description: string;
         grossWeight: number;
         stoneWeight: number;
@@ -89,10 +91,10 @@ export declare class JewelleryService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            category: string;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
             metalType: import("@prisma/client").$Enums.MetalType;
-            category: string;
             description: string;
             grossWeight: number;
             stoneWeight: number;
@@ -125,8 +127,8 @@ export declare class JewelleryService {
             loan: {
                 customer: {
                     id: string;
-                    fullName: string;
                     mobile: string | null;
+                    fullName: string;
                     customerCode: string;
                 };
                 id: string;
@@ -145,10 +147,10 @@ export declare class JewelleryService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            category: string;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
             metalType: import("@prisma/client").$Enums.MetalType;
-            category: string;
             description: string;
             grossWeight: number;
             stoneWeight: number;

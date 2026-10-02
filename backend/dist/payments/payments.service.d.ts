@@ -12,13 +12,13 @@ export declare class PaymentsService {
     receive(dto: ReceivePaymentDto, actor: AuthenticatedUser): Promise<{
         id: string;
         createdAt: Date;
-        mode: import("@prisma/client").$Enums.PaymentMode;
         otherCharges: number;
         loanId: string;
         lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
         paymentDate: Date;
-        amount: number;
         paymentCode: string;
+        amount: number;
+        mode: import("@prisma/client").$Enums.PaymentMode;
         principalComponent: number;
         interestComponent: number;
         penaltyComponent: number;
@@ -30,13 +30,13 @@ export declare class PaymentsService {
     findByLoan(loanId: string): Promise<{
         id: string;
         createdAt: Date;
-        mode: import("@prisma/client").$Enums.PaymentMode;
         otherCharges: number;
         loanId: string;
         lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
         paymentDate: Date;
-        amount: number;
         paymentCode: string;
+        amount: number;
+        mode: import("@prisma/client").$Enums.PaymentMode;
         principalComponent: number;
         interestComponent: number;
         penaltyComponent: number;
@@ -54,13 +54,13 @@ export declare class PaymentsService {
         items: {
             id: string;
             createdAt: Date;
-            mode: import("@prisma/client").$Enums.PaymentMode;
             otherCharges: number;
             loanId: string;
             lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
             paymentDate: Date;
-            amount: number;
             paymentCode: string;
+            amount: number;
+            mode: import("@prisma/client").$Enums.PaymentMode;
             principalComponent: number;
             interestComponent: number;
             penaltyComponent: number;
@@ -97,8 +97,8 @@ export declare class PaymentsService {
             loan: {
                 customer: {
                     id: string;
-                    fullName: string;
                     mobile: string | null;
+                    fullName: string;
                     customerCode: string;
                 };
                 id: string;

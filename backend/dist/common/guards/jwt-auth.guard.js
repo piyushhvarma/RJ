@@ -17,10 +17,19 @@ let JwtAuthGuard = class JwtAuthGuard {
     async canActivate(context) {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers['authorization'];
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            throw new UnauthorizedException('Missing or malformed Authorization header');
+        let token;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.slice('Bearer '.length);
         }
-        const token = authHeader.slice('Bearer '.length);
+        else if (request.query && typeof request.query.token === 'string' && request.query.token.length > 0) {
+            token = request.query.token;
+        }
+        else if (request.cookies && typeof request.cookies.gl_token === 'string' && request.cookies.gl_token.length > 0) {
+            token = request.cookies.gl_token;
+        }
+        if (!token) {
+            throw new UnauthorizedException('Authentication required: Missing session token in header, query param, or cookie');
+        }
         try {
             const payload = await this.jwtService.verifyAsync(token);
             request.user = {

@@ -1,6 +1,7 @@
 import type { AuthenticatedUser } from '../common/decorators/current-user.decorator.js';
 import { CustomersService } from './customers.service.js';
 import { CreateCustomerDto } from './dto/create-customer.dto.js';
+import { UpdateCustomerDto } from './dto/update-customer.dto.js';
 import { SearchCustomersDto } from './dto/search-customers.dto.js';
 import { UpdateCustomerPhotoDto } from './dto/update-customer-photo.dto.js';
 import { AddCustomerDocumentDto } from './dto/add-customer-document.dto.js';
@@ -11,10 +12,10 @@ export declare class CustomersController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        mobile: string | null;
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
-        mobile: string | null;
         alternateMobile: string | null;
         address: string | null;
         city: string | null;
@@ -22,9 +23,32 @@ export declare class CustomersController {
         pincode: string | null;
         occupation: string | null;
         photoUrl: string | null;
+        kycStatus: import("@prisma/client").$Enums.VerificationStatus;
         customerCode: string;
         signatureUrl: string | null;
+        biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
+        status: import("@prisma/client").$Enums.RecordLifecycle;
+        createdById: string;
+        legacySourceRef: string | null;
+    }>;
+    update(id: string, dto: UpdateCustomerDto, user: AuthenticatedUser): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        mobile: string | null;
+        fullName: string;
+        guardianName: string | null;
+        dateOfBirth: Date | null;
+        alternateMobile: string | null;
+        address: string | null;
+        city: string | null;
+        state: string | null;
+        pincode: string | null;
+        occupation: string | null;
+        photoUrl: string | null;
         kycStatus: import("@prisma/client").$Enums.VerificationStatus;
+        customerCode: string;
+        signatureUrl: string | null;
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
         status: import("@prisma/client").$Enums.RecordLifecycle;
         createdById: string;
@@ -34,10 +58,10 @@ export declare class CustomersController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        mobile: string | null;
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
-        mobile: string | null;
         alternateMobile: string | null;
         address: string | null;
         city: string | null;
@@ -45,9 +69,9 @@ export declare class CustomersController {
         pincode: string | null;
         occupation: string | null;
         photoUrl: string | null;
+        kycStatus: import("@prisma/client").$Enums.VerificationStatus;
         customerCode: string;
         signatureUrl: string | null;
-        kycStatus: import("@prisma/client").$Enums.VerificationStatus;
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
         status: import("@prisma/client").$Enums.RecordLifecycle;
         createdById: string;
@@ -68,28 +92,42 @@ export declare class CustomersController {
         verifiedAt: Date | null;
     }>;
     search(query: SearchCustomersDto): Promise<{
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        fullName: string;
-        guardianName: string | null;
-        dateOfBirth: Date | null;
-        mobile: string | null;
-        alternateMobile: string | null;
-        address: string | null;
-        city: string | null;
-        state: string | null;
-        pincode: string | null;
-        occupation: string | null;
-        photoUrl: string | null;
-        customerCode: string;
-        signatureUrl: string | null;
-        kycStatus: import("@prisma/client").$Enums.VerificationStatus;
-        biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
-        status: import("@prisma/client").$Enums.RecordLifecycle;
-        createdById: string;
-        legacySourceRef: string | null;
-    }[]>;
+        items: ({
+            biometric: {
+                status: import("@prisma/client").$Enums.BiometricStatus;
+            } | null;
+            _count: {
+                documents: number;
+                loans: number;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            mobile: string | null;
+            fullName: string;
+            guardianName: string | null;
+            dateOfBirth: Date | null;
+            alternateMobile: string | null;
+            address: string | null;
+            city: string | null;
+            state: string | null;
+            pincode: string | null;
+            occupation: string | null;
+            photoUrl: string | null;
+            kycStatus: import("@prisma/client").$Enums.VerificationStatus;
+            customerCode: string;
+            signatureUrl: string | null;
+            biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
+            status: import("@prisma/client").$Enums.RecordLifecycle;
+            createdById: string;
+            legacySourceRef: string | null;
+        })[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }>;
     findOne(id: string): Promise<{
         documents: {
             id: string;
@@ -140,10 +178,10 @@ export declare class CustomersController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        mobile: string | null;
         fullName: string;
         guardianName: string | null;
         dateOfBirth: Date | null;
-        mobile: string | null;
         alternateMobile: string | null;
         address: string | null;
         city: string | null;
@@ -151,9 +189,9 @@ export declare class CustomersController {
         pincode: string | null;
         occupation: string | null;
         photoUrl: string | null;
+        kycStatus: import("@prisma/client").$Enums.VerificationStatus;
         customerCode: string;
         signatureUrl: string | null;
-        kycStatus: import("@prisma/client").$Enums.VerificationStatus;
         biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
         status: import("@prisma/client").$Enums.RecordLifecycle;
         createdById: string;

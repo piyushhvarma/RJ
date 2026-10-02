@@ -7,14 +7,54 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Controller, Get, UseGuards } from '@nestjs/common';
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+import { Body, Controller, Get, Param, Post, Query, Res, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
+import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { ReportsService } from './reports.service.js';
 let ReportsController = class ReportsController {
     reportsService;
     constructor(reportsService) {
         this.reportsService = reportsService;
+    }
+    getDailyOperations(date) {
+        return this.reportsService.getDailyOperations(date);
+    }
+    recordCashReconciliation(dto, user) {
+        return this.reportsService.recordDailyCashReconciliation(dto, user);
+    }
+    recordPhysicalReconciliation(dto, user) {
+        return this.reportsService.recordPhysicalInventoryReconciliation(dto, user);
+    }
+    getFinancialPortfolio(range, asOfDate) {
+        return this.reportsService.getFinancialPortfolio({ range, asOfDate });
+    }
+    getPeriodicTrends(groupBy, startDate, endDate, limit) {
+        return this.reportsService.getPeriodicTrends({
+            groupBy: groupBy || 'month',
+            startDate,
+            endDate,
+            limit: limit ? parseInt(limit, 10) : undefined,
+        });
+    }
+    getCustodyReport() {
+        return this.reportsService.getCustodyReport();
+    }
+    getCustomerReport() {
+        return this.reportsService.getCustomerReport();
+    }
+    getStaffAccountabilityReport() {
+        return this.reportsService.getStaffAccountabilityReport();
+    }
+    async exportCsv(reportKey, res, groupBy, startDate, endDate) {
+        const csvContent = await this.reportsService.generateCsv(reportKey, { groupBy, startDate, endDate });
+        const filename = `${reportKey}-${groupBy || 'all'}-${new Date().toISOString().split('T')[0]}.csv`;
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        return res.send(csvContent);
     }
     getPortfolioHealth() {
         return this.reportsService.getPortfolioHealth();
@@ -29,6 +69,76 @@ let ReportsController = class ReportsController {
         return this.reportsService.getCollectionsSummary();
     }
 };
+__decorate([
+    Get('daily-operations'),
+    __param(0, Query('date')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ReportsController.prototype, "getDailyOperations", null);
+__decorate([
+    Post('daily-cash-reconciliation'),
+    __param(0, Body()),
+    __param(1, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], ReportsController.prototype, "recordCashReconciliation", null);
+__decorate([
+    Post('physical-inventory-reconciliation'),
+    __param(0, Body()),
+    __param(1, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], ReportsController.prototype, "recordPhysicalReconciliation", null);
+__decorate([
+    Get('financial-portfolio'),
+    __param(0, Query('range')),
+    __param(1, Query('asOfDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], ReportsController.prototype, "getFinancialPortfolio", null);
+__decorate([
+    Get('periodic-trends'),
+    __param(0, Query('groupBy')),
+    __param(1, Query('startDate')),
+    __param(2, Query('endDate')),
+    __param(3, Query('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String]),
+    __metadata("design:returntype", void 0)
+], ReportsController.prototype, "getPeriodicTrends", null);
+__decorate([
+    Get('custody'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ReportsController.prototype, "getCustodyReport", null);
+__decorate([
+    Get('customers'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ReportsController.prototype, "getCustomerReport", null);
+__decorate([
+    Get('staff-accountability'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ReportsController.prototype, "getStaffAccountabilityReport", null);
+__decorate([
+    Get('export/:reportKey'),
+    __param(0, Param('reportKey')),
+    __param(1, Res()),
+    __param(2, Query('groupBy')),
+    __param(3, Query('startDate')),
+    __param(4, Query('endDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, String, String, String]),
+    __metadata("design:returntype", Promise)
+], ReportsController.prototype, "exportCsv", null);
 __decorate([
     Get('portfolio'),
     __metadata("design:type", Function),

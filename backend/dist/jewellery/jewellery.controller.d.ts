@@ -10,10 +10,10 @@ export declare class JewelleryController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        category: string;
         status: import("@prisma/client").$Enums.JewelleryStatus;
         loanId: string;
         metalType: import("@prisma/client").$Enums.MetalType;
-        category: string;
         description: string;
         grossWeight: number;
         stoneWeight: number;
@@ -87,10 +87,10 @@ export declare class JewelleryController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            category: string;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
             metalType: import("@prisma/client").$Enums.MetalType;
-            category: string;
             description: string;
             grossWeight: number;
             stoneWeight: number;
@@ -123,8 +123,8 @@ export declare class JewelleryController {
             loan: {
                 customer: {
                     id: string;
-                    fullName: string;
                     mobile: string | null;
+                    fullName: string;
                     customerCode: string;
                 };
                 id: string;
@@ -143,10 +143,10 @@ export declare class JewelleryController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            category: string;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
             metalType: import("@prisma/client").$Enums.MetalType;
-            category: string;
             description: string;
             grossWeight: number;
             stoneWeight: number;
