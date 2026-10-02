@@ -53,22 +53,45 @@ export async function markDocumentSigned(documentId: string): Promise<DocumentRe
   return apiFetch<DocumentRecord>(`/documents/${documentId}/sign`, { method: 'POST' });
 }
 
+import { getSession } from '../auth/session';
+
+function withAuthToken(url: string): string {
+  const token = getSession()?.accessToken;
+  return token ? `${url}?token=${encodeURIComponent(token)}` : url;
+}
+
 export function getPledgeAgreementPdfUrl(loanId: string): string {
-  return `${API_BASE_URL}/documents/pledge-agreement/${loanId}/pdf`;
+  return withAuthToken(`${API_BASE_URL}/documents/pledge-agreement/${loanId}/pdf`);
 }
 
 export function getJewelleryAnnexurePdfUrl(loanId: string): string {
-  return `${API_BASE_URL}/documents/jewellery-annexure/${loanId}/pdf`;
+  return withAuthToken(`${API_BASE_URL}/documents/jewellery-annexure/${loanId}/pdf`);
 }
 
 export function getPaymentReceiptPdfUrl(paymentId: string): string {
-  return `${API_BASE_URL}/documents/payment-receipt/${paymentId}/pdf`;
+  return withAuthToken(`${API_BASE_URL}/documents/payment-receipt/${paymentId}/pdf`);
 }
 
 export function getClosureReceiptPdfUrl(loanId: string): string {
-  return `${API_BASE_URL}/documents/closure-receipt/${loanId}/pdf`;
+  return withAuthToken(`${API_BASE_URL}/documents/closure-receipt/${loanId}/pdf`);
 }
 
 export function getRenewalReceiptPdfUrl(loanId: string): string {
-  return `${API_BASE_URL}/documents/renewal-receipt/${loanId}/pdf`;
+  return withAuthToken(`${API_BASE_URL}/documents/renewal-receipt/${loanId}/pdf`);
+}
+
+/**
+ * Fetches PDF using Authorization header and opens it as a secure Blob URL
+ */
+export async function openSecurePdf(url: string): Promise<void> {
+  const session = getSession();
+  const res = await fetch(url, {
+    headers: session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {},
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to download secure PDF: HTTP ${res.status}`);
+  }
+  const blob = await res.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  window.open(blobUrl, '_blank');
 }

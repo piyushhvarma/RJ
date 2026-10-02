@@ -329,10 +329,74 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Hardware & Peripherals */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs space-y-3">
-                        <div className="flex items-center gap-2">
-                            <Fingerprint className="w-5 h-5 text-gray-700" />
-                            <h4 className="font-bold text-gray-900 text-sm">Connected Hardware</h4>
+                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Fingerprint className="w-5 h-5 text-gray-700" />
+                                <h4 className="font-bold text-gray-900 text-sm">Connected Hardware & Peripherals</h4>
+                            </div>
+                            <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                Counter Devices
+                            </span>
+                        </div>
+
+                        {/* Dual Webcam Setup */}
+                        <div className="p-3.5 rounded-lg border border-amber-200 bg-amber-50/40 space-y-2.5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                                    <span>Dual-Webcam Setup (Customer vs Jewellery)</span>
+                                </span>
+                                <span className="text-[10px] bg-amber-100 text-amber-900 font-semibold px-2 py-0.5 rounded">
+                                    Multi-Camera
+                                </span>
+                            </div>
+                            <p className="text-[11px] text-gray-600">
+                                Configure dedicated camera devices so customer portraits and ornament macro snapshots default to their separate cameras automatically.
+                            </p>
+
+                            <div className="space-y-2 pt-1 text-xs">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                                        👤 Customer Portrait Camera (Webcam A)
+                                    </label>
+                                    <select
+                                        className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                        defaultValue={typeof window !== 'undefined' ? localStorage.getItem('preferred_camera_customer') || '' : ''}
+                                        onChange={(e) => {
+                                            if (typeof window !== 'undefined') {
+                                                localStorage.setItem('preferred_camera_customer', e.target.value);
+                                                setSavedNotice(true);
+                                                setTimeout(() => setSavedNotice(false), 2000);
+                                            }
+                                        }}
+                                    >
+                                        <option value="">Default Front / Built-in Camera (Webcam A)</option>
+                                        <option value="external_usb_1">USB Webcam 1 (Eye-Level / Counter Facing)</option>
+                                        <option value="external_usb_2">USB Webcam 2 (Overhead / Inspection Table)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                                        💍 Jewellery Ornament Macro Camera (Webcam B)
+                                    </label>
+                                    <select
+                                        className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                        defaultValue={typeof window !== 'undefined' ? localStorage.getItem('preferred_camera_jewellery') || '' : ''}
+                                        onChange={(e) => {
+                                            if (typeof window !== 'undefined') {
+                                                localStorage.setItem('preferred_camera_jewellery', e.target.value);
+                                                setSavedNotice(true);
+                                                setTimeout(() => setSavedNotice(false), 2000);
+                                            }
+                                        }}
+                                    >
+                                        <option value="">Default Document / Macro Camera (Webcam B)</option>
+                                        <option value="external_usb_2">USB Webcam 2 (Overhead / Inspection Table)</option>
+                                        <option value="external_usb_1">USB Webcam 1 (Eye-Level / Counter Facing)</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="space-y-2 text-xs">

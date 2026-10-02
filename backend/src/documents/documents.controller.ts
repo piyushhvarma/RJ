@@ -13,17 +13,16 @@ import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import type { AuthenticatedUser } from '../common/decorators/current-user.decorator.js';
 import { DocumentsService } from './documents.service.js';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('documents')
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('loan/:loanId')
   findByLoan(@Param('loanId') loanId: string) {
     return this.documentsService.findByLoan(loanId);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('item/:id')
   findById(@Param('id') id: string) {
     return this.documentsService.getDocumentById(id);
@@ -120,13 +119,11 @@ export class DocumentsController {
     res.end(buffer);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Post(':id/print')
   markPrinted(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.documentsService.markPrinted(id, user);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Post(':id/sign')
   markSigned(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.documentsService.markSigned(id, user);
