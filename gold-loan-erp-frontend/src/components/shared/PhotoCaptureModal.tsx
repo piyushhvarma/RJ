@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, Upload, X, Check, RefreshCw, AlertCircle } from 'lucide-react';
+import { Camera, Upload, X, Check, RefreshCw, AlertCircle, Video, Settings2 } from 'lucide-react';
+
+export type PhotoCaptureTarget = 'customer' | 'jewellery' | 'general';
 
 interface PhotoCaptureModalProps {
     isOpen: boolean;
@@ -11,6 +13,7 @@ interface PhotoCaptureModalProps {
     subtitle?: string;
     showAngleSelect?: boolean;
     defaultAngle?: string;
+    captureTarget?: PhotoCaptureTarget;
 }
 
 const JEWELLERY_ANGLES = [
@@ -29,13 +32,30 @@ export function PhotoCaptureModal({
     subtitle = 'Take a live snapshot with the camera or upload an image file from your device.',
     showAngleSelect = false,
     defaultAngle = 'front',
+    captureTarget,
 }: PhotoCaptureModalProps) {
+    // Determine target (customer portrait vs jewellery ornament)
+    const effectiveTarget: PhotoCaptureTarget =
+        captureTarget ??
+        (title.toLowerCase().includes('customer') || title.toLowerCase().includes('borrower')
+            ? 'customer'
+            : title.toLowerCase().includes('jewellery') ||
+              title.toLowerCase().includes('ornament') ||
+              title.toLowerCase().includes('item')
+            ? 'jewellery'
+            : 'general');
+
     const [mode, setMode] = useState<'camera' | 'upload'>('camera');
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [angle, setAngle] = useState(defaultAngle);
     const [cameraError, setCameraError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isCameraActive, setIsCameraActive] = useState(false);
+
+    // Multi-camera device management
+    const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+    const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
+    const [justSavedDefault, setJustSavedDefault] = useState(false);
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
@@ -49,45 +69,154 @@ export function PhotoCaptureModal({
         setIsCameraActive(false);
     }, []);
 
-    const startCamera = useCallback(async () => {
-        stopCamera();
-        setCameraError(null);
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 },
-                    facingMode: 'environment',
-                },
-                audio: false,
-            });
-            streamRef.current = stream;
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                await videoRef.current.play();
-                setIsCameraActive(true);
-            }
-        } catch (err: any) {
-            setCameraError(
-                err?.name === 'NotAllowedError'
-                    ? 'Camera access permission denied. Please allow camera access in browser settings or use file upload.'
-                    : 'Could not connect to camera device. Please switch to file upload.'
-            );
-            setIsCameraActive(false);
-        }
-    }, [stopCamera]);
-
-    useEffect(() => {
-        if (isOpen && mode === 'camera' && !previewUrl) {
-            startCamera();
-        } else {
+    // Stop and start camera with specific deviceId
+    const startCamera = useCallback(
+        async (deviceIdToUse?: string) => {
             stopCamera();
+            setCameraError(null);
+
+            if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+                setCameraError('Webcam access is not supported by your browser environment.');
+                return;
+            }
+
+            try {
+                const constraints: MediaStreamConstraints = {
+                    video: deviceIdToUse
+                        ? {
+                              deviceId: { exact: deviceIdToUse },
+                              width: { ideal: 1280 },
+                              height: { ideal: 720 },
+                          }
+                        : {
+                              width: { ideal: 1280 },
+                              height: { ideal: 720 },
+                              facingMode: effectiveTarget === 'jewellery' ? 'environment' : 'user',
+                          },
+                    audio: false,
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                streamRef.current = stream;
+
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                    await videoRef.current.play();
+                    setIsCameraActive(true);
+                }
+
+                // Query and enumerate available cameras after permission is granted
+                const allDevices = await navigator.mediaDevices.enumerateDevices();
+                const cameras = allDevices.filter((d) => d.kind === 'videoinput');
+                setVideoDevices(cameras);
+
+                // Identify the active track's deviceId
+                const activeTrack = stream.getVideoTracks()[0];
+                const activeSettings = activeTrack.getSettings();
+                const activeId = activeSettings.deviceId || deviceIdToUse || cameras[0]?.deviceId;
+
+                if (activeId && (!selectedDeviceId || deviceIdToUse)) {
+                    setSelectedDeviceId(activeId);
+                }
+            } catch (err: any) {
+                console.error('Camera stream error:', err);
+                setCameraError(
+                    err?.name === 'NotAllowedError'
+                        ? 'Camera access permission denied. Please allow camera access in browser settings or use file upload.'
+                        : err?.name === 'OverconstrainedError'
+                        ? 'Selected camera device is not available. Please pick another camera or use file upload.'
+                        : 'Could not connect to camera device. Please switch camera or upload file.'
+                );
+                setIsCameraActive(false);
+            }
+        },
+        [stopCamera, effectiveTarget, selectedDeviceId]
+    );
+
+    // Initial camera resolution on modal open
+    useEffect(() => {
+        if (!isOpen || mode !== 'camera' || previewUrl) {
+            stopCamera();
+            return;
         }
+
+        const initCamera = async () => {
+            // Check localStorage for saved camera preference
+            const savedCustomerCam = localStorage.getItem('preferred_camera_customer');
+            const savedJewelleryCam = localStorage.getItem('preferred_camera_jewellery');
+
+            let preferredId =
+                effectiveTarget === 'customer'
+                    ? savedCustomerCam
+                    : effectiveTarget === 'jewellery'
+                    ? savedJewelleryCam
+                    : null;
+
+            // Attempt enumerating devices first if permission was previously granted
+            try {
+                const allDevices = await navigator.mediaDevices.enumerateDevices();
+                const cameras = allDevices.filter((d) => d.kind === 'videoinput');
+                setVideoDevices(cameras);
+
+                if (cameras.length > 0) {
+                    // Check if preferredId exists among connected cameras
+                    const exists = cameras.some((c) => c.deviceId === preferredId);
+                    if (!exists) {
+                        // Heuristic default:
+                        // Customer photo -> front/integrated camera or first camera (Webcam A)
+                        // Jewellery photo -> USB/external/macro camera or second camera (Webcam B)
+                        if (effectiveTarget === 'jewellery' && cameras.length >= 2) {
+                            const extCam = cameras.find(
+                                (c) =>
+                                    c.label.toLowerCase().includes('usb') ||
+                                    c.label.toLowerCase().includes('external') ||
+                                    c.label.toLowerCase().includes('back') ||
+                                    c.label.toLowerCase().includes('rear')
+                            );
+                            preferredId = extCam ? extCam.deviceId : cameras[1].deviceId;
+                        } else {
+                            const frontCam = cameras.find(
+                                (c) =>
+                                    c.label.toLowerCase().includes('integrated') ||
+                                    c.label.toLowerCase().includes('front') ||
+                                    c.label.toLowerCase().includes('face')
+                            );
+                            preferredId = frontCam ? frontCam.deviceId : cameras[0].deviceId;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not pre-enumerate devices before stream:', e);
+            }
+
+            if (preferredId) {
+                setSelectedDeviceId(preferredId);
+                await startCamera(preferredId);
+            } else {
+                await startCamera();
+            }
+        };
+
+        initCamera();
 
         return () => {
             stopCamera();
         };
-    }, [isOpen, mode, previewUrl, startCamera, stopCamera]);
+    }, [isOpen, mode, previewUrl, effectiveTarget]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleSwitchCamera = async (newDeviceId: string) => {
+        setSelectedDeviceId(newDeviceId);
+        // Persist preference for this specific photo target
+        if (effectiveTarget === 'customer') {
+            localStorage.setItem('preferred_camera_customer', newDeviceId);
+        } else if (effectiveTarget === 'jewellery') {
+            localStorage.setItem('preferred_camera_jewellery', newDeviceId);
+        }
+        setJustSavedDefault(true);
+        setTimeout(() => setJustSavedDefault(false), 3000);
+
+        await startCamera(newDeviceId);
+    };
 
     if (!isOpen) return null;
 
@@ -102,7 +231,7 @@ export function PhotoCaptureModal({
         if (!videoRef.current) return;
         const video = videoRef.current;
         const canvas = document.createElement('canvas');
-        const maxDim = 1024;
+        const maxDim = 1200;
         let width = video.videoWidth || 640;
         let height = video.videoHeight || 480;
 
@@ -121,7 +250,7 @@ export function PhotoCaptureModal({
         const ctx = canvas.getContext('2d');
         if (ctx) {
             ctx.drawImage(video, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
             setPreviewUrl(dataUrl);
             stopCamera();
         }
@@ -155,7 +284,7 @@ export function PhotoCaptureModal({
                 const ctx = canvas.getContext('2d');
                 if (ctx) {
                     ctx.drawImage(img, 0, 0, width, height);
-                    const compressed = canvas.toDataURL('image/jpeg', 0.85);
+                    const compressed = canvas.toDataURL('image/jpeg', 0.88);
                     setPreviewUrl(compressed);
                 }
             };
@@ -167,7 +296,7 @@ export function PhotoCaptureModal({
     const handleRetake = () => {
         setPreviewUrl(null);
         if (mode === 'camera') {
-            startCamera();
+            startCamera(selectedDeviceId);
         }
     };
 
@@ -183,12 +312,29 @@ export function PhotoCaptureModal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]">
                 {/* Modal Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/70">
                     <div>
-                        <h3 className="text-base font-bold text-gray-900">{title}</h3>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-base font-bold text-gray-900">{title}</h3>
+                            <span
+                                className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                                    effectiveTarget === 'customer'
+                                        ? 'bg-blue-100 text-blue-800'
+                                        : effectiveTarget === 'jewellery'
+                                        ? 'bg-amber-100 text-amber-800'
+                                        : 'bg-gray-100 text-gray-700'
+                                }`}
+                            >
+                                {effectiveTarget === 'customer'
+                                    ? 'Customer Camera'
+                                    : effectiveTarget === 'jewellery'
+                                    ? 'Jewellery Macro Cam'
+                                    : 'Photo Capture'}
+                            </span>
+                        </div>
                         <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
                     </div>
                     <button
@@ -200,7 +346,7 @@ export function PhotoCaptureModal({
                 </div>
 
                 <div className="p-6 space-y-4 overflow-y-auto">
-                    {/* Mode Selector Tabs (if not showing captured preview) */}
+                    {/* Mode Selector Tabs */}
                     {!previewUrl && (
                         <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-xl">
                             <button
@@ -208,6 +354,7 @@ export function PhotoCaptureModal({
                                 onClick={() => {
                                     setMode('camera');
                                     setCameraError(null);
+                                    startCamera(selectedDeviceId);
                                 }}
                                 className={`flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all ${
                                     mode === 'camera'
@@ -231,6 +378,76 @@ export function PhotoCaptureModal({
                             >
                                 <Upload className="w-4 h-4" /> Upload File
                             </button>
+                        </div>
+                    )}
+
+                    {/* Camera Device Selector Dropdown & Quick Toggles */}
+                    {!previewUrl && mode === 'camera' && (
+                        <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                                    <Video className="w-3.5 h-3.5 text-amber-600" />
+                                    <span>Active Camera Device</span>
+                                </label>
+                                {justSavedDefault && (
+                                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 animate-fade-in flex items-center gap-1">
+                                        <Check className="w-3 h-3" /> Saved as default for {effectiveTarget}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Dropdown for selecting any connected camera */}
+                            <select
+                                value={selectedDeviceId}
+                                onChange={(e) => handleSwitchCamera(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            >
+                                {videoDevices.length > 0 ? (
+                                    videoDevices.map((device, idx) => (
+                                        <option key={device.deviceId || idx} value={device.deviceId}>
+                                            {device.label || `Camera ${idx + 1} (${device.deviceId.slice(0, 8)}…)`}
+                                            {device.deviceId === selectedDeviceId ? ' — [Active]' : ''}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option value="">Default System Webcam</option>
+                                )}
+                            </select>
+
+                            {/* Quick Switcher Buttons if 2 or more cameras detected */}
+                            {videoDevices.length >= 2 && (
+                                <div className="pt-1 flex items-center gap-2">
+                                    <span className="text-[10px] font-medium text-gray-400">Quick Switch:</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const dev = videoDevices[0]?.deviceId;
+                                            if (dev) handleSwitchCamera(dev);
+                                        }}
+                                        className={`px-2 py-1 rounded text-[11px] font-semibold transition-colors flex items-center gap-1 border ${
+                                            selectedDeviceId === videoDevices[0]?.deviceId
+                                                ? 'bg-amber-100 border-amber-300 text-amber-900'
+                                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        <span>👤 Webcam A (Customer)</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const dev = videoDevices[1]?.deviceId;
+                                            if (dev) handleSwitchCamera(dev);
+                                        }}
+                                        className={`px-2 py-1 rounded text-[11px] font-semibold transition-colors flex items-center gap-1 border ${
+                                            selectedDeviceId === videoDevices[1]?.deviceId
+                                                ? 'bg-amber-100 border-amber-300 text-amber-900'
+                                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        <span>💍 Webcam B (Jewellery)</span>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -302,7 +519,7 @@ export function PhotoCaptureModal({
                                 {!isCameraActive && !cameraError && (
                                     <div className="flex flex-col items-center gap-2 text-gray-400 text-xs">
                                         <RefreshCw className="w-6 h-6 animate-spin text-amber-500" />
-                                        <span>Initializing camera…</span>
+                                        <span>Connecting to selected camera…</span>
                                     </div>
                                 )}
                                 {cameraError && (
