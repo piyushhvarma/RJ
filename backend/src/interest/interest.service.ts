@@ -86,13 +86,54 @@ export class InterestService {
       throw new NotFoundException(`Loan with ID ${loanId} not found`);
     }
 
-    const targetDate = asOfDate;
     const startDate = loan.sanctionedDate ?? loan.createdAt;
+    const isClosed = loan.status === 'CLOSED';
+
+    // If loan is already closed, determine closure/settlement date
+    const lastPaymentDate = loan.payments.length > 0 
+      ? loan.payments[loan.payments.length - 1].paymentDate 
+      : loan.updatedAt;
+    const targetDate = isClosed && asOfDate > lastPaymentDate ? lastPaymentDate : asOfDate;
     const daysElapsed = getCalendarDays(startDate, targetDate);
 
     const annualRate = loan.interestRate ?? loan.scheme?.interestRate ?? 18; // Default 18% p.a.
     const interestType = loan.interestType ?? loan.scheme?.interestType ?? InterestType.MONTHLY_SIMPLE;
     const monthlyRate = round2(annualRate / 12);
+
+    // If the loan is marked CLOSED, all obligations are fulfilled
+    if (isClosed) {
+      const totalInterestPaid = round2(
+        loan.payments.reduce((sum, p) => sum + (p.interestComponent || 0), 0),
+      );
+      const penaltyPaid = round2(
+        loan.payments.reduce((sum, p) => sum + (p.penaltyComponent || 0), 0),
+      );
+      return {
+        loanId: loan.id,
+        loanCode: loan.loanCode,
+        asOfDate: targetDate,
+        sanctionedDate: startDate,
+        maturityDate: loan.maturityDate,
+        daysElapsed,
+        principalOutstanding: 0,
+        interestRate: annualRate,
+        interestType,
+        monthlyInterestRate: monthlyRate,
+        totalInterestAccrued: totalInterestPaid,
+        totalInterestPaid,
+        interestDue: 0,
+        isOverdue: false,
+        overdueDays: 0,
+        gracePeriodDays: 7,
+        penaltyRate: 0,
+        penaltyAccrued: penaltyPaid,
+        penaltyPaid,
+        penaltyDue: 0,
+        otherChargesDue: 0,
+        totalDue: 0,
+        epochs: [],
+      };
+    }
 
     // 1. Reconstruct Principal Timeline across Ledger Entries
     // We identify all events that changed the principal balance (DISBURSEMENT, PRINCIPAL_PAID, REVERSAL).
@@ -104,8 +145,13 @@ export class InterestService {
         entry.type === 'PRINCIPAL_PAID' ||
         entry.type === 'REVERSAL'
       ) {
+        // For disbursement, use sanctionedDate if available, else entry.createdAt
+        const eventDate = entry.type === 'DISBURSEMENT' 
+          ? (loan.sanctionedDate ?? entry.createdAt)
+          : entry.createdAt;
+
         principalEvents.push({
-          date: entry.createdAt,
+          date: eventDate,
           type: entry.type,
           amount: entry.amount,
           balanceAfter: entry.balanceAfter,

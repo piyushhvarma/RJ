@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { IdGeneratorService } from '../common/services/id-generator.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { InterestService } from '../interest/interest.service.js';
+import { StorageService } from '../common/storage/storage.service.js';
 import { AuthenticatedUser } from '../common/decorators/current-user.decorator.js';
 import { CreateLoanDto } from './dto/create-loan.dto.js';
 import { DisburseLoanDto } from './dto/disburse-loan.dto.js';
@@ -18,6 +19,7 @@ export class LoansService {
     private readonly ids: IdGeneratorService,
     private readonly audit: AuditService,
     private readonly interestService: InterestService,
+    private readonly storage: StorageService,
   ) {}
 
   async create(dto: CreateLoanDto, actor: AuthenticatedUser) {
@@ -711,10 +713,10 @@ export class LoansService {
       // Update customer photo or signature if newly provided
       const custUpdate: any = {};
       if (dto.customerPhotoUrl && dto.customerPhotoUrl.length > 50) {
-        custUpdate.photoUrl = dto.customerPhotoUrl;
+        custUpdate.photoUrl = (await this.storage.normalizeAndStore(dto.customerPhotoUrl, 'customers')) ?? dto.customerPhotoUrl;
       }
       if (dto.customerSignatureUrl && dto.customerSignatureUrl.length > 50) {
-        custUpdate.signatureUrl = dto.customerSignatureUrl;
+        custUpdate.signatureUrl = (await this.storage.normalizeAndStore(dto.customerSignatureUrl, 'signatures')) ?? dto.customerSignatureUrl;
       }
       if (Object.keys(custUpdate).length > 0) {
         await tx.customer.update({
@@ -782,10 +784,11 @@ export class LoansService {
         if (it.photos && it.photos.length > 0) {
           for (const photo of it.photos) {
             if (photo && photo.length > 50) {
+              const fileUrl = (await this.storage.normalizeAndStore(photo, 'jewellery')) ?? photo;
               await tx.jewelleryPhoto.create({
                 data: {
                   jewelleryItemId: item.id,
-                  fileUrl: photo,
+                  fileUrl,
                   angle: 'counter_capture',
                   capturedById: actor.id,
                 },

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service.js';
 import { IdGeneratorService } from '../common/services/id-generator.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { StorageService } from '../common/storage/storage.service.js';
 import { AuthenticatedUser } from '../common/decorators/current-user.decorator.js';
 import { CreateJewelleryItemDto } from './dto/create-jewellery-item.dto.js';
 import { AddJewelleryPhotoDto } from './dto/add-jewellery-photo.dto.js';
@@ -13,6 +14,7 @@ export class JewelleryService {
     private readonly prisma: PrismaService,
     private readonly ids: IdGeneratorService,
     private readonly audit: AuditService,
+    private readonly storage: StorageService,
   ) {}
 
   async create(dto: CreateJewelleryItemDto, actor: AuthenticatedUser) {
@@ -82,11 +84,13 @@ export class JewelleryService {
     const item = await this.prisma.jewelleryItem.findUnique({ where: { id: itemId } });
     if (!item) throw new NotFoundException('Jewellery item not found');
 
+    const fileUrl = (await this.storage.normalizeAndStore(dto.fileUrl, 'jewellery')) ?? dto.fileUrl;
+
     return this.prisma.jewelleryPhoto.create({
       data: {
         jewelleryItemId: itemId,
         angle: dto.angle,
-        fileUrl: dto.fileUrl,
+        fileUrl,
         capturedById: actor.id,
       },
     });

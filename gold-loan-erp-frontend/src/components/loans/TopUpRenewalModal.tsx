@@ -571,6 +571,7 @@ export function TopUpRenewalModal({
                     setCustomerPhoto(dataUrl);
                     setIsPhotoModalOpen(false);
                 }}
+                captureTarget="customer"
                 title="Capture Customer Photo for Renewal"
                 subtitle="Position the customer in front of the camera and click capture."
             />

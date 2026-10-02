@@ -170,6 +170,8 @@ export default function CounterOriginationPage() {
         queryFn: () => getCustomers(customerQuery || undefined),
         enabled: customerSearchOpen || customerQuery.length > 0,
     });
+    const customerList: Customer[] = (customerResults as any)?.items ?? (Array.isArray(customerResults) ? customerResults : []);
+
 
     // Calculations
     const calculatedAdvanceInterest = useMemo(() => {
@@ -493,8 +495,9 @@ export default function CounterOriginationPage() {
                                 <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-40 max-h-72 overflow-y-auto divide-y divide-gray-100">
                                     {isSearchingCustomers ? (
                                         <div className="p-4 text-center text-xs text-gray-400">Searching borrowers…</div>
-                                    ) : customerResults && customerResults.length > 0 ? (
-                                        customerResults.map((c) => (
+                                    ) : customerList.length > 0 ? (
+                                        customerList.map((c) => (
+
                                             <div
                                                 key={c.id}
                                                 onClick={() => {
@@ -1328,6 +1331,7 @@ export default function CounterOriginationPage() {
                     isOpen={true}
                     onClose={() => setPhotoModalTarget(null)}
                     onConfirm={handlePhotoCaptured}
+                    captureTarget={photoModalTarget.type === 'customer' ? 'customer' : 'jewellery'}
                     title={
                         photoModalTarget.type === 'customer'
                             ? 'Capture Borrower Photo'
@@ -1558,6 +1562,7 @@ function QuickRegisterCustomerModal({
                         setPhotoUrl(url);
                         setIsCapturingPhoto(false);
                     }}
+                    captureTarget="customer"
                     title="Capture Borrower Portrait"
                     subtitle="Take webcam snapshot or upload photo file"
                 />

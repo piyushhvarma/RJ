@@ -445,6 +445,15 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
                                 onSubmit={handleSubmit(async (data) => {
                                     setError(null);
                                     try {
+                                        const enteredInterest = Number(data.interestComponent) || 0;
+                                        const calculatedInterest = quote?.interestDue ?? 0;
+                                        if (quote && calculatedInterest > 0 && Math.abs(enteredInterest - calculatedInterest) >= 0.5) {
+                                            const diff = calculatedInterest - enteredInterest;
+                                            const concessionNote = diff > 0 
+                                                ? `Final settlement interest: ₹${enteredInterest} (₹${diff.toFixed(2)} interest concession granted at checkout)`
+                                                : `Final settlement interest: ₹${enteredInterest} (+₹${Math.abs(diff).toFixed(2)} surcharge at checkout)`;
+                                            data.notes = data.notes ? `${data.notes} | ${concessionNote}` : concessionNote;
+                                        }
                                         await createPayment(data as Record<string, unknown>);
                                         qc.invalidateQueries({ queryKey: ['loan', loanId] });
                                         advance();
@@ -453,13 +462,65 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
                                 className="space-y-4"
                             >
                                 <input type="hidden" {...register('loanId')} value={loanId} />
+                                
+                                {/* Manual Final Interest Highlight Card */}
+                                <div className="rounded-xl border border-amber-300 bg-amber-50/70 p-4 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+                                                <span>Final Agreed Interest Received at Counter</span>
+                                                <span className="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-medium">Editable</span>
+                                            </p>
+                                            <p className="text-[11px] text-amber-700 mt-0.5">
+                                                System calculated: <strong className="font-semibold">{fmt(quote?.interestDue ?? 0)}</strong>. You can enter any negotiated or rounded final interest amount below.
+                                            </p>
+                                        </div>
+                                        {quote && (payInterest != null) && (quote.interestDue - payInterest) > 0.5 && (
+                                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 shadow-2xs">
+                                                🏷️ ₹{(quote.interestDue - payInterest).toFixed(2)} Concession
+                                            </span>
+                                        )}
+                                        {quote && (payInterest != null) && (payInterest - quote.interestDue) > 0.5 && (
+                                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300 flex items-center gap-1 shadow-2xs">
+                                                +₹{(payInterest - quote.interestDue).toFixed(2)} Surcharge
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-800 mb-1">Final Interest Received (₹) *</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                className="w-full rounded-lg border-2 border-amber-400 bg-white px-3.5 py-2 text-sm font-bold text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                                value={payInterest ?? 0}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    setValue('interestComponent', val, { shouldValidate: true });
+                                                    const newTot = Math.round(((payPrincipal ?? 0) + val + (payPenalty ?? 0) + (payOther ?? 0)) * 100) / 100;
+                                                    setValue('amount', newTot, { shouldValidate: true });
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="bg-white rounded-lg p-2.5 border border-amber-200 text-xs">
+                                            <p className="text-gray-500 text-[11px]">Auto-Synced Total Settlement</p>
+                                            <p className="font-extrabold text-base text-gray-900 mt-0.5">{fmt(payAmt)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount (₹) *</label>
-                                        <input type="number" step="0.01" className={inputCls} {...register('amount', { valueAsNumber: true })} />
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Total Payoff Amount (₹) *</label>
+                                        <input 
+                                            type="number" 
+                                            step="0.01" 
+                                            className={inputCls} 
+                                            {...register('amount', { valueAsNumber: true })} 
+                                        />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Mode *</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Payment Mode *</label>
                                         <select className={inputCls} {...register('mode')}>
                                             <option value="">Select…</option>
                                             <option value="CASH">Cash</option>
@@ -470,19 +531,54 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Principal Component (₹)</label>
-                                        <input type="number" step="0.01" defaultValue={0} className={inputCls} {...register('principalComponent', { valueAsNumber: true })} />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Interest Component (₹)</label>
-                                        <input type="number" step="0.01" defaultValue={0} className={inputCls} {...register('interestComponent', { valueAsNumber: true })} />
+                                        <input 
+                                            type="number" 
+                                            step="0.01" 
+                                            defaultValue={0} 
+                                            className={inputCls} 
+                                            {...register('principalComponent', { 
+                                                valueAsNumber: true,
+                                                onChange: (e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    const newTot = Math.round((val + (payInterest ?? 0) + (payPenalty ?? 0) + (payOther ?? 0)) * 100) / 100;
+                                                    setValue('amount', newTot, { shouldValidate: true });
+                                                }
+                                            })} 
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Penalty Component (₹)</label>
-                                        <input type="number" step="0.01" defaultValue={0} className={inputCls} {...register('penaltyComponent', { valueAsNumber: true })} />
+                                        <input 
+                                            type="number" 
+                                            step="0.01" 
+                                            defaultValue={0} 
+                                            className={inputCls} 
+                                            {...register('penaltyComponent', { 
+                                                valueAsNumber: true,
+                                                onChange: (e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    const newTot = Math.round(((payPrincipal ?? 0) + (payInterest ?? 0) + val + (payOther ?? 0)) * 100) / 100;
+                                                    setValue('amount', newTot, { shouldValidate: true });
+                                                }
+                                            })} 
+                                        />
                                     </div>
-                                    <div>
+                                    <div className="col-span-2">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Other Charges (₹)</label>
-                                        <input type="number" step="0.01" defaultValue={0} className={inputCls} {...register('otherCharges', { valueAsNumber: true })} />
+                                        <input 
+                                            type="number" 
+                                            step="0.01" 
+                                            defaultValue={0} 
+                                            className={inputCls} 
+                                            {...register('otherCharges', { 
+                                                valueAsNumber: true,
+                                                onChange: (e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    const newTot = Math.round(((payPrincipal ?? 0) + (payInterest ?? 0) + (payPenalty ?? 0) + val) * 100) / 100;
+                                                    setValue('amount', newTot, { shouldValidate: true });
+                                                }
+                                            })} 
+                                        />
                                     </div>
                                 </div>
 
@@ -492,14 +588,14 @@ export default function ClosureWizardPage({ params }: { params: Promise<{ loanId
                                     }`}>
                                     Component total: {fmt(componentSum)}
                                     {payAmt && !sumOk && ` — must equal ${fmt(payAmt)}`}
-                                    {payAmt && sumOk && ' ✓'}
+                                    {payAmt && sumOk && ' ✓ Verified'}
                                 </div>
 
                                 {error && <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
 
                                 <button type="submit" disabled={paymentSubmitting || (!!payAmt && !sumOk)}
-                                    className="rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition-colors">
-                                    {paymentSubmitting ? 'Recording…' : 'Record Payment & Continue →'}
+                                    className="rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
+                                    {paymentSubmitting ? 'Recording Settlement Payment…' : 'Record Final Payment & Continue →'}
                                 </button>
                             </form>
                         </div>

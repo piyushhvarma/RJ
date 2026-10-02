@@ -43,29 +43,42 @@ export interface BiometricEnrollment {
     enrolledAt: string;
 }
 
+export interface PaginatedResponse<T> {
+    items: T[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
 export interface Customer {
     id: string;
     customerCode: string;
     fullName: string;
-    guardianName?: string;
-    dateOfBirth?: string;
-    mobile: string;
-    alternateMobile?: string;
-    address?: string;
-    city?: string;
-    state?: string;
-    pincode?: string;
-    occupation?: string;
-    photoUrl?: string;
-    signatureUrl?: string;
+    guardianName?: string | null;
+    dateOfBirth?: string | null;
+    mobile?: string | null;
+    alternateMobile?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    pincode?: string | null;
+    occupation?: string | null;
+    photoUrl?: string | null;
+    signatureUrl?: string | null;
     kycStatus: VerificationStatus;
     biometricStatus: BiometricStatus;
     status: RecordLifecycle;
     createdAt: string;
     documents?: CustomerDocument[];
-    biometric?: BiometricEnrollment;
+    biometric?: BiometricEnrollment | null;
     loans?: Loan[];
+    _count?: {
+        loans: number;
+        documents: number;
+    };
 }
+
 
 export interface JewelleryPhoto {
     id: string;

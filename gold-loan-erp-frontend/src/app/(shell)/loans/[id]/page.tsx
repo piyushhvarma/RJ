@@ -666,6 +666,7 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
                 subtitle="Take a live photo of the pledged piece or upload high-res image."
                 showAngleSelect={true}
                 defaultAngle="front"
+                captureTarget="jewellery"
                 onConfirm={async (fileUrl, angle) => {
                     if (activeItemForPhoto) {
                         await addJewelleryPhoto(activeItemForPhoto.id, {
