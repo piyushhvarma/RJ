@@ -315,69 +315,69 @@ export default function ReportsPage() {
             <div className="flex border-b border-gray-200 gap-1 overflow-x-auto print:hidden">
                 <button
                     onClick={() => setActiveTab('tier1_daily')}
-                    className={`pb-3 px-4 text-xs font-semibold whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+                    className={`pb-3 px-3.5 text-xs whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 ${
                         activeTab === 'tier1_daily'
                             ? 'border-amber-600 text-amber-700 font-bold'
-                            : 'border-transparent text-gray-500 hover:text-gray-900'
+                            : 'border-transparent text-gray-500 hover:text-gray-900 font-medium'
                     }`}
                 >
                     <Clock className="w-4 h-4" />
-                    <span>Tier 1: Daily Operations</span>
+                    <span>Daily Operations (Dainik Rokad)</span>
                 </button>
                 <button
                     onClick={() => setActiveTab('tier_trends')}
-                    className={`pb-3 px-4 text-xs font-semibold whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+                    className={`pb-3 px-3.5 text-xs whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 ${
                         activeTab === 'tier_trends'
                             ? 'border-amber-600 text-amber-700 font-bold'
-                            : 'border-transparent text-gray-500 hover:text-gray-900'
+                            : 'border-transparent text-gray-500 hover:text-gray-900 font-medium'
                     }`}
                 >
                     <CalendarRange className="w-4 h-4" />
-                    <span>Lending & Releases (Day/Month/Year)</span>
+                    <span>Lending & Releases (Karz & Chhutayi)</span>
                 </button>
                 <button
                     onClick={() => setActiveTab('tier2_financial')}
-                    className={`pb-3 px-4 text-xs font-semibold whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+                    className={`pb-3 px-3.5 text-xs whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 ${
                         activeTab === 'tier2_financial'
                             ? 'border-amber-600 text-amber-700 font-bold'
-                            : 'border-transparent text-gray-500 hover:text-gray-900'
+                            : 'border-transparent text-gray-500 hover:text-gray-900 font-medium'
                     }`}
                 >
                     <TrendingUp className="w-4 h-4" />
-                    <span>Tier 2: Financial & Portfolio</span>
+                    <span>Financial & Portfolio (Khata & Book)</span>
                 </button>
                 <button
                     onClick={() => setActiveTab('tier3_custody')}
-                    className={`pb-3 px-4 text-xs font-semibold whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+                    className={`pb-3 px-3.5 text-xs whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 ${
                         activeTab === 'tier3_custody'
                             ? 'border-amber-600 text-amber-700 font-bold'
-                            : 'border-transparent text-gray-500 hover:text-gray-900'
+                            : 'border-transparent text-gray-500 hover:text-gray-900 font-medium'
                     }`}
                 >
                     <Vault className="w-4 h-4" />
-                    <span>Tier 3: Gold/Silver & Custody</span>
+                    <span>Vault Custody (Tijori Sona)</span>
                 </button>
                 <button
                     onClick={() => setActiveTab('tier4_customers')}
-                    className={`pb-3 px-4 text-xs font-semibold whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+                    className={`pb-3 px-3.5 text-xs whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 ${
                         activeTab === 'tier4_customers'
                             ? 'border-amber-600 text-amber-700 font-bold'
-                            : 'border-transparent text-gray-500 hover:text-gray-900'
+                            : 'border-transparent text-gray-500 hover:text-gray-900 font-medium'
                     }`}
                 >
                     <Users className="w-4 h-4" />
-                    <span>Tier 4: Customers & Risk</span>
+                    <span>Customers (Grahak & Risk)</span>
                 </button>
                 <button
                     onClick={() => setActiveTab('tier5_staff')}
-                    className={`pb-3 px-4 text-xs font-semibold whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+                    className={`pb-3 px-3.5 text-xs whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 ${
                         activeTab === 'tier5_staff'
                             ? 'border-amber-600 text-amber-700 font-bold'
-                            : 'border-transparent text-gray-500 hover:text-gray-900'
+                            : 'border-transparent text-gray-500 hover:text-gray-900 font-medium'
                     }`}
                 >
                     <ShieldCheck className="w-4 h-4" />
-                    <span>Tier 5: Staff Accountability</span>
+                    <span>Staff Audit (Munim & Cashier)</span>
                 </button>
             </div>
 
@@ -385,11 +385,14 @@ export default function ReportsPage() {
                 TIER 1: DAILY OPERATIONS
                ════════════════════════════════════════════════════════════════════════════════ */}
             {activeTab === 'tier1_daily' && (
-                <div className="space-y-6">
+                <div className="space-y-5">
                     {/* Top Operational Metrics */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-                        <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-2xs">
-                            <p className="text-[11px] font-medium text-gray-500">Disbursed Today</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
+                            <div className="flex items-center justify-between text-[11px] text-gray-500">
+                                <span>Disbursed Today</span>
+                                <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-medium">Karz Diya</span>
+                            </div>
                             <p className="text-xl font-bold text-gray-900 mt-1">
                                 {fmtINR(dailyQ.data?.summary.newLoans.amount)}
                             </p>
@@ -398,8 +401,11 @@ export default function ReportsPage() {
                             </span>
                         </div>
 
-                        <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-2xs">
-                            <p className="text-[11px] font-medium text-gray-500">Collections Today</p>
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
+                            <div className="flex items-center justify-between text-[11px] text-gray-500">
+                                <span>Collections Today</span>
+                                <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-medium">Aaj Ki Aavak</span>
+                            </div>
                             <p className="text-xl font-bold text-emerald-700 mt-1">
                                 {fmtINR(dailyQ.data?.summary.paymentsReceived.totalAmount)}
                             </p>
@@ -408,8 +414,11 @@ export default function ReportsPage() {
                             </span>
                         </div>
 
-                        <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-2xs">
-                            <p className="text-[11px] font-medium text-gray-500">Loans Closed Today</p>
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
+                            <div className="flex items-center justify-between text-[11px] text-gray-500">
+                                <span>Loans Closed Today</span>
+                                <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded font-medium">Girvi Chhutayi</span>
+                            </div>
                             <p className="text-xl font-bold text-gray-900 mt-1">
                                 {fmtINR(dailyQ.data?.summary.loansClosed.principalAmount)}
                             </p>
@@ -418,68 +427,74 @@ export default function ReportsPage() {
                             </span>
                         </div>
 
-                        <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-2xs">
-                            <p className="text-[11px] font-medium text-gray-500">Packets Vaulted</p>
-                            <p className="text-xl font-bold text-amber-700 mt-1">
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
+                            <div className="flex items-center justify-between text-[11px] text-gray-500">
+                                <span>Packets Vaulted</span>
+                                <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-medium">Tijori Me Rakha</span>
+                            </div>
+                            <p className="text-xl font-bold text-amber-800 mt-1">
                                 {dailyQ.data?.summary.packetsStored ?? 0}
                             </p>
-                            <span className="text-[11px] text-gray-500">Stored into safe boxes</span>
+                            <span className="text-[11px] text-gray-500">Safe boxes deposit</span>
                         </div>
 
-                        <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-2xs">
-                            <p className="text-[11px] font-medium text-gray-500">Packets Handed Over</p>
-                            <p className="text-xl font-bold text-indigo-700 mt-1">
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
+                            <div className="flex items-center justify-between text-[11px] text-gray-500">
+                                <span>Packets Handed Over</span>
+                                <span className="text-[10px] text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded font-medium">Grahak Ko Diya</span>
+                            </div>
+                            <p className="text-xl font-bold text-indigo-800 mt-1">
                                 {dailyQ.data?.summary.packetsReleased ?? 0}
                             </p>
-                            <span className="text-[11px] text-gray-500">Gold released to borrower</span>
+                            <span className="text-[11px] text-gray-500">Gold handed over</span>
                         </div>
                     </div>
 
-                    {/* Interest Earned Today: Realized vs Unrealized STRICT SEPARATION */}
-                    <div className="rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50/70 via-white to-emerald-50/50 p-5 shadow-2xs">
-                        <div className="flex items-center justify-between mb-3">
+                    {/* Interest Earned Today: Realized vs Unrealized */}
+                    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs">
+                        <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
-                                <Coins className="w-5 h-5 text-amber-700" />
-                                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
-                                    Today's Interest Metrics (Realized vs Unrealized)
+                                <Coins className="w-4 h-4 text-amber-600" />
+                                <h3 className="text-sm font-bold text-gray-900">
+                                    Today's Interest Metrics (Vyaj Hisaab)
                                 </h3>
                             </div>
-                            <span className="text-[11px] font-medium bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full border border-amber-200">
-                                Never Blended
+                            <span className="text-[11px] font-medium text-gray-500 bg-gray-100 px-2.5 py-0.5 rounded">
+                                Realized Cash vs Book Accrual
                             </span>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-white p-4 rounded-lg border border-emerald-200 shadow-2xs">
+                            <div className="p-4 rounded-lg bg-emerald-50/50 border border-emerald-200">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
-                                        Realized Interest Collected Today
+                                    <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">
+                                        Realized Interest (Kamaaya Hua Vyaj)
                                     </span>
-                                    <span className="text-[11px] bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded">
-                                        Cash in Till
+                                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">
+                                        Rokad In Hand
                                     </span>
                                 </div>
-                                <p className="text-2xl font-extrabold text-emerald-700 mt-2">
+                                <p className="text-2xl font-black text-emerald-700 mt-2">
                                     {fmtINRDec(dailyQ.data?.interestToday.realized)}
                                 </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Actual interest collected via completed payments today. Fully realized profit in hand.
+                                <p className="text-xs text-gray-600 mt-1">
+                                    Actual interest collected via completed payments today. Cash in hand profit.
                                 </p>
                             </div>
 
-                            <div className="bg-white p-4 rounded-lg border border-indigo-200 shadow-2xs">
+                            <div className="p-4 rounded-lg bg-indigo-50/50 border border-indigo-200">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-indigo-800 uppercase tracking-wider">
-                                        Unrealized Accrued Today (Active Book)
+                                    <span className="text-xs font-bold text-indigo-800 uppercase tracking-wide">
+                                        Unrealized Accrued (Bakaya Kitabi Vyaj)
                                     </span>
-                                    <span className="text-[11px] bg-indigo-50 text-indigo-700 font-semibold px-2 py-0.5 rounded">
-                                        Book Accrual
+                                    <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-1.5 py-0.5 rounded">
+                                        Active Book Accrual
                                     </span>
                                 </div>
-                                <p className="text-2xl font-extrabold text-indigo-700 mt-2">
+                                <p className="text-2xl font-black text-indigo-700 mt-2">
                                     {fmtINRDec(dailyQ.data?.interestToday.unrealizedEstimated)}
                                 </p>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-gray-600 mt-1">
                                     Estimated 1-day interest accrued across the active live book today. Owed by borrowers, not yet collected.
                                 </p>
                             </div>
@@ -487,15 +502,15 @@ export default function ReportsPage() {
                     </div>
 
                     {/* Daily Cash Reconciliation Section */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-2xs">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                     <DollarSign className="w-4 h-4 text-emerald-600" />
-                                    <span>Daily Cash Drawer Reconciliation</span>
+                                    <span>Daily Cash Reconciliation (Galley Ka Rokad Mel)</span>
                                 </h3>
                                 <p className="text-xs text-gray-500 mt-0.5">
-                                    Formula: Opening Float + Cash Collections − Cash Disbursements = Expected Closing Cash
+                                    Opening Float (Subah Ki Rokad) + Collections (Jama) − Disbursements (Karz Nikaasi) = Expected Closing (Bachi Rokad)
                                 </p>
                             </div>
                             {dailyQ.data?.cashReconciliation.lastVariance != null && (
@@ -503,43 +518,43 @@ export default function ReportsPage() {
                                     className={`px-3 py-1 rounded-full text-xs font-bold border ${
                                         Math.abs(dailyQ.data.cashReconciliation.lastVariance) < 1.0
                                             ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                                            : 'bg-rose-50 border-rose-300 text-rose-700 animate-pulse'
+                                            : 'bg-rose-50 border-rose-300 text-rose-700'
                                     }`}
                                 >
                                     {Math.abs(dailyQ.data.cashReconciliation.lastVariance) < 1.0
-                                        ? '✓ Till Balanced'
-                                        : `⚠️ Variance: ${fmtINR(dailyQ.data.cashReconciliation.lastVariance)}`}
+                                        ? '✓ Till Balanced (Rokad Mel Sahi Hai)'
+                                        : `⚠️ Variance: ${fmtINR(dailyQ.data.cashReconciliation.lastVariance)} (Galle Me Farak)`}
                                 </span>
                             )}
                         </div>
 
                         {reconSuccessMsg && (
-                            <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
+                            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
                                 {reconSuccessMsg}
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50 p-3.5 rounded-lg border border-gray-200/70 mb-4 text-xs">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50/80 p-3.5 rounded-lg border border-gray-200/80 text-xs">
                             <div>
-                                <p className="text-gray-500">Opening Cash Float</p>
+                                <p className="text-gray-500">Opening Float (Shuru Ki Rokad)</p>
                                 <p className="font-bold text-gray-900 mt-0.5">
                                     {fmtINR(dailyQ.data?.cashReconciliation.openingCash)}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-gray-500">Cash Collections In (+)</p>
+                                <p className="text-gray-500">Cash In (+) (Jama / Aavak)</p>
                                 <p className="font-bold text-emerald-700 mt-0.5">
                                     +{fmtINR(dailyQ.data?.cashReconciliation.cashCollections)}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-gray-500">Cash Disbursements Out (−)</p>
+                                <p className="text-gray-500">Cash Out (−) (Karz Nikaasi / Jaavak)</p>
                                 <p className="font-bold text-rose-700 mt-0.5">
                                     −{fmtINR(dailyQ.data?.cashReconciliation.cashDisbursements)}
                                 </p>
                             </div>
-                            <div className="border-l border-gray-300 pl-3">
-                                <p className="text-gray-700 font-semibold">Expected Closing Cash</p>
+                            <div className="border-l border-gray-200 pl-3">
+                                <p className="text-gray-700 font-semibold">Expected Closing (Bachi Rokad)</p>
                                 <p className="font-extrabold text-base text-gray-900 mt-0.5">
                                     {fmtINR(dailyQ.data?.cashReconciliation.expectedClosingCash)}
                                 </p>
@@ -547,18 +562,18 @@ export default function ReportsPage() {
                         </div>
 
                         {/* Physical Count Entry Box */}
-                        <div className="border border-dashed border-amber-300 rounded-lg p-4 bg-amber-50/40">
+                        <div className="rounded-lg p-4 bg-amber-50/50 border border-amber-200">
                             <p className="text-xs font-bold text-amber-900 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                                <span>End of Day Counter Cash Count</span>
-                                <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded font-medium">Counter Staff Audit</span>
+                                <span>End of Day Counter Cash Count (Galley Ki Ginti)</span>
+                                <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">Counter Audit</span>
                             </p>
                             <div className="flex flex-col sm:flex-row items-center gap-3">
                                 <div className="w-full sm:w-64">
-                                    <label className="block text-[11px] text-gray-600 mb-1">Physical Cash Count (₹) *</label>
+                                    <label className="block text-[11px] text-gray-600 mb-1">Physical Cash (Galley Ka Cash Count) ₹ *</label>
                                     <input
                                         type="number"
                                         placeholder="e.g. 102500"
-                                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
                                         value={physicalCashInput}
                                         onChange={(e) => setPhysicalCashInput(e.target.value)}
                                     />
@@ -568,7 +583,7 @@ export default function ReportsPage() {
                                     <input
                                         type="text"
                                         placeholder="Drawer denomination count verified by counter staff..."
-                                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
                                         value={cashReconNotes}
                                         onChange={(e) => setCashReconNotes(e.target.value)}
                                     />
@@ -584,31 +599,31 @@ export default function ReportsPage() {
                                         });
                                     }}
                                     disabled={!physicalCashInput || cashReconMutation.isPending}
-                                    className="w-full sm:w-auto mt-4 sm:mt-0 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-2xs disabled:opacity-50 transition-colors whitespace-nowrap"
+                                    className="w-full sm:w-auto mt-4 sm:mt-0 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-xs disabled:opacity-50 transition-colors whitespace-nowrap"
                                 >
-                                    {cashReconMutation.isPending ? 'Verifying…' : 'Record & Reconcile'}
+                                    {cashReconMutation.isPending ? 'Verifying…' : 'Record & Reconcile (Rokad Mel)'}
                                 </button>
                             </div>
                         </div>
                     </div>
 
                     {/* Overdue Buckets Aging & Due Soon */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {/* Overdue Aging Matrix */}
-                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-2xs">
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs">
                             <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-3">
                                 <AlertTriangle className="w-4 h-4 text-rose-600" />
-                                <span>Overdue Portfolio Aging Buckets</span>
+                                <span>Overdue Portfolio Aging (Muddat Paar Bakaya)</span>
                             </h3>
-                            <div className="space-y-2.5">
+                            <div className="space-y-2">
                                 {[
                                     { key: 'b1_7', data: dailyQ.data?.overdueBuckets.b1_7, color: 'text-amber-700 bg-amber-50 border-amber-200' },
                                     { key: 'b8_30', data: dailyQ.data?.overdueBuckets.b8_30, color: 'text-orange-700 bg-orange-50 border-orange-200' },
                                     { key: 'b31_90', data: dailyQ.data?.overdueBuckets.b31_90, color: 'text-red-700 bg-red-50 border-red-200' },
                                     { key: 'b90Plus', data: dailyQ.data?.overdueBuckets.b90Plus, color: 'text-purple-700 bg-purple-50 border-purple-200' },
                                 ].map((b) => (
-                                    <div key={b.key} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50">
-                                        <div className="flex items-center gap-2.5">
+                                    <div key={b.key} className="flex items-center justify-between p-2.5 rounded-lg border border-gray-100 bg-gray-50/50">
+                                        <div className="flex items-center gap-2">
                                             <span className={`px-2 py-0.5 rounded text-xs font-bold border ${b.color}`}>
                                                 {b.data?.label}
                                             </span>
@@ -625,27 +640,27 @@ export default function ReportsPage() {
                         </div>
 
                         {/* Due Today / Due Soon */}
-                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-2xs flex flex-col justify-between">
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs flex flex-col justify-between">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-3">
                                     <Clock className="w-4 h-4 text-blue-600" />
-                                    <span>Loans Maturing & Due Soon</span>
+                                    <span>Loans Maturing & Due Soon (Muddat Puri Hone Wali Hai)</span>
                                 </h3>
                                 <div className="grid grid-cols-3 gap-3 mb-4">
                                     <div className="p-3 rounded-lg bg-blue-50/70 border border-blue-200 text-center">
-                                        <p className="text-[11px] font-semibold text-blue-800">Due Today</p>
+                                        <p className="text-[11px] font-semibold text-blue-800">Due Today (Aaj)</p>
                                         <p className="text-lg font-bold text-blue-900 mt-0.5">
                                             {dailyQ.data?.dueLoans.dueToday.length ?? 0}
                                         </p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-indigo-50/70 border border-indigo-200 text-center">
-                                        <p className="text-[11px] font-semibold text-indigo-800">In 3 Days</p>
+                                        <p className="text-[11px] font-semibold text-indigo-800">In 3 Days (3 Din)</p>
                                         <p className="text-lg font-bold text-indigo-900 mt-0.5">
                                             {dailyQ.data?.dueLoans.due3Days.length ?? 0}
                                         </p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-amber-50/70 border border-amber-200 text-center">
-                                        <p className="text-[11px] font-semibold text-amber-800">In 7 Days</p>
+                                        <p className="text-[11px] font-semibold text-amber-800">In 7 Days (7 Din)</p>
                                         <p className="text-lg font-bold text-amber-900 mt-0.5">
                                             {dailyQ.data?.dueLoans.due7Days.length ?? 0}
                                         </p>
@@ -664,22 +679,22 @@ export default function ReportsPage() {
                 PERIODIC CASH FLOW & RELEASES (BY DAY / MONTH / YEAR)
                ════════════════════════════════════════════════════════════════════════════════ */}
             {activeTab === 'tier_trends' && (
-                <div className="space-y-6">
+                <div className="space-y-5">
                     {/* Controls & Filters Card */}
-                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-2xs space-y-4">
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-xs space-y-3.5">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                             <div>
                                 <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
                                     <CalendarRange className="w-5 h-5 text-amber-600" />
-                                    <span>Capital Movement & Cash Flow Breakdown</span>
+                                    <span>Capital & Cash Flow Breakdown (Karz & Rokad Hisaab)</span>
                                 </h2>
                                 <p className="text-xs text-gray-500 mt-0.5">
-                                    Granular calculation of capital disbursed (lent), repayments collected, interest realized, and collateral released.
+                                    Date-wise calculation of capital lent (karz), repayments (mool), interest (vyaj), and gold released (girvi chhutayi).
                                 </p>
                             </div>
 
                             {/* Granularity Toggle Buttons (Day / Month / Year) */}
-                            <div className="inline-flex items-center rounded-lg border border-gray-300 bg-gray-50 p-1 shadow-2xs">
+                            <div className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1">
                                 <button
                                     onClick={() => setTrendGroupBy('day')}
                                     className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
@@ -688,7 +703,7 @@ export default function ReportsPage() {
                                             : 'text-gray-600 hover:text-gray-900'
                                     }`}
                                 >
-                                    By Day (Daily)
+                                    Daily (Rozana)
                                 </button>
                                 <button
                                     onClick={() => setTrendGroupBy('month')}
@@ -698,7 +713,7 @@ export default function ReportsPage() {
                                             : 'text-gray-600 hover:text-gray-900'
                                     }`}
                                 >
-                                    By Month (Monthly)
+                                    Monthly (Mahina)
                                 </button>
                                 <button
                                     onClick={() => setTrendGroupBy('year')}
@@ -708,16 +723,16 @@ export default function ReportsPage() {
                                             : 'text-gray-600 hover:text-gray-900'
                                     }`}
                                 >
-                                    By Year (Annual)
+                                    Annual (Saalana)
                                 </button>
                             </div>
                         </div>
 
                         {/* Quick Presets & Custom Date Range */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-gray-100">
+                        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-gray-100">
                             {/* Preset Buttons */}
                             <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                                <span className="text-gray-400 font-medium mr-1 text-[11px]">Presets:</span>
+                                <span className="text-gray-400 font-medium mr-1 text-[11px]">Period:</span>
                                 {[
                                     { id: 'last7d', label: 'Last 7 Days' },
                                     { id: 'last30d', label: 'Last 30 Days' },
@@ -730,10 +745,10 @@ export default function ReportsPage() {
                                     <button
                                         key={p.id}
                                         onClick={() => applyDatePreset(p.id)}
-                                        className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
+                                        className={`px-2.5 py-1 rounded text-xs transition-colors ${
                                             trendPreset === p.id
-                                                ? 'bg-amber-50 text-amber-900 border-amber-300 font-bold'
-                                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                                ? 'bg-amber-100 text-amber-900 font-bold border border-amber-300'
+                                                : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
                                         }`}
                                     >
                                         {p.label}
@@ -748,7 +763,7 @@ export default function ReportsPage() {
                                     <span>From:</span>
                                     <input
                                         type="date"
-                                        className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                        className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white"
                                         value={trendStartDate}
                                         onChange={(e) => {
                                             setTrendStartDate(e.target.value);
@@ -758,7 +773,7 @@ export default function ReportsPage() {
                                     <span>To:</span>
                                     <input
                                         type="date"
-                                        className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                        className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white"
                                         value={trendEndDate}
                                         onChange={(e) => {
                                             setTrendEndDate(e.target.value);
@@ -783,14 +798,14 @@ export default function ReportsPage() {
                     </div>
 
                     {/* Summary KPI Cards for Selected View */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-                        {/* Capital Lent (Disbursed) */}
-                        <div className="bg-white p-4 rounded-xl border border-amber-200 shadow-2xs">
-                            <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1">
-                                <ArrowUpRight className="w-3.5 h-3.5 text-amber-600" />
-                                <span>Capital Lent (Disbursed)</span>
-                            </span>
-                            <p className="text-xl font-black text-amber-900 mt-1.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                        {/* Capital Lent (Karz Diya) */}
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
+                            <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-semibold text-gray-600">Capital Lent</span>
+                                <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Karz Diya</span>
+                            </div>
+                            <p className="text-xl font-bold text-amber-900 mt-1.5">
                                 {fmtCr(periodicTrendsQ.data?.summary.totalCapitalLent)}
                             </p>
                             <p className="text-[11px] text-gray-500 mt-0.5">
@@ -798,13 +813,13 @@ export default function ReportsPage() {
                             </p>
                         </div>
 
-                        {/* Capital Repaid (Principal Recovered) */}
-                        <div className="bg-white p-4 rounded-xl border border-emerald-200 shadow-2xs">
-                            <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>Capital Repaid (Principal)</span>
-                            </span>
-                            <p className="text-xl font-black text-emerald-700 mt-1.5">
+                        {/* Principal Repaid (Mool Dhan Aaya) */}
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
+                            <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-semibold text-gray-600">Principal Repaid</span>
+                                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Mool Dhan Aaya</span>
+                            </div>
+                            <p className="text-xl font-bold text-emerald-700 mt-1.5">
                                 +{fmtCr(periodicTrendsQ.data?.summary.totalPrincipalRepaid)}
                             </p>
                             <p className="text-[11px] text-gray-500 mt-0.5">
@@ -812,13 +827,13 @@ export default function ReportsPage() {
                             </p>
                         </div>
 
-                        {/* Realized Interest Collected */}
-                        <div className="bg-white p-4 rounded-xl border border-blue-200 shadow-2xs">
-                            <span className="text-[11px] font-bold text-blue-800 uppercase tracking-wider flex items-center gap-1">
-                                <Coins className="w-3.5 h-3.5 text-blue-600" />
-                                <span>Interest Realized</span>
-                            </span>
-                            <p className="text-xl font-black text-blue-700 mt-1.5">
+                        {/* Interest Realized (Vyaj Aaya) */}
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
+                            <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-semibold text-gray-600">Interest Collected</span>
+                                <span className="text-[10px] font-bold text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">Vyaj Aaya</span>
+                            </div>
+                            <p className="text-xl font-bold text-blue-700 mt-1.5">
                                 +{fmtCr(periodicTrendsQ.data?.summary.totalInterestCollected)}
                             </p>
                             <p className="text-[11px] text-gray-500 mt-0.5">
@@ -826,13 +841,13 @@ export default function ReportsPage() {
                             </p>
                         </div>
 
-                        {/* Amount Released / Loans Closed */}
-                        <div className="bg-white p-4 rounded-xl border border-purple-200 shadow-2xs">
-                            <span className="text-[11px] font-bold text-purple-800 uppercase tracking-wider flex items-center gap-1">
-                                <Gem className="w-3.5 h-3.5 text-purple-600" />
-                                <span>Collateral Released</span>
-                            </span>
-                            <p className="text-xl font-black text-purple-800 mt-1.5">
+                        {/* Amount Released / Loans Closed (Girvi Chhutayi) */}
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
+                            <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-semibold text-gray-600">Collateral Released</span>
+                                <span className="text-[10px] font-bold text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">Girvi Chhutayi</span>
+                            </div>
+                            <p className="text-xl font-bold text-purple-800 mt-1.5">
                                 {fmtCr(periodicTrendsQ.data?.summary.totalReleasedPrincipal)}
                             </p>
                             <p className="text-[11px] text-gray-500 mt-0.5">
@@ -840,20 +855,26 @@ export default function ReportsPage() {
                             </p>
                         </div>
 
-                        {/* Net Cash Flow */}
+                        {/* Net Cash Flow (Bachi Rokad) */}
                         <div
-                            className={`p-4 rounded-xl border shadow-2xs ${
+                            className={`p-4 rounded-xl border shadow-xs ${
                                 (periodicTrendsQ.data?.summary.totalNetCashFlow ?? 0) >= 0
-                                    ? 'bg-emerald-50/50 border-emerald-300'
-                                    : 'bg-rose-50/50 border-rose-300'
+                                    ? 'bg-emerald-50/40 border-emerald-200'
+                                    : 'bg-rose-50/40 border-rose-200'
                             }`}
                         >
-                            <span className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 text-gray-700">
-                                <DollarSign className="w-3.5 h-3.5" />
-                                <span>Net Cash Flow</span>
-                            </span>
+                            <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-semibold text-gray-700">Net Cash Flow</span>
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                                    (periodicTrendsQ.data?.summary.totalNetCashFlow ?? 0) >= 0
+                                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                        : 'bg-rose-100 text-rose-800 border-rose-300'
+                                }`}>
+                                    Bachi Rokad
+                                </span>
+                            </div>
                             <p
-                                className={`text-xl font-black mt-1.5 ${
+                                className={`text-xl font-bold mt-1.5 ${
                                     (periodicTrendsQ.data?.summary.totalNetCashFlow ?? 0) >= 0 ? 'text-emerald-700' : 'text-rose-700'
                                 }`}
                             >
@@ -861,31 +882,31 @@ export default function ReportsPage() {
                                 {fmtCr(periodicTrendsQ.data?.summary.totalNetCashFlow)}
                             </p>
                             <p className="text-[11px] text-gray-500 mt-0.5">
-                                Total Inflow minus Capital Lent
+                                Inflow minus Capital Lent
                             </p>
                         </div>
                     </div>
 
                     {/* Comparative Visual Timeline Chart (Top periods) */}
                     {periodicTrendsQ.data && periodicTrendsQ.data.rows.length > 0 && (
-                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-2xs space-y-3">
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
                                     <BarChart3 className="w-4 h-4 text-amber-600" />
-                                    <span>Lending Outflow vs Cash Inflow vs Released Capital ({trendGroupBy.toUpperCase()})</span>
+                                    <span>Lending vs Cash Inflow vs Released Capital (Karz vs Aavak vs Chhutayi)</span>
                                 </h3>
                                 <div className="flex items-center gap-3 text-[11px]">
                                     <span className="flex items-center gap-1 text-amber-800">
                                         <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
-                                        <span>Capital Lent</span>
+                                        <span>Capital Lent (Karz)</span>
                                     </span>
                                     <span className="flex items-center gap-1 text-emerald-800">
                                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
-                                        <span>Cash Inflow</span>
+                                        <span>Cash Inflow (Aavak)</span>
                                     </span>
                                     <span className="flex items-center gap-1 text-purple-800">
                                         <span className="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block"></span>
-                                        <span>Released Collateral</span>
+                                        <span>Released (Chhutayi)</span>
                                     </span>
                                 </div>
                             </div>
@@ -907,11 +928,11 @@ export default function ReportsPage() {
                                             <div className="flex justify-between items-center text-[11px] font-semibold text-gray-700">
                                                 <span className="font-bold text-gray-900">{r.period}</span>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-amber-700">Lent: {fmtCr(r.capitalLent)}</span>
-                                                    <span className="text-emerald-700">In: {fmtCr(r.totalCashReceived)}</span>
-                                                    <span className="text-purple-700">Released: {fmtCr(r.releasedPrincipal)}</span>
+                                                    <span className="text-amber-700">Karz: {fmtCr(r.capitalLent)}</span>
+                                                    <span className="text-emerald-700">Aavak: {fmtCr(r.totalCashReceived)}</span>
+                                                    <span className="text-purple-700">Chhutayi: {fmtCr(r.releasedPrincipal)}</span>
                                                     <span className={r.netCashFlow >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-                                                        Net: {r.netCashFlow >= 0 ? '+' : ''}{fmtCr(r.netCashFlow)}
+                                                        Rokad: {r.netCashFlow >= 0 ? '+' : ''}{fmtCr(r.netCashFlow)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -946,14 +967,14 @@ export default function ReportsPage() {
                     )}
 
                     {/* Detailed Data Table */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden">
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden">
                         <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900">
-                                    Granular Period Ledger ({periodicTrendsQ.data?.rows.length ?? 0} {trendGroupBy} intervals)
+                                    Granular Period Ledger (Karz & Rokad Bahi-Khata)
                                 </h3>
                                 <p className="text-xs text-gray-500">
-                                    Exact calculation of loans disbursed, repayments, interest realized, and collateral released
+                                    Exact calculation of loans disbursed, repayments, interest realized, and collateral released ({periodicTrendsQ.data?.rows.length ?? 0} {trendGroupBy} intervals)
                                 </p>
                             </div>
                             <button
@@ -961,7 +982,7 @@ export default function ReportsPage() {
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors"
                             >
                                 <Download className="w-3.5 h-3.5" />
-                                <span>Export Filtered Table to CSV</span>
+                                <span>Export CSV</span>
                             </button>
                         </div>
 
@@ -969,14 +990,14 @@ export default function ReportsPage() {
                             <table className="w-full text-left text-xs">
                                 <thead className="bg-gray-50/80 text-gray-600 font-semibold border-b border-gray-200">
                                     <tr>
-                                        <th className="py-3 px-3.5">Period / Date</th>
-                                        <th className="py-3 px-3.5 text-right text-amber-900">Capital Lent (₹)</th>
-                                        <th className="py-3 px-3.5 text-right text-emerald-900">Principal Repaid (₹)</th>
-                                        <th className="py-3 px-3.5 text-right text-blue-900">Interest Collected (₹)</th>
-                                        <th className="py-3 px-3.5 text-right text-gray-700">Fees / Penalties (₹)</th>
-                                        <th className="py-3 px-3.5 text-right font-bold text-gray-900">Total Inflow (₹)</th>
-                                        <th className="py-3 px-3.5 text-right text-purple-900">Loans Closed / Released</th>
-                                        <th className="py-3 px-3.5 text-right font-bold">Net Cash Flow (₹)</th>
+                                        <th className="py-3 px-3.5">Period / Tarikh</th>
+                                        <th className="py-3 px-3.5 text-right text-amber-900">Capital Lent (Karz Diya) (₹)</th>
+                                        <th className="py-3 px-3.5 text-right text-emerald-900">Principal Repaid (Mool) (₹)</th>
+                                        <th className="py-3 px-3.5 text-right text-blue-900">Interest (Vyaj) (₹)</th>
+                                        <th className="py-3 px-3.5 text-right text-gray-700">Fees / Jurmana (₹)</th>
+                                        <th className="py-3 px-3.5 text-right font-bold text-gray-900">Total Inflow (Kul Aavak) (₹)</th>
+                                        <th className="py-3 px-3.5 text-right text-purple-900">Released (Girvi Chhuti)</th>
+                                        <th className="py-3 px-3.5 text-right font-bold">Net Cash (Bachi Rokad) (₹)</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 text-gray-800">
@@ -1090,59 +1111,72 @@ export default function ReportsPage() {
                 TIER 2: FINANCIAL & PORTFOLIO
                ════════════════════════════════════════════════════════════════════════════════ */}
             {activeTab === 'tier2_financial' && (
-                <div className="space-y-6">
+                <div className="space-y-5">
                     {/* Granular Breakdown Quick Navigation Banner */}
-                    <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-white p-4 rounded-xl border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                    <div className="bg-amber-50/70 p-4 rounded-xl border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                         <div>
                             <p className="text-xs font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1.5">
                                 <CalendarRange className="w-4 h-4 text-amber-700" />
-                                <span>Day-by-Day, Month-by-Month, or Year-by-Year Calculations</span>
+                                <span>Day-by-Day, Month-by-Month Calculations (Karz & Rokad Ka Rozana Hisaab)</span>
                             </p>
                             <p className="text-xs text-gray-600 mt-0.5">
-                                Calculate how much money was disbursed (lent), repaid, and released with date filters and CSV export.
+                                Calculate how much money was disbursed (karz), repaid (mool), and released (girvi chhutayi) across custom date filters.
                             </p>
                         </div>
                         <button
                             onClick={() => setActiveTab('tier_trends')}
-                            className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-2xs whitespace-nowrap transition-colors flex items-center gap-1.5 self-start sm:self-auto"
+                            className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-xs whitespace-nowrap transition-colors flex items-center gap-1.5 self-start sm:self-auto"
                         >
-                            <span>Open Day / Month / Year Breakdown</span>
+                            <span>Open Day / Month / Year View</span>
                             <ArrowUpRight className="w-3.5 h-3.5" />
                         </button>
                     </div>
 
                     {/* Realized vs Unrealized Interest Banner */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white p-5 rounded-xl border-2 border-emerald-500/40 shadow-xs">
-                            <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-                                <span>Realized Interest Collected</span>
-                                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Cash In</span>
-                            </span>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="bg-white p-5 rounded-xl border border-emerald-200 shadow-xs">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-emerald-800 uppercase tracking-wider">
+                                    Realized Interest Collected
+                                </span>
+                                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">
+                                    Kamaaya Hua Vyaj
+                                </span>
+                            </div>
                             <p className="text-2xl font-black text-emerald-700 mt-2">
                                 {fmtCr(financialQ.data?.interest.totalRealizedCollected)}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
-                                Exact collected interest from ledger receipts. True cash realized.
+                                Exact collected interest from ledger receipts. True cash realized in hand.
                             </p>
                         </div>
 
-                        <div className="bg-white p-5 rounded-xl border-2 border-indigo-500/40 shadow-xs">
-                            <span className="text-xs font-bold text-indigo-800 uppercase tracking-wider flex items-center gap-1.5">
-                                <span>Unrealized Interest Accrued</span>
-                                <span className="text-[10px] bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded">Book Value</span>
-                            </span>
+                        <div className="bg-white p-5 rounded-xl border border-indigo-200 shadow-xs">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-indigo-800 uppercase tracking-wider">
+                                    Unrealized Accrued Interest
+                                </span>
+                                <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-1.5 py-0.5 rounded">
+                                    Kitabi Vyaj
+                                </span>
+                            </div>
                             <p className="text-2xl font-black text-indigo-700 mt-2">
                                 {fmtCr(financialQ.data?.interest.totalUnrealizedAccruedActiveBook)}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
-                                Total uncollected interest accrued across the live active book as of today.
+                                Total uncollected interest accrued across live active loans as of today.
                             </p>
                         </div>
 
                         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs">
-                            <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                Live Active Loan Book
-                            </span>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-gray-700 uppercase tracking-wider">
+                                    Live Active Loan Book
+                                </span>
+                                <span className="text-[10px] bg-gray-100 text-gray-700 font-bold px-1.5 py-0.5 rounded">
+                                    Bazaar Me Laga Karz
+                                </span>
+                            </div>
                             <p className="text-2xl font-black text-gray-900 mt-2">
                                 {fmtCr(financialQ.data?.interest.activePrincipalBook)}
                             </p>
@@ -1153,27 +1187,27 @@ export default function ReportsPage() {
                     </div>
 
                     {/* Capital Flow & Liquidity */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-2xs space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
                             <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                 <DollarSign className="w-4 h-4 text-amber-600" />
-                                <span>Capital Flow & Liquidity Summary</span>
+                                <span>Capital Flow & Liquidity (Rokad & Mool Khata)</span>
                             </h3>
                             <div className="space-y-2 text-xs">
                                 <div className="flex justify-between py-1.5 border-b border-gray-100">
-                                    <span className="text-gray-500">Total Capital Disbursed (Lent)</span>
+                                    <span className="text-gray-500">Total Capital Disbursed (Kul Karz Diya)</span>
                                     <span className="font-bold text-gray-900">{fmtCr(financialQ.data?.capitalSummary.capitalLent.amount)}</span>
                                 </div>
                                 <div className="flex justify-between py-1.5 border-b border-gray-100">
-                                    <span className="text-gray-500">Total Capital Recovered (Repaid Principal)</span>
+                                    <span className="text-gray-500">Capital Recovered (Mool Wapas Aaya)</span>
                                     <span className="font-bold text-emerald-700">+{fmtCr(financialQ.data?.capitalSummary.capitalReceived.amount)}</span>
                                 </div>
                                 <div className="flex justify-between py-1.5 border-b border-gray-100">
-                                    <span className="text-gray-500">Realized Interest Collected</span>
+                                    <span className="text-gray-500">Realized Interest Collected (Vyaj Aaya)</span>
                                     <span className="font-bold text-emerald-700">+{fmtCr(financialQ.data?.interest.totalRealizedCollected)}</span>
                                 </div>
-                                <div className="flex justify-between py-2 font-bold text-sm bg-gray-50 px-2 rounded">
-                                    <span>Net Operational Cash Flow</span>
+                                <div className="flex justify-between py-2 font-bold text-sm bg-gray-50 px-2.5 rounded">
+                                    <span>Net Operational Cash Flow (Bachi Rokad)</span>
                                     <span className={(financialQ.data?.capitalSummary.netCashFlow ?? 0) >= 0 ? 'text-emerald-700' : 'text-rose-700'}>
                                         {fmtCr(financialQ.data?.capitalSummary.netCashFlow)}
                                     </span>
@@ -1182,11 +1216,11 @@ export default function ReportsPage() {
                         </div>
 
                         {/* Lending Profit & Loss */}
-                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-2xs space-y-3">
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                     <TrendingUp className="w-4 h-4 text-emerald-600" />
-                                    <span>Lending-Side Profit & Loss</span>
+                                    <span>Lending Profit & Loss (Karz Munafa-Nuksan)</span>
                                 </h3>
                                 <span className="text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-mono">
                                     Operating Margin
@@ -1194,19 +1228,19 @@ export default function ReportsPage() {
                             </div>
                             <div className="space-y-2 text-xs">
                                 <div className="flex justify-between py-1.5 border-b border-gray-100">
-                                    <span className="text-gray-500">Realized Interest Income</span>
+                                    <span className="text-gray-500">Realized Interest Income (Vyaj Se Munafa)</span>
                                     <span className="font-bold text-emerald-700">+{fmtCr(financialQ.data?.profitAndLoss.realizedInterestIncome)}</span>
                                 </div>
                                 <div className="flex justify-between py-1.5 border-b border-gray-100">
-                                    <span className="text-gray-500">Overdue Penalties & Processing Fees</span>
+                                    <span className="text-gray-500">Overdue Penalties & Fees (Jurmana & Shulk)</span>
                                     <span className="font-bold text-emerald-700">+{fmtCr(financialQ.data?.profitAndLoss.feesAndPenalties)}</span>
                                 </div>
                                 <div className="flex justify-between py-1.5 border-b border-gray-100">
-                                    <span className="text-gray-500">Bad Debt Write-Offs (Auction Shortfall)</span>
+                                    <span className="text-gray-500">Bad Debt Write-Offs (Khatte Me Gaya / Shortfall)</span>
                                     <span className="font-bold text-rose-700">−{fmtINR(financialQ.data?.profitAndLoss.badDebtWriteOffs)}</span>
                                 </div>
-                                <div className="flex justify-between py-2 font-bold text-sm bg-emerald-50 text-emerald-900 px-2 rounded border border-emerald-200">
-                                    <span>Net Lending Profit</span>
+                                <div className="flex justify-between py-2 font-bold text-sm bg-emerald-50 text-emerald-900 px-2.5 rounded border border-emerald-200">
+                                    <span>Net Lending Profit (Shuddh Munafa)</span>
                                     <span>{fmtCr(financialQ.data?.profitAndLoss.netLendingProfit)}</span>
                                 </div>
                             </div>
@@ -1217,12 +1251,12 @@ export default function ReportsPage() {
                     </div>
 
                     {/* Loan-to-Value (LTV) Risk Distribution */}
-                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-2xs">
+                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs">
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                     <ShieldAlert className="w-4 h-4 text-amber-600" />
-                                    <span>Loan-to-Value (LTV) Risk Distribution</span>
+                                    <span>Loan-to-Value (LTV) Risk Distribution (Suraksha Margin)</span>
                                 </h3>
                                 <p className="text-xs text-gray-500 mt-0.5">
                                     Regulatory risk bands based on pledged gold collateral valuation
@@ -1269,12 +1303,12 @@ export default function ReportsPage() {
                     </div>
 
                     {/* Monthly Trends & Cash Flow Table */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden">
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden">
                         <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                     <BarChart3 className="w-4 h-4 text-amber-600" />
-                                    <span>Trailing 12-Month Performance & Capital Trends</span>
+                                    <span>Trailing 12-Month Performance & Capital Trends (Mahina-war Hisaab)</span>
                                 </h3>
                                 <p className="text-xs text-gray-500">
                                     Historical breakdown of capital lent, principal repaid, collected interest, and closed loans
@@ -1291,12 +1325,12 @@ export default function ReportsPage() {
                             <table className="w-full text-left text-xs">
                                 <thead className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
                                     <tr>
-                                        <th className="py-2.5 px-3.5">Month</th>
-                                        <th className="py-2.5 px-3.5 text-right text-amber-900">Capital Lent (₹)</th>
-                                        <th className="py-2.5 px-3.5 text-right text-emerald-900">Principal Repaid (₹)</th>
-                                        <th className="py-2.5 px-3.5 text-right text-blue-900">Collected Interest (₹)</th>
-                                        <th className="py-2.5 px-3.5 text-right text-purple-900">Released Capital (₹)</th>
-                                        <th className="py-2.5 px-3.5 text-right font-bold">Net Cash Flow (₹)</th>
+                                        <th className="py-2.5 px-3.5">Month / Mahina</th>
+                                        <th className="py-2.5 px-3.5 text-right text-amber-900">Capital Lent (Karz Diya) (₹)</th>
+                                        <th className="py-2.5 px-3.5 text-right text-emerald-900">Principal Repaid (Mool Aaya) (₹)</th>
+                                        <th className="py-2.5 px-3.5 text-right text-blue-900">Interest (Vyaj) (₹)</th>
+                                        <th className="py-2.5 px-3.5 text-right text-purple-900">Released (Girvi Chhutayi) (₹)</th>
+                                        <th className="py-2.5 px-3.5 text-right font-bold">Net Cash (Bachi Rokad) (₹)</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 text-gray-800">
@@ -1325,53 +1359,65 @@ export default function ReportsPage() {
                 TIER 3: GOLD/SILVER & CUSTODY
                ════════════════════════════════════════════════════════════════════════════════ */}
             {activeTab === 'tier3_custody' && (
-                <div className="space-y-6">
+                <div className="space-y-5">
                     {/* Collateral Market Value vs Loan Exposure (Margin of Safety) */}
-                    <div className="rounded-xl border border-amber-300 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white p-5 shadow-2xs">
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-xs">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                     <Scale className="w-5 h-5 text-amber-700" />
-                                    <span>Collateral Value vs Total Book Exposure</span>
+                                    <span>Collateral Value vs Total Book Exposure (Tijori Sona vs Kul Karz)</span>
                                 </h3>
                                 <p className="text-xs text-gray-500 mt-0.5">
                                     Live spot rate benchmark: Gold ₹{custodyQ.data?.marginOfSafety.goldSpotRateUsed}/g, Silver ₹{custodyQ.data?.marginOfSafety.silverSpotRateUsed}/g
                                 </p>
                             </div>
-                            <div className="px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-sm border border-emerald-300 shadow-2xs flex items-center gap-1.5">
+                            <div className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-300 shadow-xs flex items-center gap-1.5 self-start sm:self-auto">
                                 <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                                <span>Portfolio Margin of Safety: {custodyQ.data?.marginOfSafety.safetyMarginPercent}%</span>
+                                <span>Margin of Safety: {custodyQ.data?.marginOfSafety.safetyMarginPercent}% (Suraksha Margin)</span>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                             <div className="bg-white p-3.5 rounded-lg border border-amber-200">
-                                <p className="text-gray-500">Gold Pledged (Net)</p>
-                                <p className="font-extrabold text-lg text-amber-900 mt-0.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-500">Gold Pledged (Net)</span>
+                                    <span className="text-[10px] text-amber-800 bg-amber-50 px-1 py-0.5 rounded font-bold">Tijori Sona</span>
+                                </div>
+                                <p className="font-extrabold text-lg text-amber-900 mt-1">
                                     {fmtWeight(custodyQ.data?.goldPledged.netWeight)}
                                 </p>
                                 <p className="text-gray-400 text-[11px] mt-0.5">{custodyQ.data?.goldPledged.count} items</p>
                             </div>
 
                             <div className="bg-white p-3.5 rounded-lg border border-slate-200">
-                                <p className="text-gray-500">Silver Pledged (Net)</p>
-                                <p className="font-extrabold text-lg text-slate-800 mt-0.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-500">Silver Pledged (Net)</span>
+                                    <span className="text-[10px] text-slate-800 bg-slate-50 px-1 py-0.5 rounded font-bold">Tijori Chandi</span>
+                                </div>
+                                <p className="font-extrabold text-lg text-slate-800 mt-1">
                                     {fmtWeight(custodyQ.data?.silverPledged.netWeight)}
                                 </p>
                                 <p className="text-gray-400 text-[11px] mt-0.5">{custodyQ.data?.silverPledged.count} items</p>
                             </div>
 
                             <div className="bg-white p-3.5 rounded-lg border border-emerald-200">
-                                <p className="text-gray-500">Total Collateral Market Value</p>
-                                <p className="font-extrabold text-lg text-emerald-700 mt-0.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-500">Collateral Market Value</span>
+                                    <span className="text-[10px] text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded font-bold">Bazar Bhav</span>
+                                </div>
+                                <p className="font-extrabold text-lg text-emerald-700 mt-1">
                                     {fmtCr(custodyQ.data?.marginOfSafety.totalCollateralMarketValue)}
                                 </p>
                                 <p className="text-gray-400 text-[11px] mt-0.5">Market liquid value</p>
                             </div>
 
                             <div className="bg-white p-3.5 rounded-lg border border-rose-200">
-                                <p className="text-gray-500">Total Outstanding Principal</p>
-                                <p className="font-extrabold text-lg text-rose-700 mt-0.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-500">Outstanding Principal</span>
+                                    <span className="text-[10px] text-rose-800 bg-rose-50 px-1 py-0.5 rounded font-bold">Kul Karz</span>
+                                </div>
+                                <p className="font-extrabold text-lg text-rose-700 mt-1">
                                     {fmtCr(custodyQ.data?.marginOfSafety.totalExposurePrincipal)}
                                 </p>
                                 <p className="text-gray-400 text-[11px] mt-0.5">Active book debt</p>
@@ -1380,24 +1426,24 @@ export default function ReportsPage() {
                     </div>
 
                     {/* Physical Inventory Vault Walk Reconciliation */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-2xs">
+                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                     <Vault className="w-4 h-4 text-amber-700" />
-                                    <span>Physical Vault Inventory Reconciliation</span>
+                                    <span>Physical Vault Inventory Reconciliation (Tijori Ke Packet Ki Ginti)</span>
                                 </h3>
                                 <p className="text-xs text-gray-500 mt-0.5">
                                     Compare database expected packets against staff physical vault walk audit. Mismatches flag critical exceptions.
                                 </p>
                             </div>
                             {custodyQ.data?.physicalReconciliation.variance !== 0 ? (
-                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 border border-rose-300 text-rose-700 animate-pulse">
-                                    🚨 Packet Variance: {custodyQ.data?.physicalReconciliation.variance}
+                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 border border-rose-300 text-rose-700">
+                                    🚨 Packet Variance: {custodyQ.data?.physicalReconciliation.variance} (Farak)
                                 </span>
                             ) : (
                                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 border border-emerald-300 text-emerald-700">
-                                    ✓ Vault Packets Verified
+                                    ✓ Vault Packets Verified (Tijori Sahi Hai)
                                 </span>
                             )}
                         </div>
@@ -1408,9 +1454,9 @@ export default function ReportsPage() {
                             </div>
                         )}
 
-                        <div className="flex flex-col sm:flex-row items-center gap-3 bg-gray-50 p-3.5 rounded-lg border border-gray-200">
+                        <div className="flex flex-col sm:flex-row items-center gap-3 bg-gray-50/80 p-3.5 rounded-lg border border-gray-200">
                             <div className="text-xs sm:w-60">
-                                <p className="text-gray-500">Expected Packets (In DB)</p>
+                                <p className="text-gray-500">Expected Packets (Tijori Me Darj)</p>
                                 <p className="text-lg font-extrabold text-gray-900 mt-0.5">
                                     {custodyQ.data?.boxes.totalPacketsInVault ?? 0} packets
                                 </p>
@@ -1418,8 +1464,8 @@ export default function ReportsPage() {
                             <div className="w-full sm:w-64">
                                 <input
                                     type="number"
-                                    placeholder="Enter physical packet count..."
-                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                    placeholder="Enter physical count (Tijori Me Ginti)..."
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
                                     value={physicalPacketsInput}
                                     onChange={(e) => setPhysicalPacketsInput(e.target.value)}
                                 />
@@ -1431,20 +1477,20 @@ export default function ReportsPage() {
                                     vaultReconMutation.mutate({ actualPhysicalPackets: count });
                                 }}
                                 disabled={!physicalPacketsInput || vaultReconMutation.isPending}
-                                className="w-full sm:w-auto px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-2xs disabled:opacity-50 transition-colors whitespace-nowrap"
+                                className="w-full sm:w-auto px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-xs disabled:opacity-50 transition-colors whitespace-nowrap"
                             >
-                                {vaultReconMutation.isPending ? 'Verifying…' : 'Verify Vault Inventory'}
+                                {vaultReconMutation.isPending ? 'Verifying…' : 'Verify Vault (Tijori Milayein)'}
                             </button>
                         </div>
                     </div>
 
                     {/* 100-Box Occupancy Matrix */}
-                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-2xs">
+                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                     <Box className="w-4 h-4 text-amber-600" />
-                                    <span>Vault 100-Box Occupancy Matrix</span>
+                                    <span>Vault 100-Box Occupancy Matrix (Tijori Ke 100 Khane)</span>
                                 </h3>
                                 <p className="text-xs text-gray-500 mt-0.5">
                                     Real-time custody density across all 100 physical boxes (RefDocNo % 100 storage rule)
@@ -1463,7 +1509,7 @@ export default function ReportsPage() {
                                     key={b.box}
                                     className={`p-2 rounded text-center border transition-all hover:scale-105 ${
                                         b.status === 'OVERLOADED'
-                                            ? 'bg-rose-100 border-rose-300 text-rose-900 font-extrabold shadow-2xs'
+                                            ? 'bg-rose-100 border-rose-300 text-rose-900 font-extrabold shadow-xs'
                                             : b.status === 'BUSY'
                                             ? 'bg-amber-100 border-amber-300 text-amber-900 font-bold'
                                             : b.packetCount > 0
@@ -1484,11 +1530,14 @@ export default function ReportsPage() {
                 TIER 4: CUSTOMERS
                ════════════════════════════════════════════════════════════════════════════════ */}
             {activeTab === 'tier4_customers' && (
-                <div className="space-y-6">
+                <div className="space-y-5">
                     {/* Top Customer KPI Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-2xs">
-                            <span className="text-xs font-medium text-gray-500">Total Borrowers Acquired</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs">
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                                <span>Total Borrowers Acquired</span>
+                                <span className="text-[10px] bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded font-bold">Kul Grahak</span>
+                            </div>
                             <p className="text-2xl font-bold text-gray-900 mt-1">
                                 {customerQ.data?.acquisition.totalCustomers.toLocaleString('en-IN') ?? 0}
                             </p>
@@ -1497,8 +1546,11 @@ export default function ReportsPage() {
                             </span>
                         </div>
 
-                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-2xs">
-                            <span className="text-xs font-medium text-gray-500">Missing Mobile Numbers</span>
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs">
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                                <span>Missing Mobile Numbers</span>
+                                <span className="text-[10px] bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded font-bold">Bina Mobile</span>
+                            </div>
                             <p className="text-2xl font-bold text-amber-700 mt-1">
                                 {customerQ.data?.kycMissingTracker.missingMobileCount ?? 0}
                             </p>
@@ -1507,8 +1559,11 @@ export default function ReportsPage() {
                             </span>
                         </div>
 
-                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-2xs">
-                            <span className="text-xs font-medium text-gray-500">Missing KYC Documents</span>
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs">
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                                <span>Missing KYC Documents</span>
+                                <span className="text-[10px] bg-rose-50 text-rose-800 px-1.5 py-0.5 rounded font-bold">Adhoora KYC</span>
+                            </div>
                             <p className="text-2xl font-bold text-rose-700 mt-1">
                                 {customerQ.data?.kycMissingTracker.missingKycDocsCount ?? 0}
                             </p>
@@ -1519,18 +1574,18 @@ export default function ReportsPage() {
                     </div>
 
                     {/* Top 10 Borrowers (Concentration Risk) */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-2xs">
+                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs">
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                     <Users className="w-4 h-4 text-amber-600" />
-                                    <span>Top Borrowers (Concentration Risk)</span>
+                                    <span>Top Borrowers (Bade Karzdar / Concentration Risk)</span>
                                 </h3>
                                 <p className="text-xs text-gray-500 mt-0.5">
                                     Highest outstanding debt exposure across active pledge loans
                                 </p>
                             </div>
-                            <span className="text-xs text-gray-500">Ranked by Outstanding Principal</span>
+                            <span className="text-xs text-gray-500">Ranked by Outstanding Principal (Bakaya Mool)</span>
                         </div>
 
                         <div className="overflow-x-auto">
@@ -1538,11 +1593,11 @@ export default function ReportsPage() {
                                 <thead className="bg-gray-50 text-gray-600 uppercase border-y border-gray-200 font-semibold">
                                     <tr>
                                         <th className="py-2.5 px-3">Rank</th>
-                                        <th className="py-2.5 px-3">Customer</th>
+                                        <th className="py-2.5 px-3">Customer (Grahak)</th>
                                         <th className="py-2.5 px-3">Mobile</th>
                                         <th className="py-2.5 px-3">KYC</th>
                                         <th className="py-2.5 px-3 text-center">Active Loans</th>
-                                        <th className="py-2.5 px-3 text-right">Outstanding Principal</th>
+                                        <th className="py-2.5 px-3 text-right">Outstanding Principal (Bakaya Mool)</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -1582,14 +1637,14 @@ export default function ReportsPage() {
                 TIER 5: STAFF ACCOUNTABILITY
                ════════════════════════════════════════════════════════════════════════════════ */}
             {activeTab === 'tier5_staff' && (
-                <div className="space-y-6">
+                <div className="space-y-5">
                     {/* Cashier Collections Breakdown */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-2xs">
+                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs">
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                     <CreditCard className="w-4 h-4 text-emerald-600" />
-                                    <span>Cashier Collection Summary</span>
+                                    <span>Cashier Collection Summary (Munim & Cash Counter Hisaab)</span>
                                 </h3>
                                 <p className="text-xs text-gray-500 mt-0.5">
                                     Total receipts and mode breakdown attributed per counter staff account
@@ -1601,13 +1656,13 @@ export default function ReportsPage() {
                             <table className="w-full text-xs text-left">
                                 <thead className="bg-gray-50 text-gray-600 uppercase border-y border-gray-200 font-semibold">
                                     <tr>
-                                        <th className="py-2.5 px-3">Cashier</th>
+                                        <th className="py-2.5 px-3">Cashier (Munim / Staff)</th>
                                         <th className="py-2.5 px-3">Role</th>
-                                        <th className="py-2.5 px-3 text-center">Receipts</th>
-                                        <th className="py-2.5 px-3 text-right">Cash (₹)</th>
+                                        <th className="py-2.5 px-3 text-center">Receipts (Raseed)</th>
+                                        <th className="py-2.5 px-3 text-right">Cash (Rokad ₹)</th>
                                         <th className="py-2.5 px-3 text-right">UPI (₹)</th>
                                         <th className="py-2.5 px-3 text-right">Bank Transfer (₹)</th>
-                                        <th className="py-2.5 px-3 text-right font-bold">Total Collected (₹)</th>
+                                        <th className="py-2.5 px-3 text-right font-bold">Total Collected (Kul Jama ₹)</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -1632,12 +1687,12 @@ export default function ReportsPage() {
                     </div>
 
                     {/* Exceptions & Sensitive Overrides Report */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-2xs">
+                    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs">
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                     <ShieldAlert className="w-4 h-4 text-amber-600" />
-                                    <span>Exceptions & Sensitive Overrides Audit</span>
+                                    <span>Exceptions & Sensitive Overrides Audit (Vishesh Chhoot & Overrides)</span>
                                 </h3>
                                 <p className="text-xs text-gray-500 mt-0.5">
                                     Biometric fallbacks, manager overrides, and authorized concessions
@@ -1649,9 +1704,9 @@ export default function ReportsPage() {
                             <table className="w-full text-xs text-left">
                                 <thead className="bg-gray-50 text-gray-600 uppercase border-y border-gray-200 font-semibold">
                                     <tr>
-                                        <th className="py-2.5 px-3">Date & Time</th>
+                                        <th className="py-2.5 px-3">Date & Time (Tarikh)</th>
                                         <th className="py-2.5 px-3">Type</th>
-                                        <th className="py-2.5 px-3">Borrower</th>
+                                        <th className="py-2.5 px-3">Borrower (Grahak)</th>
                                         <th className="py-2.5 px-3">Authorized By</th>
                                         <th className="py-2.5 px-3">Reason / Audit Trail</th>
                                     </tr>
