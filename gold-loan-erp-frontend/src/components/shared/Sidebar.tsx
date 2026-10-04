@@ -198,7 +198,7 @@ export function Sidebar() {
             </div>
 
             {/* Nav */}
-            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5 custom-scrollbar">
                 {NAV.map(item => {
                     const el = <NavLink key={item.href} item={item} />;
                     if (item.roles) {

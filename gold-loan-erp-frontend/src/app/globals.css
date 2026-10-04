@@ -136,3 +136,57 @@
     display: none;
   }
 }
+
+/* ─── Modern Sleek Scrollbars ────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.35);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(217, 119, 6, 0.55);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0;
+  height: 0;
+}
+
+@utility custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 119, 6, 0.25) transparent;
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(217, 119, 6, 0.25);
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(217, 119, 6, 0.55);
+  }
+}
