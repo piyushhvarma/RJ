@@ -152,17 +152,36 @@ export class LoansService {
     const skip = (page - 1) * limit;
 
     const where: any = {};
-    if (dto.status) {
-      where.status = dto.status;
+    const conditions: any[] = [];
+
+    if (dto.status && dto.status.trim() !== '' && dto.status.toUpperCase() !== 'ALL') {
+      const s = dto.status.toUpperCase();
+      if (s === 'OVERDUE') {
+        conditions.push({
+          OR: [
+            { status: 'OVERDUE' },
+            { status: 'ACTIVE', maturityDate: { lt: new Date() } },
+          ],
+        });
+      } else {
+        conditions.push({ status: s });
+      }
     }
+
     if (dto.q) {
       const q = dto.q.trim();
-      where.OR = [
-        { loanCode: { contains: q, mode: 'insensitive' } },
-        { customer: { fullName: { contains: q, mode: 'insensitive' } } },
-        { customer: { mobile: { contains: q } } },
-        { customer: { customerCode: { contains: q, mode: 'insensitive' } } },
-      ];
+      conditions.push({
+        OR: [
+          { loanCode: { contains: q, mode: 'insensitive' } },
+          { customer: { fullName: { contains: q, mode: 'insensitive' } } },
+          { customer: { mobile: { contains: q } } },
+          { customer: { customerCode: { contains: q, mode: 'insensitive' } } },
+        ],
+      });
+    }
+
+    if (conditions.length > 0) {
+      where.AND = conditions;
     }
 
     const orderBy: any = {};

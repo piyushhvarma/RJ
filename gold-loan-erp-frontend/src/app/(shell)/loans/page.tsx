@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getLoans, type ListLoansParams } from '@/lib/api/loans';
 import { LoanStatusBadge } from '@/components/shared/StatusBadge';
@@ -27,12 +28,12 @@ import {
 import { format } from 'date-fns';
 
 const STATUS_FILTERS = [
-    { label: 'All Loans', value: 'ALL' },
-    { label: 'Active', value: 'ACTIVE' },
-    { label: 'Closed', value: 'CLOSED' },
-    { label: 'Draft', value: 'DRAFT' },
-    { label: 'Overdue', value: 'OVERDUE' },
-    { label: 'Hold', value: 'HOLD' },
+    { label: 'All Loans', value: 'ALL', hinglish: 'कुल' },
+    { label: 'Active', value: 'ACTIVE', hinglish: 'चालू' },
+    { label: 'Overdue', value: 'OVERDUE', hinglish: 'मुद्दत पार' },
+    { label: 'Closed', value: 'CLOSED', hinglish: 'चुकता' },
+    { label: 'Draft', value: 'DRAFT', hinglish: 'ड्राफ्ट' },
+    { label: 'Hold', value: 'HOLD', hinglish: 'रोक' },
 ];
 
 function fmtINR(n?: number | null) {
@@ -40,21 +41,66 @@ function fmtINR(n?: number | null) {
     return `₹${n.toLocaleString('en-IN')}`;
 }
 
-export default function LoansPage() {
-    const [q, setQ] = useState('');
-    const [debouncedQ, setDebouncedQ] = useState('');
-    const [statusFilter, setStatusFilter] = useState('ALL');
-    const [page, setPage] = useState(1);
+function LoansContent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    const urlStatus = (searchParams.get('status') || 'ALL').toUpperCase();
+    const [statusFilter, setStatusFilter] = useState(urlStatus);
+    const [q, setQ] = useState(searchParams.get('q') || '');
+    const [debouncedQ, setDebouncedQ] = useState(q);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = 20;
+
+    // Synchronize statusFilter when URL query parameter changes
+    useEffect(() => {
+        setStatusFilter(urlStatus);
+    }, [urlStatus]);
 
     // Debounce search query
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedQ(q);
-            setPage(1);
+            const currentUrlQ = searchParams.get('q') || '';
+            if (q !== currentUrlQ) {
+                const next = new URLSearchParams(searchParams.toString());
+                if (q.trim()) {
+                    next.set('q', q.trim());
+                } else {
+                    next.delete('q');
+                }
+                next.delete('page');
+                const qs = next.toString();
+                router.push(`${pathname}${qs ? `?${qs}` : ''}`);
+            }
         }, 300);
         return () => clearTimeout(timer);
-    }, [q]);
+    }, [q, pathname, router, searchParams]);
+
+    const handleStatusFilter = (val: string) => {
+        setStatusFilter(val);
+        const next = new URLSearchParams(searchParams.toString());
+        if (val === 'ALL') {
+            next.delete('status');
+        } else {
+            next.set('status', val);
+        }
+        next.delete('page');
+        const qs = next.toString();
+        router.push(`${pathname}${qs ? `?${qs}` : ''}`);
+    };
+
+    const handlePageChange = (newPage: number) => {
+        const next = new URLSearchParams(searchParams.toString());
+        if (newPage > 1) {
+            next.set('page', String(newPage));
+        } else {
+            next.delete('page');
+        }
+        const qs = next.toString();
+        router.push(`${pathname}${qs ? `?${qs}` : ''}`);
+    };
 
     const params: ListLoansParams = {
         q: debouncedQ || undefined,
@@ -78,20 +124,39 @@ export default function LoansPage() {
     const startIdx = total === 0 ? 0 : (page - 1) * limit + 1;
     const endIdx = Math.min(page * limit, total);
 
+    const getHeaderTitle = () => {
+        switch (statusFilter) {
+            case 'ACTIVE':
+                return { title: 'Active Loans', sub: 'चालू ऋण • Currently open & active gold loans' };
+            case 'OVERDUE':
+                return { title: 'Overdue Loans', sub: 'मुद्दत पार ऋण • Loans past maturity date requiring follow-up or renewal' };
+            case 'CLOSED':
+                return { title: 'Closed Loans', sub: 'चुकता ऋण • Settled, redeemed, and closed historical gold loans' };
+            case 'HOLD':
+                return { title: 'Loans on Hold', sub: 'रोक सूची • Flagged or disputed loan records' };
+            case 'DRAFT':
+                return { title: 'Draft Loans', sub: 'कच्चा ड्राफ्ट • Incomplete origination workflows' };
+            default:
+                return { title: 'Loans Portfolio', sub: 'कुल ऋण बही • Complete ledger of active, overdue, and historical loans' };
+        }
+    };
+
+    const header = getHeaderTitle();
+
     return (
         <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-6">
                 <div>
                     <div className="flex items-center gap-3">
-                        <h1 className="text-2xl font-bold text-gray-950 tracking-tight">Loans Portfolio</h1>
+                        <h1 className="text-2xl font-bold text-gray-950 tracking-tight">{header.title}</h1>
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                            {total.toLocaleString()} Total Records
+                            {total.toLocaleString()} Records
                         </span>
                     </div>
                     <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                        Radhika Jewellers • Complete ledger of active, pledged, and historical gold loans
+                        Radhika Jewellers • {header.sub}
                     </p>
                 </div>
 
@@ -129,7 +194,14 @@ export default function LoansPage() {
                     />
                     {q && (
                         <button
-                            onClick={() => setQ('')}
+                            onClick={() => {
+                                setQ('');
+                                const next = new URLSearchParams(searchParams.toString());
+                                next.delete('q');
+                                next.delete('page');
+                                const qs = next.toString();
+                                router.push(`${pathname}${qs ? `?${qs}` : ''}`);
+                            }}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
                         >
                             <X className="w-3.5 h-3.5" />
@@ -144,17 +216,19 @@ export default function LoansPage() {
                         return (
                             <button
                                 key={f.value}
-                                onClick={() => {
-                                    setStatusFilter(f.value);
-                                    setPage(1);
-                                }}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                                onClick={() => handleStatusFilter(f.value)}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1 ${
                                     isSelected
                                         ? 'bg-amber-600 text-white shadow-xs'
                                         : 'bg-gray-100/80 text-gray-600 hover:bg-gray-200/80'
                                 }`}
                             >
-                                {f.label}
+                                <span>{f.label}</span>
+                                {f.hinglish && (
+                                    <span className={`text-[10px] ${isSelected ? 'text-amber-100' : 'text-gray-400'}`}>
+                                        ({f.hinglish})
+                                    </span>
+                                )}
                             </button>
                         );
                     })}
@@ -250,7 +324,7 @@ export default function LoansPage() {
 
                                         {/* Status */}
                                         <td className="px-5 py-3.5">
-                                            <LoanStatusBadge status={loan.status} />
+                                            <LoanStatusBadge status={loan.status} maturityDate={loan.maturityDate} />
                                         </td>
 
                                         {/* Sanction Date */}
@@ -275,11 +349,19 @@ export default function LoansPage() {
                                 <tr>
                                     <td colSpan={7} className="px-5 py-12 text-center">
                                         <Coins className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                                        <p className="text-sm font-bold text-gray-800">No loans found</p>
+                                        <p className="text-sm font-bold text-gray-800">
+                                            {statusFilter === 'OVERDUE'
+                                                ? 'No overdue loans found'
+                                                : statusFilter === 'ACTIVE'
+                                                ? 'No active loans found'
+                                                : statusFilter === 'CLOSED'
+                                                ? 'No closed loans found'
+                                                : 'No loans found'}
+                                        </p>
                                         <p className="text-xs text-gray-500 mt-1">
                                             {debouncedQ
                                                 ? `No records matching "${debouncedQ}". Try adjusting your search query.`
-                                                : 'No loans in this category.'}
+                                                : 'No loans matching this category filter.'}
                                         </p>
                                     </td>
                                 </tr>
@@ -298,9 +380,9 @@ export default function LoansPage() {
 
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            onClick={() => handlePageChange(Math.max(1, page - 1))}
                             disabled={page <= 1 || isLoading}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition shadow-2xs"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition shadow-2xs cursor-pointer"
                         >
                             <ChevronLeft className="w-3.5 h-3.5" /> Previous
                         </button>
@@ -310,9 +392,9 @@ export default function LoansPage() {
                         </span>
 
                         <button
-                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
                             disabled={page >= totalPages || isLoading}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition shadow-2xs"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition shadow-2xs cursor-pointer"
                         >
                             Next <ChevronRight className="w-3.5 h-3.5" />
                         </button>
@@ -320,5 +402,20 @@ export default function LoansPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoansPage() {
+    return (
+        <Suspense fallback={
+            <div className="p-8 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
+                <div className="flex items-center gap-3 text-amber-700 font-medium text-sm">
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <span>Loading loans portfolio...</span>
+                </div>
+            </div>
+        }>
+            <LoansContent />
+        </Suspense>
     );
 }

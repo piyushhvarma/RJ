@@ -8,8 +8,8 @@ export class ListLoansDto {
   q?: string;
 
   @IsOptional()
-  @IsEnum(LoanStatus)
-  status?: LoanStatus;
+  @IsString()
+  status?: string;
 
   @IsOptional()
   @Type(() => Number)

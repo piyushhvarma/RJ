@@ -40,7 +40,10 @@ const APPRAISAL_STATUS_CONFIG: Record<AppraisalStatus, { label: string; classNam
     LOCKED: { label: 'Locked', className: 'bg-green-600 text-white' },
 };
 
-interface LoanStatusBadgeProps { status: LoanStatus }
+interface LoanStatusBadgeProps {
+    status: LoanStatus | string;
+    maturityDate?: string | null | Date;
+}
 interface PacketStatusBadgeProps { status: PacketStatus }
 interface AppraisalStatusBadgeProps { status: AppraisalStatus }
 
@@ -52,8 +55,10 @@ function Badge({ label, className }: { label: string; className: string }) {
     );
 }
 
-export function LoanStatusBadge({ status }: LoanStatusBadgeProps) {
-    const cfg = LOAN_STATUS_CONFIG[status] ?? { label: status, className: 'bg-gray-100 text-gray-700' };
+export function LoanStatusBadge({ status, maturityDate }: LoanStatusBadgeProps) {
+    const isOverdue = status === 'ACTIVE' && !!maturityDate && new Date(maturityDate) < new Date();
+    const effectiveStatus = (isOverdue ? 'OVERDUE' : status) as LoanStatus;
+    const cfg = LOAN_STATUS_CONFIG[effectiveStatus] ?? { label: status, className: 'bg-gray-100 text-gray-700' };
     return <Badge label={cfg.label} className={cfg.className} />;
 }
 

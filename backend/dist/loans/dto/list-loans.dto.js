@@ -7,9 +7,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
-import { LoanStatus } from '@prisma/client';
 export class ListLoansDto {
     q;
     status;
@@ -25,7 +24,7 @@ __decorate([
 ], ListLoansDto.prototype, "q", void 0);
 __decorate([
     IsOptional(),
-    IsEnum(LoanStatus),
+    IsString(),
     __metadata("design:type", String)
 ], ListLoansDto.prototype, "status", void 0);
 __decorate([
