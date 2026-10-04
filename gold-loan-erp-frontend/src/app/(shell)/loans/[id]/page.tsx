@@ -104,7 +104,7 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
                     <div>
                         <div className="flex items-center gap-3">
                             <h1 className="text-xl font-bold text-gray-900">{loan.loanCode}</h1>
-                            <LoanStatusBadge status={loan.status} />
+                            <LoanStatusBadge status={loan.status} maturityDate={loan.maturityDate} />
                         </div>
                         {loan.customer && (
                             <Link
@@ -500,7 +500,7 @@ export default function LoanProfilePage({ params }: { params: Promise<{ id: stri
                     <div className="rounded-xl border border-amber-200/80 bg-amber-50/30 p-4 flex flex-col justify-between space-y-3">
                         <div>
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold uppercase tracking-wider text-amber-900">Pawn Ticket / गिरवी पावती</span>
+                                <span className="text-xs font-bold uppercase tracking-wider text-amber-900">Pawn Ticket / Girvi Pawti</span>
                                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">
                                     Official Agreement
                                 </span>

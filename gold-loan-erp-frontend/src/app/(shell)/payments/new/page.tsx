@@ -168,10 +168,10 @@ function NewPaymentPageContent() {
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Mode *</label>
                             <select className={inputCls} disabled={isSubmitting} {...register('mode')}>
                                 <option value="">Select…</option>
-                                <option value="CASH">Cash</option>
-                                <option value="UPI">UPI</option>
-                                <option value="BANK_TRANSFER">Bank Transfer</option>
-                                <option value="OTHER">Other</option>
+                                <option value="CASH">Cash (Rokad)</option>
+                                <option value="UPI">UPI (Online)</option>
+                                <option value="BANK_TRANSFER">Bank Transfer (Khata Transfer)</option>
+                                <option value="OTHER">Other (Anya)</option>
                             </select>
                             {errors.mode && <p className="mt-1 text-xs text-red-600">{errors.mode.message}</p>}
                         </div>
@@ -261,10 +261,10 @@ function NewPaymentPageContent() {
 
                     <div className="grid grid-cols-2 gap-4">
                         {[
-                            { label: 'Principal Component (₹)', field: 'principalComponent' as const },
-                            { label: 'Interest Component (₹)', field: 'interestComponent' as const },
-                            { label: 'Penalty Component (₹)', field: 'penaltyComponent' as const },
-                            { label: 'Other Charges (₹)', field: 'otherCharges' as const },
+                            { label: 'Principal Component (Mool) ₹', field: 'principalComponent' as const },
+                            { label: 'Interest Component (Byaj) ₹', field: 'interestComponent' as const },
+                            { label: 'Penalty Component (Harjana) ₹', field: 'penaltyComponent' as const },
+                            { label: 'Other Charges (Anya Shulk) ₹', field: 'otherCharges' as const },
                         ].map(({ label, field }) => (
                             <div key={field}>
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>

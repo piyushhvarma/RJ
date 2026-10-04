@@ -150,7 +150,7 @@ export default function DashboardPage() {
                 <div className="relative overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 p-5 shadow-sm">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold uppercase tracking-wider text-amber-800/80">
-                            Active Portfolio
+                            Active Portfolio (Chalu Rinn)
                         </span>
                         <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-700">
                             <Coins className="w-5 h-5" />
@@ -173,7 +173,7 @@ export default function DashboardPage() {
                 <div className="relative overflow-hidden rounded-2xl border border-yellow-200 bg-gradient-to-br from-yellow-500/10 via-white to-yellow-500/5 p-5 shadow-sm">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold uppercase tracking-wider text-yellow-800/80">
-                            Pledged Gold (Vault)
+                            Pledged Gold (Girvi Sona)
                         </span>
                         <div className="w-9 h-9 rounded-xl bg-yellow-500/15 flex items-center justify-center text-yellow-700">
                             <Scale className="w-5 h-5" />
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                             {fmtWeight(kpis.pledgedGoldNetWeightGrams)}
                         </div>
                         <div className="text-xs text-gray-500 mt-1 flex items-center justify-between">
-                            <span>Gross: {fmtWeight(kpis.pledgedGoldGrossWeightGrams)}</span>
+                            <span>Gross: {fmtWeight(kpis.pledgedGoldGrossWeightGrams)} (Kaccha)</span>
                             <span className="font-semibold text-yellow-800 bg-yellow-100/80 px-2 py-0.5 rounded-md">
                                 {kpis.pledgedJewelleryItemsCount.toLocaleString()} items
                             </span>
@@ -196,7 +196,7 @@ export default function DashboardPage() {
                 <div className="relative overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-500/10 via-white to-blue-500/5 p-5 shadow-sm">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold uppercase tracking-wider text-blue-800/80">
-                            Collateral Valuation
+                            Collateral Valuation (Girvi Mulyankan)
                         </span>
                         <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center text-blue-700">
                             <ShieldCheck className="w-5 h-5" />
@@ -219,7 +219,7 @@ export default function DashboardPage() {
                 <div className="relative overflow-hidden rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-500/10 via-white to-purple-500/5 p-5 shadow-sm">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold uppercase tracking-wider text-purple-800/80">
-                            Registered Borrowers
+                            Registered Borrowers (Grahak)
                         </span>
                         <div className="w-9 h-9 rounded-xl bg-purple-500/15 flex items-center justify-center text-purple-700">
                             <Users className="w-5 h-5" />
@@ -243,7 +243,7 @@ export default function DashboardPage() {
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-600">
-                        Operational Shortcuts
+                        Operational Shortcuts (Khatavahi)
                     </h2>
                     <span className="text-xs text-gray-400">Fast action launchpad</span>
                 </div>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
                         </div>
                         <div>
                             <p className="text-xs font-semibold text-gray-900">Register Customer</p>
-                            <p className="text-[11px] text-gray-500">KYC & Aadhaar</p>
+                            <p className="text-[11px] text-gray-500">Naya Grahak (Aadhaar)</p>
                         </div>
                     </Link>
 
@@ -270,7 +270,7 @@ export default function DashboardPage() {
                         </div>
                         <div>
                             <p className="text-xs font-semibold text-gray-900">Create Loan</p>
-                            <p className="text-[11px] text-gray-500">Appraise & Disburse</p>
+                            <p className="text-[11px] text-gray-500">Naya Loan (Girvi Sona)</p>
                         </div>
                     </Link>
 
@@ -283,7 +283,7 @@ export default function DashboardPage() {
                         </div>
                         <div>
                             <p className="text-xs font-semibold text-gray-900">Receive Payment</p>
-                            <p className="text-[11px] text-gray-500">Principal & Interest</p>
+                            <p className="text-[11px] text-gray-500">Kist Jama (Mool & Byaj)</p>
                         </div>
                     </Link>
 
@@ -296,7 +296,7 @@ export default function DashboardPage() {
                         </div>
                         <div>
                             <p className="text-xs font-semibold text-gray-900">Customer Directory</p>
-                            <p className="text-[11px] text-gray-500">Search 8,600+ records</p>
+                            <p className="text-[11px] text-gray-500">Grahak Bahi (Search)</p>
                         </div>
                     </Link>
                 </div>

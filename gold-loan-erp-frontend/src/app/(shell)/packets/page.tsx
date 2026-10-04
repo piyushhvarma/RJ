@@ -25,12 +25,12 @@ import {
 import { format } from 'date-fns';
 
 const STATUS_FILTERS = [
-    { label: 'All Statuses', value: 'ALL' },
-    { label: 'In Safe Locker (Stored)', value: 'STORED' },
-    { label: 'Sealed (Pending Storing)', value: 'SEALED' },
-    { label: 'In Closure Process', value: 'IN_CLOSURE_PROCESS' },
-    { label: 'Retrieved from Safe', value: 'RETRIEVED' },
-    { label: 'Released to Customer', value: 'RELEASED' },
+    { label: 'All Statuses (Sabhi)', value: 'ALL' },
+    { label: 'In Safe Locker (Tijori Me Jama)', value: 'STORED' },
+    { label: 'Sealed (Sealed Theli)', value: 'SEALED' },
+    { label: 'In Closure Process (Chukta Process)', value: 'IN_CLOSURE_PROCESS' },
+    { label: 'Retrieved from Safe (Tijori Se Nikala)', value: 'RETRIEVED' },
+    { label: 'Released to Customer (Grahak Ko Wapas)', value: 'RELEASED' },
 ];
 
 function fmtINR(n?: number | null) {

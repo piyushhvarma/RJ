@@ -28,10 +28,10 @@ import { format } from 'date-fns';
 import { getClosureReceiptPdfUrl } from '@/lib/api/documents';
 
 const CLOSURE_FILTERS = [
-    { label: 'Active Loans (Ready for Closure)', value: 'ACTIVE' },
-    { label: 'Closed Accounts', value: 'CLOSED' },
-    { label: 'Overdue Loans', value: 'OVERDUE' },
-    { label: 'All Records', value: 'ALL' },
+    { label: 'Active Loans (Chalu Rinn)', value: 'ACTIVE' },
+    { label: 'Closed Accounts (Chukta Khata)', value: 'CLOSED' },
+    { label: 'Overdue Loans (Muddat Paar)', value: 'OVERDUE' },
+    { label: 'All Records (Sabhi Records)', value: 'ALL' },
 ];
 
 function fmtINR(n?: number | null) {

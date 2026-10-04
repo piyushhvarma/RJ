@@ -24,14 +24,14 @@ import { format } from 'date-fns';
 
 const PURITY_FILTERS = ['ALL', '22K (91.6%)', '20K (80%)', '24K (95%)', 'Silver 80%'];
 const METAL_FILTERS = [
-    { label: 'All Metals', value: 'ALL' },
-    { label: 'Gold Ornaments', value: 'GOLD' },
-    { label: 'Silver (Payal, Kada, Bracelet, etc.)', value: 'SILVER' },
+    { label: 'All Metals (Sabhi)', value: 'ALL' },
+    { label: 'Gold Ornaments (Sona)', value: 'GOLD' },
+    { label: 'Silver (Chandi - Payal, Kada)', value: 'SILVER' },
 ];
 const STATUS_FILTERS = [
-    { label: 'All Status', value: 'ALL' },
-    { label: 'In Vault (Pledged)', value: 'PLEDGED' },
-    { label: 'Released / Settled', value: 'RELEASED' },
+    { label: 'All Status (Sabhi)', value: 'ALL' },
+    { label: 'In Vault / Pledged (Tijori Girvi)', value: 'PLEDGED' },
+    { label: 'Released / Settled (Chukta Wapas)', value: 'RELEASED' },
 ];
 
 function fmtINR(n?: number | null) {

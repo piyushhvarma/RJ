@@ -113,7 +113,7 @@ export default function PaymentsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Collections</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Collections (Kul Wasooli)</span>
                         <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
                             <Banknote className="w-4 h-4" />
                         </div>
@@ -131,7 +131,7 @@ export default function PaymentsPage() {
 
                 <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Principal Recovered</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Principal Recovered (Mool Wapsi)</span>
                         <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
                             <TrendingUp className="w-4 h-4" />
                         </div>
@@ -148,7 +148,7 @@ export default function PaymentsPage() {
 
                 <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Transactions</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Receipts (Kul Pawti)</span>
                         <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
                             <Coins className="w-4 h-4" />
                         </div>
@@ -166,7 +166,7 @@ export default function PaymentsPage() {
 
                 <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Counter Protocol</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Counter Mode (Rokad / UPI)</span>
                         <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
                             <QrCode className="w-4 h-4" />
                         </div>
@@ -208,13 +208,13 @@ export default function PaymentsPage() {
                     <table className="w-full text-left text-sm text-gray-600">
                         <thead className="bg-gray-50/80 border-b border-gray-200 text-xs uppercase font-semibold text-gray-500 tracking-wider">
                             <tr>
-                                <th className="px-5 py-3.5">Receipt & Payment</th>
-                                <th className="px-5 py-3.5">Date & Time</th>
-                                <th className="px-5 py-3.5">Loan Account</th>
-                                <th className="px-5 py-3.5">Borrower</th>
-                                <th className="px-5 py-3.5">Payment Mode</th>
-                                <th className="px-5 py-3.5">Principal Paid</th>
-                                <th className="px-5 py-3.5 font-bold text-gray-900">Total Collected</th>
+                                <th className="px-5 py-3.5">Receipt <span className="lowercase font-normal text-gray-400">(pawti)</span></th>
+                                <th className="px-5 py-3.5">Date <span className="lowercase font-normal text-gray-400">(tareekh)</span></th>
+                                <th className="px-5 py-3.5">Loan <span className="lowercase font-normal text-gray-400">(khata)</span></th>
+                                <th className="px-5 py-3.5">Borrower <span className="lowercase font-normal text-gray-400">(grahak)</span></th>
+                                <th className="px-5 py-3.5">Mode <span className="lowercase font-normal text-gray-400">(rokad / upi)</span></th>
+                                <th className="px-5 py-3.5">Principal Paid <span className="lowercase font-normal text-gray-400">(mool)</span></th>
+                                <th className="px-5 py-3.5 font-bold text-gray-900">Total Collected <span className="lowercase font-normal text-gray-500">(kul jama)</span></th>
                                 <th className="px-5 py-3.5 text-right">Actions</th>
                             </tr>
                         </thead>

@@ -28,12 +28,12 @@ import {
 import { format } from 'date-fns';
 
 const STATUS_FILTERS = [
-    { label: 'All Loans', value: 'ALL', hinglish: 'कुल' },
-    { label: 'Active', value: 'ACTIVE', hinglish: 'चालू' },
-    { label: 'Overdue', value: 'OVERDUE', hinglish: 'मुद्दत पार' },
-    { label: 'Closed', value: 'CLOSED', hinglish: 'चुकता' },
-    { label: 'Draft', value: 'DRAFT', hinglish: 'ड्राफ्ट' },
-    { label: 'Hold', value: 'HOLD', hinglish: 'रोक' },
+    { label: 'All Loans', value: 'ALL', hinglish: 'Sabhi' },
+    { label: 'Active', value: 'ACTIVE', hinglish: 'Chalu' },
+    { label: 'Overdue', value: 'OVERDUE', hinglish: 'Muddat Paar' },
+    { label: 'Closed', value: 'CLOSED', hinglish: 'Chukta' },
+    { label: 'Draft', value: 'DRAFT', hinglish: 'Kacha' },
+    { label: 'Hold', value: 'HOLD', hinglish: 'Roka Hua' },
 ];
 
 function fmtINR(n?: number | null) {
@@ -127,17 +127,17 @@ function LoansContent() {
     const getHeaderTitle = () => {
         switch (statusFilter) {
             case 'ACTIVE':
-                return { title: 'Active Loans', sub: 'चालू ऋण • Currently open & active gold loans' };
+                return { title: 'Active Loans', sub: 'Chalu Rinn • Currently open & active gold loans' };
             case 'OVERDUE':
-                return { title: 'Overdue Loans', sub: 'मुद्दत पार ऋण • Loans past maturity date requiring follow-up or renewal' };
+                return { title: 'Overdue Loans', sub: 'Muddat Paar Rinn • Loans past maturity date requiring follow-up or renewal' };
             case 'CLOSED':
-                return { title: 'Closed Loans', sub: 'चुकता ऋण • Settled, redeemed, and closed historical gold loans' };
+                return { title: 'Closed Loans', sub: 'Chukta Rinn • Settled, redeemed, and closed historical gold loans' };
             case 'HOLD':
-                return { title: 'Loans on Hold', sub: 'रोक सूची • Flagged or disputed loan records' };
+                return { title: 'Loans on Hold', sub: 'Roke Gaye Rinn • Flagged or disputed loan records' };
             case 'DRAFT':
-                return { title: 'Draft Loans', sub: 'कच्चा ड्राफ्ट • Incomplete origination workflows' };
+                return { title: 'Draft Loans', sub: 'Kacha Draft • Incomplete origination workflows' };
             default:
-                return { title: 'Loans Portfolio', sub: 'कुल ऋण बही • Complete ledger of active, overdue, and historical loans' };
+                return { title: 'Loans Portfolio', sub: 'Kul Rinn Bahi • Complete ledger of active, overdue, and historical loans' };
         }
     };
 
@@ -241,12 +241,12 @@ function LoansContent() {
                     <table className="w-full text-left text-xs">
                         <thead className="bg-gray-50/80 text-gray-500 font-semibold border-b border-gray-100 uppercase tracking-wider text-[11px]">
                             <tr>
-                                <th className="px-5 py-3.5">Loan Reference</th>
-                                <th className="px-5 py-3.5">Borrower</th>
-                                <th className="px-5 py-3.5 text-right">Principal</th>
-                                <th className="px-5 py-3.5">Collateral</th>
-                                <th className="px-5 py-3.5">Status</th>
-                                <th className="px-5 py-3.5">Sanction Date</th>
+                                <th className="px-5 py-3.5">Loan Reference <span className="text-[10px] text-gray-400 font-normal lowercase">(khata)</span></th>
+                                <th className="px-5 py-3.5">Borrower <span className="text-[10px] text-gray-400 font-normal lowercase">(grahak)</span></th>
+                                <th className="px-5 py-3.5 text-right">Principal <span className="text-[10px] text-gray-400 font-normal lowercase">(mool)</span></th>
+                                <th className="px-5 py-3.5">Collateral <span className="text-[10px] text-gray-400 font-normal lowercase">(girvi gehne)</span></th>
+                                <th className="px-5 py-3.5">Status <span className="text-[10px] text-gray-400 font-normal lowercase">(sthiti)</span></th>
+                                <th className="px-5 py-3.5">Sanction Date <span className="text-[10px] text-gray-400 font-normal lowercase">(tareekh)</span></th>
                                 <th className="px-5 py-3.5 text-right">Action</th>
                             </tr>
                         </thead>
