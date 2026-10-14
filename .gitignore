@@ -1,7 +1,13 @@
 node_modules/
 .env
+.env*.local
 .DS_Store
+Thumbs.db
 *.mdb
-docs/
+*.zip
+*.log
+*.tsbuildinfo
+dist/
+.next/
 data/
 *.csv

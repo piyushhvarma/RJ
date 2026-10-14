@@ -7,6 +7,7 @@
   records). No need to touch the original `.mdb` file or install any Access-
   reading tools on Windows — this is already done.
 - `migrate-legacy-jsoft.ts` — the migration script itself.
+- `categorize-jewellery.mjs` — post-migration script to classify legacy items into Gold and Silver categories (Payal, Kada, Patali, Rings, etc.) and standardize purities.
 - `wipe-migrated-data.ts` — clears out any prior migrated data so you can
   run the migration cleanly. Read the confirmation prompt carefully before
   typing "yes" — it deletes real rows.
