@@ -183,6 +183,7 @@ export interface Payment {
 export interface Loan {
     id: string;
     loanCode: string;
+    legacyPledgeNo?: string | null;
     customerId: string;
     customer?: Customer;
     schemeId?: string;
@@ -203,3 +204,24 @@ export interface Loan {
     packet?: Packet;
     documents?: unknown[];
 }
+
+export interface AuditLogEntry {
+    id: string;
+    entityType: string;
+    entityId: string;
+    action: string;
+    userId: string;
+    user?: {
+        id: string;
+        fullName: string;
+        role: string;
+        email?: string;
+    };
+    roleAtTime: string;
+    oldValue?: Record<string, unknown> | null;
+    newValue?: Record<string, unknown> | null;
+    reason?: string | null;
+    result: string;
+    timestamp: string;
+}
+

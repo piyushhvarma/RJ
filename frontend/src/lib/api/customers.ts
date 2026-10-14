@@ -1,5 +1,5 @@
 import { apiFetch } from './client';
-import type { Customer, PaginatedResponse } from './types';
+import type { Customer, PaginatedResponse, AuditLogEntry } from './types';
 
 export interface LoginResponse {
     accessToken: string;
@@ -83,6 +83,10 @@ export async function addCustomerDocument(
         method: 'POST',
         body: JSON.stringify(data),
     });
+}
+
+export async function getCustomerAccessHistory(id: string): Promise<AuditLogEntry[]> {
+    return apiFetch<AuditLogEntry[]>(`/customers/${id}/access-history`);
 }
 
 

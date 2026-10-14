@@ -56,13 +56,18 @@ export class CustomersController {
   }
 
   @Get()
-  search(@Query() query: SearchCustomersDto) {
-    return this.customersService.search(query);
+  search(@Query() query: SearchCustomersDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.customersService.search(query, user);
+  }
+
+  @Get(':id/access-history')
+  getAccessHistory(@Param('id') id: string) {
+    return this.customersService.getAccessHistory(id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.customersService.findById(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.customersService.findById(id, user);
   }
 }
 
