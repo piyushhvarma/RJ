@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { getSession, clearSession } from '@/lib/auth/session';
+import { getSession, clearSession, getActiveBook, setActiveBook, type ActiveBook } from '@/lib/auth/session';
 import { RoleGate } from '@/components/shared/RoleGate';
 import { cn } from '@/lib/utils';
+import { telemetry } from '@/lib/telemetry/tracker';
 import {
     LayoutDashboard, Users, Landmark, Gem, CreditCard, Package,
     LockKeyhole, FileText, Settings, ChevronRight, LogOut, User,
+    HardDrive, Usb, ShieldCheck, RefreshCw,
 } from 'lucide-react';
 
 interface NavItem {
@@ -177,7 +179,36 @@ function NavLink({ item }: { item: NavItem }) {
 
 export function Sidebar() {
     const router = useRouter();
+    const pathname = usePathname();
     const session = getSession();
+    const [book, setBook] = useState<ActiveBook>('book1');
+
+    useEffect(() => {
+        setBook(getActiveBook());
+        telemetry.track('PAGE_VIEW', { path: pathname });
+
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.shiftKey && (e.key === 'B' || e.key === 'b')) {
+                e.preventDefault();
+                const current = getActiveBook();
+                const next = current === 'book1' ? 'book2' : 'book1';
+                setActiveBook(next);
+                setBook(next);
+                telemetry.track('CLICK', { action: 'HOTKEY_SWITCH_BOOK', to: next });
+                window.location.reload();
+            }
+        };
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, [pathname]);
+
+    function toggleBook() {
+        const next = book === 'book1' ? 'book2' : 'book1';
+        setActiveBook(next);
+        setBook(next);
+        telemetry.track('CLICK', { action: 'CLICK_SWITCH_BOOK', to: next });
+        window.location.reload();
+    }
 
     function handleLogout() {
         clearSession();
@@ -197,6 +228,32 @@ export function Sidebar() {
                 </div>
             </div>
 
+            {/* Book Switcher Badge */}
+            <div className="px-3 pt-3 pb-1">
+                <button
+                    onClick={toggleBook}
+                    title={book === 'book1' ? 'Active: Gopal Nathmal Varma (Ctrl+Shift+B to switch)' : 'Active: XYZ (Ctrl+Shift+B to switch)'}
+                    className={cn(
+                        "w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all border shadow-xs",
+                        book === 'book1'
+                            ? "bg-blue-50/80 border-blue-200 text-blue-800 hover:bg-blue-100"
+                            : "bg-emerald-50/80 border-emerald-200 text-emerald-800 hover:bg-emerald-100"
+                    )}
+                >
+                    <div className="flex items-center gap-2 min-w-0">
+                        {book === 'book1' ? (
+                            <HardDrive className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        ) : (
+                            <Usb className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        )}
+                        <span className="truncate">{book === 'book1' ? 'Gopal Nathmal Varma' : 'XYZ'}</span>
+                    </div>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/80 border border-current opacity-70 shrink-0 ml-1">
+                        Ctrl+⇧+B
+                    </span>
+                </button>
+            </div>
+
             {/* Nav */}
             <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5 custom-scrollbar">
                 {NAV.map(item => {
@@ -211,6 +268,15 @@ export function Sidebar() {
                     return el;
                 })}
             </nav>
+
+            {/* Cloud Vault & Sync Indicator */}
+            <div className="px-4 py-2 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Cloud Vault Protected</span>
+                </div>
+                <span className="text-[10px] text-gray-400 font-mono">WAL 60s</span>
+            </div>
 
             {/* User footer */}
             <div className="border-t border-gray-200 px-3 py-3">

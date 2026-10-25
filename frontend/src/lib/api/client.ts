@@ -5,10 +5,10 @@
  * - On 401 → clears session + redirects to /login
  */
 
-import { getSession, clearSession } from '@/lib/auth/session';
+import { getSession, clearSession, getActiveBook } from '@/lib/auth/session';
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
 
 export class ApiError extends Error {
   constructor(
@@ -59,8 +59,10 @@ export async function apiFetch<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const session = getSession();
+  const book = getActiveBook();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'x-book': book,
     ...(options.headers as Record<string, string>),
   };
   if (session?.accessToken) {

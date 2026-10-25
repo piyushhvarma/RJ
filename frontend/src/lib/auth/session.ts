@@ -53,3 +53,17 @@ export function hasRole(roles: UserRole[]): boolean {
     if (!role) return false;
     return roles.includes(role);
 }
+
+export type ActiveBook = 'book1' | 'book2';
+const BOOK_KEY = 'gl_active_book';
+
+export function getActiveBook(): ActiveBook {
+    if (typeof window === 'undefined') return 'book1';
+    return (localStorage.getItem(BOOK_KEY) as ActiveBook) || 'book1';
+}
+
+export function setActiveBook(book: ActiveBook): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(BOOK_KEY, book);
+    window.dispatchEvent(new CustomEvent('book_changed', { detail: book }));
+}
