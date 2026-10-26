@@ -17,24 +17,22 @@ import {
     RotateCcw,
     Scale,
     Coins,
-    Building2,
     Calendar,
     Percent,
-    ShieldCheck,
     CheckCircle2,
     FileText,
     Package,
     Lock,
-    ExternalLink,
-    ChevronDown,
-    ArrowRight,
+    Unlock,
     User,
-    Phone,
-    MapPin,
+    AlertTriangle,
+    Info,
+    Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 
-import { getCustomers, createCustomer, updateCustomerPhoto } from '@/lib/api/customers';
+import { hasRole } from '@/lib/auth/session';
+import { getCustomers, createCustomer } from '@/lib/api/customers';
 import { counterOriginateLoan, type CounterJewelleryItemDto, type CounterOriginationResponse } from '@/lib/api/loans';
 import { getPledgeAgreementPdfUrl } from '@/lib/api/documents';
 import { SignaturePad } from '@/components/shared/SignaturePad';
@@ -83,6 +81,13 @@ interface CollateralRowState {
     photos: string[];
 }
 
+interface ToastMessage {
+    id: string;
+    message: string;
+    title?: string;
+    type: 'error' | 'success' | 'warning' | 'info';
+}
+
 function createDefaultRow(idNum: number): CollateralRowState {
     return {
         id: `row-${idNum}-${Date.now()}`,
@@ -101,8 +106,7 @@ function createDefaultRow(idNum: number): CollateralRowState {
     };
 }
 
-function fmtINR(val: number | null | undefined): string {
-    if (val == null || isNaN(val)) return '₹0';
+function fmtINR(val: number): string {
     return new Intl.NumberFormat('en-IN', {
         style: 'currency',
         currency: 'INR',
@@ -110,9 +114,41 @@ function fmtINR(val: number | null | undefined): string {
     }).format(val);
 }
 
+/**
+ * Derives the safe box number (1 to 100) from Customer ID using the traditional
+ * jeweller pigeonhole modulo logic (e.g., CUS-2026-000003 -> 3, CUS-2026-000103 -> 3,
+ * CUS-2026-000987 -> 87, CUS-2026-000100 -> 100, CUS-2026-000000 -> 100).
+ */
+export function deriveBoxNumber(customerCode?: string | null): string {
+    if (!customerCode) return '';
+    const match = customerCode.match(/\d+$/);
+    if (!match) return '';
+    const num = parseInt(match[0], 10);
+    if (isNaN(num)) return '';
+    const remainder = num % 100;
+    const boxNum = remainder === 0 ? 100 : remainder;
+    return `Box ${boxNum}`;
+}
+
 export default function CounterOriginationPage() {
     const router = useRouter();
     const queryClient = useQueryClient();
+    const isOwner = hasRole(['OWNER']);
+
+    // ─── Toasts State (Floating on Right Side) ───────────────────
+    const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+    const showToast = (message: string, type: 'error' | 'success' | 'warning' | 'info' = 'error', title?: string) => {
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        setToasts((prev) => [...prev, { id, message, title, type }]);
+        setTimeout(() => {
+            setToasts((current) => current.filter((t) => t.id !== id));
+        }, 3600);
+    };
+
+    const removeToast = (id: string) => {
+        setToasts((current) => current.filter((t) => t.id !== id));
+    };
 
     // ─── Customer Selection State ───────────────────────────────
     const [customerQuery, setCustomerQuery] = useState('');
@@ -127,7 +163,8 @@ export default function CounterOriginationPage() {
     const [interestOption, setInterestOption] = useState<'MONTHLY_SIMPLE' | 'DAILY_SIMPLE' | 'ANNUAL_SIMPLE'>('MONTHLY_SIMPLE');
     const [interestRatePm, setInterestRatePm] = useState<number | ''>(2.5); // 2.5% per month (30% p.a.)
     const [firmName, setFirmName] = useState<string>('Radhika Jewellers');
-    const [packetBoxNo, setPacketBoxNo] = useState<string>('Box 14');
+    const [packetBoxNo, setPacketBoxNo] = useState<string>('');
+    const [isBoxUnlocked, setIsBoxUnlocked] = useState<boolean>(false);
     const [deductFirstMonthInterest, setDeductFirstMonthInterest] = useState<boolean>(false);
     const [tenureMonths, setTenureMonths] = useState<number>(12);
 
@@ -137,14 +174,13 @@ export default function CounterOriginationPage() {
     // ─── Payment & Storage State ────────────────────────────────
     const [paymentMode, setPaymentMode] = useState<'CASH' | 'UPI' | 'BANK_TRANSFER'>('CASH');
     const [paymentRemarks, setPaymentRemarks] = useState<string>('');
-    const [storageLocation, setStorageLocation] = useState<string>('Safe 1, Box 14');
-    const [notes, setNotes] = useState<string>('Counter verified. 42 mani & 1 pendal intact.');
+    const [storageLocation, setStorageLocation] = useState<string>('');
+    const [notes, setNotes] = useState<string>('Counter verified.');
     const [customerSignatureUrl, setCustomerSignatureUrl] = useState<string | null>(null);
 
     // ─── Modal / Dialog Controls ────────────────────────────────
     const [photoModalTarget, setPhotoModalTarget] = useState<{ type: 'customer' } | { type: 'item'; rowIndex: number } | null>(null);
     const [submissionResult, setSubmissionResult] = useState<CounterOriginationResponse | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Auto-sync storage location with box number
@@ -154,15 +190,22 @@ export default function CounterOriginationPage() {
         }
     }, [packetBoxNo]);
 
-    // Update customer photo when customer changes
+    // Update customer photo and auto-derive safe box when customer changes
     useEffect(() => {
         if (selectedCustomer) {
             setCustomerPhotoUrl(selectedCustomer.photoUrl || null);
             if (selectedCustomer.signatureUrl) {
                 setCustomerSignatureUrl(selectedCustomer.signatureUrl);
             }
+            if (!isBoxUnlocked) {
+                setPacketBoxNo(deriveBoxNumber(selectedCustomer.customerCode));
+            }
+        } else {
+            if (!isBoxUnlocked) {
+                setPacketBoxNo('');
+            }
         }
-    }, [selectedCustomer]);
+    }, [selectedCustomer, isBoxUnlocked]);
 
     // Query Customers
     const { data: customerResults, isLoading: isSearchingCustomers } = useQuery({
@@ -172,18 +215,7 @@ export default function CounterOriginationPage() {
     });
     const customerList: Customer[] = (customerResults as any)?.items ?? (Array.isArray(customerResults) ? customerResults : []);
 
-
-    // Calculations
-    const calculatedAdvanceInterest = useMemo(() => {
-        if (!principalAmount || !interestRatePm) return 0;
-        return Math.round(Number(principalAmount) * (Number(interestRatePm) / 100));
-    }, [principalAmount, interestRatePm]);
-
-    const netCashToDisburse = useMemo(() => {
-        const p = Number(principalAmount) || 0;
-        return deductFirstMonthInterest ? Math.max(0, p - calculatedAdvanceInterest) : p;
-    }, [principalAmount, deductFirstMonthInterest, calculatedAdvanceInterest]);
-
+    // Computed Collateral Totals
     const totals = useMemo(() => {
         let totalGross = 0;
         let totalStone = 0;
@@ -265,22 +297,30 @@ export default function CounterOriginationPage() {
         setCollateralRows((prev) => prev.filter((_, i) => i !== index));
     };
 
-    // Photo capture
-    const handlePhotoCaptured = (photoDataUrl: string) => {
+    // Calculate upfront interest deduction
+    const calculatedAdvanceInterest = useMemo(() => {
+        if (!deductFirstMonthInterest || !principalAmount || !interestRatePm) return 0;
+        return Math.round((Number(principalAmount) * Number(interestRatePm)) / 100);
+    }, [deductFirstMonthInterest, principalAmount, interestRatePm]);
+
+    const netCashToDisburse = useMemo(() => {
+        const p = Number(principalAmount) || 0;
+        return Math.max(0, p - calculatedAdvanceInterest);
+    }, [principalAmount, calculatedAdvanceInterest]);
+
+    // Handle photo captured from modal
+    const handlePhotoCaptured = (url: string) => {
         if (!photoModalTarget) return;
 
         if (photoModalTarget.type === 'customer') {
-            setCustomerPhotoUrl(photoDataUrl);
-            if (selectedCustomer?.id) {
-                updateCustomerPhoto(selectedCustomer.id, photoDataUrl).catch(() => {});
-            }
+            setCustomerPhotoUrl(url);
         } else if (photoModalTarget.type === 'item') {
-            const rowIndex = photoModalTarget.rowIndex;
+            const idx = photoModalTarget.rowIndex;
             setCollateralRows((prev) => {
                 const next = [...prev];
-                next[rowIndex] = {
-                    ...next[rowIndex],
-                    photos: [photoDataUrl],
+                next[idx] = {
+                    ...next[idx],
+                    photos: [...next[idx].photos, url],
                 };
                 return next;
             });
@@ -298,43 +338,54 @@ export default function CounterOriginationPage() {
         setInterestRatePm(2.5);
         setDeductFirstMonthInterest(false);
         setCollateralRows([createDefaultRow(1)]);
-        setPacketBoxNo('Box 14');
-        setNotes('Counter verified. 42 mani & 1 pendal intact.');
-        setErrorMessage(null);
+        setPacketBoxNo('');
+        setIsBoxUnlocked(false);
+        setNotes('Counter verified.');
         setSubmissionResult(null);
+        showToast('Form reset to default counter state', 'info', 'Form Cleared');
     };
 
-    // Submit Loan
+    // Submit Loan with Live Multi-Trigger Toast Validation
     const handleSubmitLoan = async () => {
-        setErrorMessage(null);
-
+        // 1. Borrower Validation
         if (!selectedCustomer) {
-            setErrorMessage('Please select or register a borrower customer.');
+            showToast('Please search or register a borrower customer first!', 'warning', 'Borrower Required');
             return;
         }
 
+        // 2. Principal Validation
         if (!principalAmount || Number(principalAmount) <= 0) {
-            setErrorMessage('Please enter a valid loan principal amount.');
+            showToast('Please enter a valid loan sanction amount greater than ₹0.', 'warning', 'Invalid Loan Amount');
             return;
         }
 
+        // 3. Collateral Item Validations
         if (!collateralRows.length) {
-            setErrorMessage('At least one collateral ornament item is required.');
+            showToast('At least one pledged gold/silver ornament item is required.', 'warning', 'No Collateral Items');
             return;
         }
 
         for (let i = 0; i < collateralRows.length; i++) {
             const r = collateralRows[i];
+            const itemLabel = r.description.trim() || `Item #${i + 1}`;
+
             if (!r.description.trim()) {
-                setErrorMessage(`Item #${i + 1} requires a description.`);
+                showToast(`Item #${i + 1}: Please enter ornament description or select a preset.`, 'error', 'Missing Description');
                 return;
             }
-            if (!r.grossWeight || Number(r.grossWeight) <= 0) {
-                setErrorMessage(`Item #${i + 1} requires a valid gross weight.`);
+
+            if (r.grossWeight === '' || r.grossWeight === null || Number(r.grossWeight) <= 0) {
+                showToast(`Item #${i + 1} (${itemLabel}): Gross weight is empty or 0! Please enter gross grams.`, 'error', 'Gross Weight Required');
                 return;
             }
-            if (!r.netWeight || Number(r.netWeight) <= 0) {
-                setErrorMessage(`Item #${i + 1} requires a valid net weight.`);
+
+            if (r.netWeight === '' || r.netWeight === null || Number(r.netWeight) <= 0) {
+                showToast(`Item #${i + 1} (${itemLabel}): Net weight must be greater than 0g.`, 'error', 'Invalid Net Weight');
+                return;
+            }
+
+            if (!r.valuation || Number(r.valuation) <= 0) {
+                showToast(`Item #${i + 1} (${itemLabel}): Valuation must be greater than ₹0.`, 'error', 'Valuation Required');
                 return;
             }
         }
@@ -378,93 +429,94 @@ export default function CounterOriginationPage() {
 
             setSubmissionResult(res);
             queryClient.invalidateQueries({ queryKey: ['loans'] });
+            showToast(`Loan ${res.loanCode} created successfully! Safe Box: ${res.storageLocation}`, 'success', 'Disbursed');
         } catch (err: any) {
-            setErrorMessage(err?.message || 'Failed to complete counter origination. Please verify details.');
+            showToast(err?.message || 'Failed to complete loan origination. Please verify details.', 'error', 'Submission Failed');
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-slate-50/60 pb-28 font-sans">
-            {/* Top Clean Header */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-20 shadow-xs">
-                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-h-screen bg-slate-50/70 pb-20 font-sans text-gray-900">
+            {/* ─────────────────────────────────────────────────────────────
+                RIGHT-SIDE FLOATING TOAST STACK (Auto-dismissing)
+            ───────────────────────────────────────────────────────────── */}
+            <div className="fixed top-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
+                {toasts.map((t) => (
+                    <div
+                        key={t.id}
+                        className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-xl shadow-2xl border backdrop-blur-md transition-all duration-300 animate-in slide-in-from-right-8 fade-in ${
+                            t.type === 'error'
+                                ? 'bg-red-950/90 border-red-500/60 text-white'
+                                : t.type === 'warning'
+                                ? 'bg-amber-950/90 border-amber-500/60 text-white'
+                                : t.type === 'success'
+                                ? 'bg-emerald-950/90 border-emerald-500/60 text-white'
+                                : 'bg-slate-900/90 border-slate-700 text-white'
+                        }`}
+                    >
+                        <div className="shrink-0 mt-0.5">
+                            {t.type === 'error' && <AlertCircle className="w-5 h-5 text-red-400" />}
+                            {t.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-400" />}
+                            {t.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
+                            {t.type === 'info' && <Info className="w-5 h-5 text-sky-400" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            {t.title && <p className="text-xs font-bold uppercase tracking-wider mb-0.5 opacity-90">{t.title}</p>}
+                            <p className="text-xs font-medium leading-relaxed">{t.message}</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => removeToast(t.id)}
+                            className="text-white/60 hover:text-white p-1 rounded-md transition"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                ))}
+            </div>
+
+            {/* ─────────────────────────────────────────────────────────────
+                CLEAN TOP HEADER
+            ───────────────────────────────────────────────────────────── */}
+            <div className="bg-white border-b border-gray-200 px-6 py-3.5 sticky top-0 z-20 shadow-xs">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center font-bold shadow-xs">
+                        <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-xs">
                             <Coins className="w-5 h-5" />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-xl font-bold text-gray-950 tracking-tight">New Loan Counter</h1>
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    Single-Window
+                                <h1 className="text-lg font-bold text-gray-950 tracking-tight">New Loan Counter</h1>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                    Single-Window Counter
                                 </span>
                             </div>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                                Radhika Jewellers • Rapid pledge origination, appraisal &amp; pledge agreement generator
-                            </p>
+                            <p className="text-xs text-gray-500">Radhika Jewellers • Rapid pledge, valuation &amp; pouch chitthi</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2.5">
-                        <button
-                            type="button"
-                            onClick={handleResetForm}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 text-xs font-medium hover:bg-gray-50 transition shadow-xs"
-                        >
-                            <RotateCcw className="w-3.5 h-3.5 text-gray-400" /> Reset Form
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={handleResetForm}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-xs font-semibold transition shadow-xs"
+                    >
+                        <RotateCcw className="w-3.5 h-3.5 text-gray-400" /> Reset Form
+                    </button>
                 </div>
             </div>
 
-            {/* Main Content Area */}
+            {/* ─────────────────────────────────────────────────────────────
+                MAIN CONTENT: 2-COLUMN AIRY WORKSPACE
+            ───────────────────────────────────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-                {/* Error Banner */}
-                {errorMessage && (
-                    <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-center justify-between shadow-xs animate-in fade-in">
-                        <div className="flex items-center gap-2.5">
-                            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                            <p className="text-xs font-semibold">{errorMessage}</p>
-                        </div>
-                        <button
-                            onClick={() => setErrorMessage(null)}
-                            className="p-1 text-red-500 hover:text-red-700 rounded-md"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
-                    </div>
-                )}
 
-                {/* ─────────────────────────────────────────────────────────────
-                    CARD 1: BORROWER IDENTIFICATION & PHOTO
-                ───────────────────────────────────────────────────────────── */}
-                <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 sm:p-6 transition-all">
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
-                        <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
-                                <User className="w-4 h-4" />
-                            </div>
-                            <div>
-                                <h2 className="text-sm font-bold text-gray-900 tracking-tight">Borrower Information</h2>
-                                <p className="text-xs text-gray-400">Search existing customer profile or register a new borrower</p>
-                            </div>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() => setIsNewCustomerModalOpen(true)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition shadow-xs"
-                        >
-                            <UserPlus className="w-3.5 h-3.5" /> Register Customer
-                        </button>
-                    </div>
-
+                {/* 1. TOP BORROWER SELECTION BAR */}
+                <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-4 sm:p-5">
                     {!selectedCustomer ? (
-                        /* Customer Search Bar */
-                        <div className="relative">
-                            <div className="relative">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                            <div className="relative flex-1">
                                 <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 <input
                                     type="text"
@@ -475,7 +527,7 @@ export default function CounterOriginationPage() {
                                         setCustomerQuery(e.target.value);
                                         setCustomerSearchOpen(true);
                                     }}
-                                    className="w-full pl-10 pr-10 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs"
+                                    className="w-full pl-10 pr-10 py-2.5 bg-gray-50/60 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs"
                                 />
                                 {customerQuery && (
                                     <button
@@ -488,755 +540,581 @@ export default function CounterOriginationPage() {
                                         <X className="w-4 h-4" />
                                     </button>
                                 )}
+
+                                {/* Autocomplete Dropdown */}
+                                {customerSearchOpen && (
+                                    <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-40 max-h-72 overflow-y-auto divide-y divide-gray-100">
+                                        {isSearchingCustomers ? (
+                                            <div className="p-4 text-center text-xs text-gray-400">Searching borrowers…</div>
+                                        ) : customerList.length > 0 ? (
+                                            customerList.map((c) => (
+                                                <div
+                                                    key={c.id}
+                                                    onClick={() => {
+                                                        setSelectedCustomer(c);
+                                                        setCustomerSearchOpen(false);
+                                                        setCustomerQuery('');
+                                                    }}
+                                                    className="p-3 hover:bg-amber-50/50 cursor-pointer flex items-center justify-between transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
+                                                            {c.fullName.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-bold text-gray-900">{c.fullName}</p>
+                                                            <p className="text-[11px] text-gray-500 mt-0.5">
+                                                                S/o: {c.guardianName || '—'} • City: {c.city || '—'} • Mobile: {c.mobile}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[10px] font-mono font-semibold bg-gray-100 text-gray-700 px-2 py-0.5 rounded border border-gray-200">
+                                                        {c.customerCode}
+                                                    </span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="p-4 text-center">
+                                                <p className="text-xs text-gray-500">No customers found matching &quot;{customerQuery}&quot;</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setCustomerSearchOpen(false);
+                                                        setIsNewCustomerModalOpen(true);
+                                                    }}
+                                                    className="mt-2 inline-flex items-center gap-1.5 text-xs text-amber-600 font-semibold hover:underline"
+                                                >
+                                                    <UserPlus className="w-3.5 h-3.5" /> Register &quot;{customerQuery}&quot; Now
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Autocomplete Dropdown */}
-                            {customerSearchOpen && (
-                                <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-40 max-h-72 overflow-y-auto divide-y divide-gray-100">
-                                    {isSearchingCustomers ? (
-                                        <div className="p-4 text-center text-xs text-gray-400">Searching borrowers…</div>
-                                    ) : customerList.length > 0 ? (
-                                        customerList.map((c) => (
-
-                                            <div
-                                                key={c.id}
-                                                onClick={() => {
-                                                    setSelectedCustomer(c);
-                                                    setCustomerSearchOpen(false);
-                                                    setCustomerQuery('');
-                                                }}
-                                                className="p-3 hover:bg-amber-50/50 cursor-pointer flex items-center justify-between transition-colors"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
-                                                        {c.fullName.charAt(0)}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-bold text-gray-900">{c.fullName}</p>
-                                                        <p className="text-[11px] text-gray-500 mt-0.5">
-                                                            S/o: {c.guardianName || '—'} • City: {c.city || '—'} • Phone: {c.mobile}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <span className="text-[10px] font-mono font-semibold bg-gray-100 text-gray-700 px-2 py-0.5 rounded border border-gray-200">
-                                                    {c.customerCode}
-                                                </span>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="p-4 text-center">
-                                            <p className="text-xs text-gray-500">No customers found matching &quot;{customerQuery}&quot;</p>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setCustomerSearchOpen(false);
-                                                    setIsNewCustomerModalOpen(true);
-                                                }}
-                                                className="mt-2 inline-flex items-center gap-1.5 text-xs text-amber-600 font-semibold hover:underline"
-                                            >
-                                                <UserPlus className="w-3.5 h-3.5" /> Register &quot;{customerQuery}&quot; Now
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                            <button
+                                type="button"
+                                onClick={() => setIsNewCustomerModalOpen(true)}
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-xs shrink-0"
+                            >
+                                <UserPlus className="w-4 h-4" /> New Customer
+                            </button>
                         </div>
                     ) : (
-                        /* Selected Borrower Profile Card */
-                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 bg-gradient-to-br from-amber-50/60 via-white to-gray-50/40 rounded-xl p-4 border border-amber-200/70">
-                            <div className="flex items-center gap-4">
-                                {/* Portrait Photo Thumbnail */}
-                                <div className="relative w-20 h-20 rounded-xl border border-amber-300 bg-gray-100 overflow-hidden shadow-xs flex items-center justify-center group shrink-0">
+                        /* Selected Borrower Compact Banner */
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-amber-50/40 rounded-xl p-3 sm:p-4 border border-amber-200">
+                            <div className="flex items-center gap-3.5">
+                                <div className="relative w-14 h-14 rounded-xl border border-amber-300 bg-white overflow-hidden shadow-xs flex items-center justify-center shrink-0 group">
                                     {customerPhotoUrl ? (
                                         // eslint-disable-next-line @next/next/no-img-element
-                                        <img
-                                            src={customerPhotoUrl}
-                                            alt="Customer"
-                                            className="w-full h-full object-cover"
-                                        />
+                                        <img src={customerPhotoUrl} alt="Borrower" className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="flex flex-col items-center text-gray-400 text-[10px]">
-                                            <Camera className="w-5 h-5 mb-0.5 text-gray-400" />
-                                            <span>No Photo</span>
-                                        </div>
+                                        <User className="w-7 h-7 text-amber-700" />
                                     )}
                                     <button
                                         type="button"
                                         onClick={() => setPhotoModalTarget({ type: 'customer' })}
-                                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[10px] font-bold transition-opacity"
+                                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-opacity"
                                     >
-                                        <Camera className="w-4 h-4 mb-0.5 text-amber-300" />
-                                        <span>Change</span>
+                                        <Camera className="w-4 h-4 text-amber-300" />
                                     </button>
                                 </div>
 
-                                {/* Information Details */}
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-2">
                                         <h3 className="text-base font-bold text-gray-950">{selectedCustomer.fullName}</h3>
-                                        <span className="font-mono text-[11px] font-semibold bg-white text-gray-700 px-2 py-0.5 rounded border border-gray-200 shadow-xs">
+                                        <span className="font-mono text-xs font-semibold bg-white text-gray-700 px-2 py-0.5 rounded border border-gray-200">
                                             {selectedCustomer.customerCode}
                                         </span>
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                            KYC Verified
+                                        <span className="font-mono text-xs font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded border border-amber-300 flex items-center gap-1">
+                                            <Package className="w-3 h-3 text-amber-700" /> {packetBoxNo || deriveBoxNumber(selectedCustomer.customerCode)}
                                         </span>
                                     </div>
-
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-gray-600 pt-0.5">
-                                        <div>
-                                            <span className="text-gray-400 font-medium">S/o:</span>{' '}
-                                            <span className="font-semibold text-gray-800">{selectedCustomer.guardianName || '—'}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-gray-400 font-medium">City:</span>{' '}
-                                            <span className="font-semibold text-gray-800">{selectedCustomer.city || '—'}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-gray-400 font-medium">Mobile:</span>{' '}
-                                            <span className="font-mono font-semibold text-gray-800">{selectedCustomer.mobile}</span>
-                                        </div>
-                                        <div className="col-span-2 sm:col-span-3 truncate">
-                                            <span className="text-gray-400 font-medium">Address:</span>{' '}
-                                            <span className="text-gray-700">{selectedCustomer.address || '—'}</span>
-                                        </div>
-                                    </div>
+                                    <p className="text-xs text-gray-600 mt-1">
+                                        S/o: <span className="font-semibold text-gray-800">{selectedCustomer.guardianName || '—'}</span> • Mobile: <span className="font-mono font-semibold text-gray-800">{selectedCustomer.mobile}</span> • City: <span className="font-semibold text-gray-800">{selectedCustomer.city || '—'}</span>
+                                    </p>
                                 </div>
                             </div>
 
-                            {/* Actions on customer */}
-                            <div className="flex items-center gap-2 self-end md:self-center">
-                                <button
-                                    type="button"
-                                    onClick={() => setPhotoModalTarget({ type: 'customer' })}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium transition shadow-xs"
-                                >
-                                    <Camera className="w-3.5 h-3.5 text-amber-600" />
-                                    {customerPhotoUrl ? 'Update Photo' : 'Capture Photo'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedCustomer(null)}
-                                    className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-700 text-xs font-medium transition shadow-xs"
-                                >
-                                    Change
-                                </button>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedCustomer(null)}
+                                className="px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-900 text-xs font-semibold transition shadow-xs self-end sm:self-center"
+                            >
+                                Switch Borrower
+                            </button>
                         </div>
                     )}
                 </div>
 
-                {/* ─────────────────────────────────────────────────────────────
-                    CARD 2: LOAN TERMS & STORAGE ALLOCATION
-                ───────────────────────────────────────────────────────────── */}
-                <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 sm:p-6 space-y-4">
-                    <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
-                        <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
-                            <Percent className="w-4 h-4" />
-                        </div>
-                        <div>
-                            <h2 className="text-sm font-bold text-gray-900 tracking-tight">Loan Terms &amp; Custody Allocation</h2>
-                            <p className="text-xs text-gray-400">Specify principal sanction, monthly interest rate, and security box</p>
-                        </div>
-                    </div>
+                {/* 2. MAIN 2-COLUMN WORKSPACE */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                        {/* Principal Amount */}
-                        <div className="sm:col-span-2 lg:col-span-2 space-y-1.5 bg-amber-50/30 p-3.5 rounded-xl border border-amber-200/80">
-                            <div className="flex items-center justify-between">
-                                <label className="block text-xs font-bold uppercase tracking-wider text-amber-900">
-                                    Principal Sanction Amount *
-                                </label>
-                                <span className="text-[11px] text-amber-700 font-semibold">INR (₹)</span>
+                    {/* ──── LEFT COLUMN (8 COLS): COLLATERAL & LOAN TERMS ──── */}
+                    <div className="lg:col-span-8 space-y-6">
+
+                        {/* SECTION A: COLLATERAL ORNAMENTS GRID */}
+                        <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 space-y-4">
+                            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                                        <Scale className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-sm font-bold text-gray-900">Pledged Ornaments &amp; Valuation</h2>
+                                        <p className="text-[11px] text-gray-400">Add gold/silver items, karats, gross weight, and stone deductions</p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={handleAddRow}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition shadow-xs"
+                                >
+                                    <Plus className="w-3.5 h-3.5" /> Add Item
+                                </button>
                             </div>
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-amber-700">
-                                    ₹
-                                </span>
-                                <input
-                                    type="number"
-                                    step="500"
-                                    value={principalAmount}
-                                    onChange={(e) => setPrincipalAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                                    placeholder="50000"
-                                    className="w-full pl-8 pr-3 py-2 bg-white border border-amber-300 rounded-lg text-lg font-bold font-mono text-gray-950 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-xs"
-                                />
-                            </div>
-                            {/* Preset Pills */}
-                            <div className="flex gap-1.5 pt-1">
-                                {[10000, 25000, 50000, 100000].map((amt) => (
-                                    <button
-                                        key={amt}
-                                        type="button"
-                                        onClick={() => setPrincipalAmount(amt)}
-                                        className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white border border-amber-200 text-amber-800 hover:bg-amber-100 transition shadow-xs"
-                                    >
-                                        ₹{(amt / 1000).toFixed(0)}k
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
 
-                        {/* Start Date */}
-                        <div className="space-y-1.5 p-3.5 rounded-xl border border-gray-200 bg-gray-50/40">
-                            <label className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5 text-gray-400" /> Start Date
-                            </label>
-                            <input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-mono font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-xs"
-                            />
-                            <span className="text-[10px] text-gray-400 block">Sanction agreement date</span>
-                        </div>
-
-                        {/* Monthly Interest Rate */}
-                        <div className="space-y-1.5 p-3.5 rounded-xl border border-gray-200 bg-gray-50/40">
-                            <label className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-                                <Percent className="w-3.5 h-3.5 text-gray-400" /> Interest Rate
-                            </label>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    value={interestRatePm}
-                                    onChange={(e) => setInterestRatePm(e.target.value === '' ? '' : Number(e.target.value))}
-                                    className="w-20 px-2.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-bold font-mono text-center text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-xs"
-                                    placeholder="2.5"
-                                />
-                                <span className="text-xs font-semibold text-gray-600">% p.m.</span>
-                            </div>
-                            <span className="text-[10px] text-gray-500 block font-mono">
-                                ({((Number(interestRatePm) || 0) * 12).toFixed(1)}% per annum)
-                            </span>
-                        </div>
-
-                        {/* Packet / Safe Box No. */}
-                        <div className="space-y-1.5 p-3.5 rounded-xl border border-gray-200 bg-gray-50/40">
-                            <label className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-                                <Package className="w-3.5 h-3.5 text-amber-600" /> Safe Box No. *
-                            </label>
-                            <input
-                                type="text"
-                                value={packetBoxNo}
-                                onChange={(e) => setPacketBoxNo(e.target.value)}
-                                placeholder="Box 14"
-                                className="w-full px-3 py-2 bg-white border border-amber-300 rounded-lg text-xs font-bold font-mono text-gray-950 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-xs"
-                            />
-                            <span className="text-[10px] text-amber-700 font-medium block">
-                                Printed bold on Pouch Chitthi
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Upfront Interest Deduction Banner */}
-                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <label className="flex items-start sm:items-center gap-3 cursor-pointer select-none">
-                            <input
-                                type="checkbox"
-                                checked={deductFirstMonthInterest}
-                                onChange={(e) => setDeductFirstMonthInterest(e.target.checked)}
-                                className="w-4 h-4 mt-0.5 sm:mt-0 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                            />
-                            <div>
-                                <span className="text-xs font-bold text-gray-900 block">
-                                    Deduct 1st Month Interest Upfront
-                                </span>
-                                <span className="text-[11px] text-gray-500">
-                                    Deducts first month interest from cash in hand and issues an immediate interest payment voucher.
-                                </span>
-                            </div>
-                        </label>
-
-                        <div className="flex items-center gap-4 text-xs font-mono self-end sm:self-center bg-white px-3.5 py-1.5 rounded-lg border border-gray-200 shadow-xs">
-                            <div>
-                                <span className="text-[10px] text-gray-400 uppercase block">1st Mo Interest:</span>
-                                <span className="font-bold text-red-600">
-                                    {deductFirstMonthInterest ? `-${fmtINR(calculatedAdvanceInterest)}` : '₹0'}
-                                </span>
-                            </div>
-                            <div className="h-6 w-px bg-gray-200" />
-                            <div>
-                                <span className="text-[10px] text-emerald-700 uppercase font-bold block">
-                                    Net Cash to Hand:
-                                </span>
-                                <span className="text-sm font-extrabold text-emerald-700">
-                                    {fmtINR(netCashToDisburse)}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* ─────────────────────────────────────────────────────────────
-                    CARD 3: COLLATERAL ORNAMENTS TABLE
-                ───────────────────────────────────────────────────────────── */}
-                <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 sm:p-6 space-y-4">
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                        <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
-                                <Scale className="w-4 h-4" />
-                            </div>
-                            <div>
-                                <h2 className="text-sm font-bold text-gray-900 tracking-tight">Collateral Ornaments Grid</h2>
-                                <p className="text-xs text-gray-400">Add ornaments, purity karats, weights, and live camera snapshots</p>
-                            </div>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={handleAddRow}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-800 text-xs font-semibold transition shadow-xs"
-                        >
-                            <Plus className="w-3.5 h-3.5 text-amber-600" /> Add Ornament Item
-                        </button>
-                    </div>
-
-                    {/* Table */}
-                    <div className="overflow-x-auto rounded-xl border border-gray-200">
-                        <table className="w-full text-left text-xs divide-y divide-gray-200">
-                            <thead className="bg-gray-50 text-[11px] font-bold uppercase tracking-wider text-gray-600">
-                                <tr>
-                                    <th className="px-2.5 py-3 text-center w-8">#</th>
-                                    <th className="px-2.5 py-3 w-24">Metal</th>
-                                    <th className="px-2.5 py-3 min-w-[220px]">Item Description</th>
-                                    <th className="px-2.5 py-3 text-center w-14">Qty</th>
-                                    <th className="px-2.5 py-3 text-right w-24">Gross (g)</th>
-                                    <th className="px-2.5 py-3 text-right w-20">Stone (g)</th>
-                                    <th className="px-2.5 py-3 text-right w-24">Net (g)</th>
-                                    <th className="px-2.5 py-3 w-32">Purity</th>
-                                    <th className="px-2.5 py-3 text-right w-24">Fine (g)</th>
-                                    <th className="px-2.5 py-3 text-right w-24">Rate (₹/g)</th>
-                                    <th className="px-2.5 py-3 text-right w-28">Valuation (₹)</th>
-                                    <th className="px-2.5 py-3 text-center w-16">Photo</th>
-                                    <th className="px-2.5 py-3 text-center w-10"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 bg-white">
-                                {collateralRows.map((row, idx) => {
-                                    const net = Number(row.netWeight) || 0;
-                                    const fine = net * ((Number(row.fineness) || 91.6) / 100);
-
-                                    return (
-                                        <tr key={row.id} className="hover:bg-amber-50/30 transition-colors">
-                                            {/* Row # */}
-                                            <td className="px-2.5 py-2.5 text-center font-bold text-gray-400">{idx + 1}</td>
-
-                                            {/* Metal */}
-                                            <td className="px-2.5 py-2.5">
-                                                <select
-                                                    value={row.metalType}
-                                                    onChange={(e) =>
-                                                        handleUpdateRow(idx, {
-                                                            metalType: e.target.value as 'GOLD' | 'SILVER',
-                                                            valuationRate: e.target.value === 'GOLD' ? 6500 : 85,
-                                                            purityKarat: e.target.value === 'GOLD' ? '22K' : '70%',
-                                                            fineness: e.target.value === 'GOLD' ? 91.6 : 70.0,
-                                                        })
-                                                    }
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-xs font-bold text-amber-800 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
-                                                >
-                                                    <option value="GOLD">GOLD</option>
-                                                    <option value="SILVER">SILVER</option>
-                                                </select>
-                                            </td>
-
-                                            {/* Description with Presets */}
-                                            <td className="px-2.5 py-2.5">
-                                                <input
-                                                    type="text"
-                                                    list={`presets-${idx}`}
-                                                    value={row.description}
-                                                    onChange={(e) => handleUpdateRow(idx, { description: e.target.value })}
-                                                    placeholder="e.g. 42 Mani, 1 Pendal Pot"
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
-                                                />
-                                                <datalist id={`presets-${idx}`}>
-                                                    {ITEM_PRESETS.map((p) => (
-                                                        <option key={p} value={p} />
-                                                    ))}
-                                                </datalist>
-                                            </td>
-
-                                            {/* Qty */}
-                                            <td className="px-2.5 py-2.5">
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={row.quantity}
-                                                    onChange={(e) =>
-                                                        handleUpdateRow(idx, { quantity: Math.max(1, parseInt(e.target.value) || 1) })
-                                                    }
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-1.5 py-1.5 text-xs font-bold text-center text-gray-900 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
-                                                />
-                                            </td>
-
-                                            {/* Gross Wt */}
-                                            <td className="px-2.5 py-2.5">
-                                                <input
-                                                    type="number"
-                                                    step="0.001"
-                                                    value={row.grossWeight}
-                                                    onChange={(e) =>
-                                                        handleUpdateRow(idx, {
-                                                            grossWeight: e.target.value === '' ? '' : Number(e.target.value),
-                                                        })
-                                                    }
-                                                    placeholder="0.000"
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-right text-gray-900 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
-                                                />
-                                            </td>
-
-                                            {/* Stone Wt */}
-                                            <td className="px-2.5 py-2.5">
-                                                <input
-                                                    type="number"
-                                                    step="0.001"
-                                                    value={row.stoneWeight}
-                                                    onChange={(e) =>
-                                                        handleUpdateRow(idx, {
-                                                            stoneWeight: e.target.value === '' ? '' : Number(e.target.value),
-                                                        })
-                                                    }
-                                                    placeholder="0.000"
-                                                    className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-mono text-right text-gray-500 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
-                                                />
-                                            </td>
-
-                                            {/* Net Wt */}
-                                            <td className="px-2.5 py-2.5">
-                                                <input
-                                                    type="number"
-                                                    step="0.001"
-                                                    value={row.netWeight}
-                                                    onChange={(e) =>
-                                                        handleUpdateRow(idx, {
-                                                            netWeight: e.target.value === '' ? '' : Number(e.target.value),
-                                                        })
-                                                    }
-                                                    placeholder="0.000"
-                                                    className="w-full bg-amber-50/40 border border-amber-300 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-right text-emerald-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-xs"
-                                                />
-                                            </td>
-
-                                            {/* Purity */}
-                                            <td className="px-2.5 py-2.5">
-                                                <select
-                                                    value={row.purityKarat}
-                                                    onChange={(e) => handleUpdateRow(idx, { purityKarat: e.target.value })}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-xs font-medium text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
-                                                >
-                                                    {PURITY_OPTIONS.map((p) => (
-                                                        <option key={p.label} value={p.karat}>
-                                                            {p.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </td>
-
-                                            {/* Fine Wt */}
-                                            <td className="px-2.5 py-2.5 text-right font-mono font-bold text-gray-900">
-                                                {fine.toFixed(3)}
-                                            </td>
-
-                                            {/* Valuation Rate */}
-                                            <td className="px-2.5 py-2.5">
-                                                <input
-                                                    type="number"
-                                                    step="50"
-                                                    value={row.valuationRate}
-                                                    onChange={(e) =>
-                                                        handleUpdateRow(idx, {
-                                                            valuationRate: e.target.value === '' ? '' : Number(e.target.value),
-                                                        })
-                                                    }
-                                                    placeholder="6500"
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-1.5 py-1.5 text-xs font-mono text-right text-gray-700 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
-                                                />
-                                            </td>
-
-                                            {/* Valuation (₹) */}
-                                            <td className="px-2.5 py-2.5 text-right font-mono font-bold text-gray-950">
-                                                {fmtINR(Number(row.valuation) || 0)}
-                                            </td>
-
-                                            {/* Photo */}
-                                            <td className="px-2.5 py-2.5 text-center">
-                                                {row.photos && row.photos.length > 0 ? (
-                                                    <div
-                                                        onClick={() => setPhotoModalTarget({ type: 'item', rowIndex: idx })}
-                                                        className="w-7 h-7 mx-auto rounded-lg border border-amber-400 overflow-hidden cursor-pointer shadow-xs hover:opacity-80 transition"
-                                                    >
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                        <img
-                                                            src={row.photos[0]}
-                                                            alt="Ornament"
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setPhotoModalTarget({ type: 'item', rowIndex: idx })}
-                                                        title="Snap ornament snapshot"
-                                                        className="w-7 h-7 mx-auto rounded-lg bg-gray-100 hover:bg-amber-50 text-gray-400 hover:text-amber-700 flex items-center justify-center border border-gray-200 transition shadow-xs"
-                                                    >
-                                                        <Camera className="w-3.5 h-3.5" />
-                                                    </button>
-                                                )}
-                                            </td>
-
-                                            {/* Delete */}
-                                            <td className="px-2.5 py-2.5 text-center">
-                                                <button
-                                                    type="button"
-                                                    disabled={collateralRows.length <= 1}
-                                                    onClick={() => handleRemoveRow(idx)}
-                                                    className="p-1 text-gray-300 hover:text-red-600 disabled:opacity-20 transition"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </td>
+                            {/* Table */}
+                            <div className="overflow-x-auto rounded-xl border border-gray-200">
+                                <table className="w-full text-left text-xs divide-y divide-gray-200">
+                                    <thead className="bg-gray-50 text-[11px] font-bold uppercase tracking-wider text-gray-600">
+                                        <tr>
+                                            <th className="px-2.5 py-2.5 text-center w-8">#</th>
+                                            <th className="px-2.5 py-2.5 w-24">Metal</th>
+                                            <th className="px-2.5 py-2.5 min-w-[200px]">Ornament Description</th>
+                                            <th className="px-2.5 py-2.5 w-32">Purity</th>
+                                            <th className="px-2.5 py-2.5 text-right w-24">Gross (g) *</th>
+                                            <th className="px-2.5 py-2.5 text-right w-20">Stone (g)</th>
+                                            <th className="px-2.5 py-2.5 text-right w-24">Net (g)</th>
+                                            <th className="px-2.5 py-2.5 text-right w-24">Rate (₹/g)</th>
+                                            <th className="px-2.5 py-2.5 text-right w-28">Valuation</th>
+                                            <th className="px-2.5 py-2.5 text-center w-12"></th>
                                         </tr>
-                                    );
-                                })}
-                            </tbody>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 bg-white">
+                                        {collateralRows.map((row, idx) => {
+                                            const net = Number(row.netWeight) || 0;
+                                            const isGrossEmpty = row.grossWeight === '' || row.grossWeight === null || Number(row.grossWeight) <= 0;
 
-                            {/* Totals */}
-                            <tfoot className="bg-gray-50/90 font-mono font-bold text-xs text-gray-900 border-t border-gray-200">
-                                <tr>
-                                    <td colSpan={3} className="px-3 py-3 text-right font-sans uppercase text-gray-500">
-                                        Total Collateral:
-                                    </td>
-                                    <td className="px-2.5 py-3 text-center">{totals.totalQty}</td>
-                                    <td className="px-2.5 py-3 text-right">{totals.totalGross.toFixed(3)}</td>
-                                    <td className="px-2.5 py-3 text-right text-gray-400">{totals.totalStone.toFixed(3)}</td>
-                                    <td className="px-2.5 py-3 text-right text-emerald-800 text-sm font-extrabold">
-                                        {totals.totalNet.toFixed(3)} g
-                                    </td>
-                                    <td className="px-2.5 py-3"></td>
-                                    <td className="px-2.5 py-3 text-right">{totals.totalFine.toFixed(3)} g</td>
-                                    <td className="px-2.5 py-3"></td>
-                                    <td className="px-2.5 py-3 text-right text-gray-950 text-sm font-extrabold">
-                                        {fmtINR(totals.totalValuation)}
-                                    </td>
-                                    <td colSpan={2} className="px-2.5 py-3"></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                                            return (
+                                                <tr key={row.id} className="hover:bg-amber-50/20 transition-colors">
+                                                    <td className="px-2.5 py-2 text-center font-bold text-gray-400">{idx + 1}</td>
 
-                    {/* Safety LTV Badge */}
-                    <div className="flex items-center justify-between text-xs pt-1">
-                        <div className="flex items-center gap-2">
-                            <span
-                                className={`px-2.5 py-1 rounded-lg font-bold border ${
-                                    totals.ltvRatio <= 75
-                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                                        : 'bg-red-50 border-red-200 text-red-800'
-                                }`}
-                            >
-                                LTV Ratio: {totals.ltvRatio}% {totals.ltvRatio <= 75 ? '(Safe Margin ✅)' : '(High LTV ⚠️)'}
-                            </span>
-                            <span className="text-gray-500">
-                                Standard RBI regulatory cap: 75% LTV
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                                                    {/* Metal */}
+                                                    <td className="px-2.5 py-2">
+                                                        <select
+                                                            value={row.metalType}
+                                                            onChange={(e) =>
+                                                                handleUpdateRow(idx, {
+                                                                    metalType: e.target.value as 'GOLD' | 'SILVER',
+                                                                    valuationRate: e.target.value === 'GOLD' ? 6500 : 85,
+                                                                    purityKarat: e.target.value === 'GOLD' ? '22K' : '70%',
+                                                                    fineness: e.target.value === 'GOLD' ? 91.6 : 70.0,
+                                                                })
+                                                            }
+                                                            className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-xs font-bold text-amber-800 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
+                                                        >
+                                                            <option value="GOLD">GOLD</option>
+                                                            <option value="SILVER">SILVER</option>
+                                                        </select>
+                                                    </td>
 
-                {/* ─────────────────────────────────────────────────────────────
-                    CARD 4: PAYMENT, STORAGE & BORROWER SIGNATURE
-                ───────────────────────────────────────────────────────────── */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Left: Custody & Payment Details (7 Cols) */}
-                    <div className="lg:col-span-7 bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 sm:p-6 space-y-4">
-                        <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
-                            <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
-                                <Lock className="w-4 h-4" />
+                                                    {/* Description with Presets */}
+                                                    <td className="px-2.5 py-2">
+                                                        <div className="relative">
+                                                            <input
+                                                                type="text"
+                                                                value={row.description}
+                                                                onChange={(e) => handleUpdateRow(idx, { description: e.target.value })}
+                                                                placeholder="e.g. Gold Chain"
+                                                                className="w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
+                                                            />
+                                                            <select
+                                                                onChange={(e) => {
+                                                                    if (e.target.value) {
+                                                                        handleUpdateRow(idx, { description: e.target.value });
+                                                                    }
+                                                                }}
+                                                                value=""
+                                                                className="absolute right-1 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 bg-transparent text-[10px] cursor-pointer"
+                                                                title="Choose ornament preset"
+                                                            >
+                                                                <option value="" disabled>Presets ▾</option>
+                                                                {ITEM_PRESETS.map((p) => (
+                                                                    <option key={p} value={p}>{p}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Purity */}
+                                                    <td className="px-2.5 py-2">
+                                                        <select
+                                                            value={row.purityKarat}
+                                                            onChange={(e) => handleUpdateRow(idx, { purityKarat: e.target.value })}
+                                                            className="w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
+                                                        >
+                                                            {PURITY_OPTIONS.filter((p) => (row.metalType === 'GOLD' ? !p.label.includes('Silver') : p.label.includes('Silver'))).map((p) => (
+                                                                <option key={p.karat} value={p.karat}>{p.label}</option>
+                                                            ))}
+                                                        </select>
+                                                    </td>
+
+                                                    {/* Gross Weight */}
+                                                    <td className="px-2.5 py-2">
+                                                        <input
+                                                            type="number"
+                                                            step="0.001"
+                                                            value={row.grossWeight}
+                                                            onChange={(e) => handleUpdateRow(idx, { grossWeight: e.target.value === '' ? '' : Number(e.target.value) })}
+                                                            placeholder="0.000"
+                                                            className={`w-full text-right font-mono font-bold rounded-lg px-2.5 py-1.5 text-xs focus:outline-none transition-colors shadow-xs ${
+                                                                isGrossEmpty
+                                                                    ? 'bg-red-50/60 border border-red-300 text-red-900 focus:ring-1 focus:ring-red-500'
+                                                                    : 'bg-white border border-gray-300 text-gray-900 focus:ring-1 focus:ring-amber-500'
+                                                            }`}
+                                                        />
+                                                    </td>
+
+                                                    {/* Stone Weight */}
+                                                    <td className="px-2.5 py-2">
+                                                        <input
+                                                            type="number"
+                                                            step="0.001"
+                                                            value={row.stoneWeight}
+                                                            onChange={(e) => handleUpdateRow(idx, { stoneWeight: e.target.value === '' ? '' : Number(e.target.value) })}
+                                                            placeholder="0.000"
+                                                            className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-xs text-right font-mono text-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
+                                                        />
+                                                    </td>
+
+                                                    {/* Net Weight (Readonly) */}
+                                                    <td className="px-2.5 py-2 text-right font-mono font-bold text-emerald-700 bg-emerald-50/30">
+                                                        {net > 0 ? `${net.toFixed(3)}g` : '—'}
+                                                    </td>
+
+                                                    {/* Rate */}
+                                                    <td className="px-2.5 py-2">
+                                                        <input
+                                                            type="number"
+                                                            step="50"
+                                                            value={row.valuationRate}
+                                                            onChange={(e) => handleUpdateRow(idx, { valuationRate: e.target.value === '' ? '' : Number(e.target.value) })}
+                                                            className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-xs text-right font-mono text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
+                                                        />
+                                                    </td>
+
+                                                    {/* Valuation */}
+                                                    <td className="px-2.5 py-2 text-right font-mono font-bold text-gray-950">
+                                                        {row.valuation ? fmtINR(Number(row.valuation)) : '₹0'}
+                                                    </td>
+
+                                                    {/* Delete */}
+                                                    <td className="px-2.5 py-2 text-center">
+                                                        <button
+                                                            type="button"
+                                                            disabled={collateralRows.length <= 1}
+                                                            onClick={() => handleRemoveRow(idx)}
+                                                            className="p-1 text-gray-300 hover:text-red-600 disabled:opacity-20 transition"
+                                                            title="Delete Item"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
-                            <div>
-                                <h2 className="text-sm font-bold text-gray-900 tracking-tight">Disbursement &amp; Custody</h2>
-                                <p className="text-xs text-gray-400">Payment instrument and physical locker allocation</p>
+
+                            {/* Weight Totals Bar */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs font-mono">
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <div>
+                                        <span className="text-[10px] text-gray-400 uppercase block font-sans">Gross Weight:</span>
+                                        <span className="font-bold text-gray-800">{totals.totalGross.toFixed(3)} g</span>
+                                    </div>
+                                    <div className="h-6 w-px bg-gray-200" />
+                                    <div>
+                                        <span className="text-[10px] text-gray-400 uppercase block font-sans">Stone Weight:</span>
+                                        <span className="font-bold text-gray-500">{totals.totalStone.toFixed(3)} g</span>
+                                    </div>
+                                    <div className="h-6 w-px bg-gray-200" />
+                                    <div>
+                                        <span className="text-[10px] text-emerald-700 uppercase font-bold block font-sans">Net Pledged Gold:</span>
+                                        <span className="font-extrabold text-emerald-700 text-sm">{totals.totalNet.toFixed(3)} g</span>
+                                    </div>
+                                    <div className="h-6 w-px bg-gray-200" />
+                                    <div>
+                                        <span className="text-[10px] text-gray-400 uppercase block font-sans">Fine Gold (24K Equiv):</span>
+                                        <span className="font-bold text-gray-800">{totals.totalFine.toFixed(3)} g</span>
+                                    </div>
+                                </div>
+
+                                <div className="text-right">
+                                    <span className="text-[10px] text-gray-400 uppercase block font-sans">Total Collateral Valuation:</span>
+                                    <span className="font-extrabold text-gray-950 text-sm">{fmtINR(totals.totalValuation)}</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {/* Payment Mode */}
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                                    Disbursement Payment Mode
-                                </label>
-                                <div className="grid grid-cols-3 gap-1.5">
-                                    {(['CASH', 'UPI', 'BANK_TRANSFER'] as const).map((mode) => (
-                                        <button
-                                            key={mode}
-                                            type="button"
-                                            onClick={() => setPaymentMode(mode)}
-                                            className={`py-2 px-2 rounded-lg text-xs font-semibold transition border ${
-                                                paymentMode === mode
-                                                    ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                                                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                                            }`}
-                                        >
-                                            {mode === 'CASH' ? 'Cash' : mode === 'UPI' ? 'UPI' : 'Bank NEFT'}
-                                        </button>
-                                    ))}
+                        {/* SECTION B: LOAN SANCTION & RATE TERMS */}
+                        <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 space-y-4">
+                            <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
+                                <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                                    <Percent className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <h2 className="text-sm font-bold text-gray-900">Loan Sanction Terms</h2>
+                                    <p className="text-[11px] text-gray-400">Principal disbursement amount, interest rate and tenure</p>
                                 </div>
                             </div>
 
-                            {/* Tenure */}
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                                    Loan Tenure Period
-                                </label>
-                                <select
-                                    value={tenureMonths}
-                                    onChange={(e) => setTenureMonths(Number(e.target.value))}
-                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs font-semibold text-gray-900 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
-                                >
-                                    <option value={3}>3 Months</option>
-                                    <option value={6}>6 Months</option>
-                                    <option value={12}>12 Months (1 Year)</option>
-                                    <option value={24}>24 Months (2 Years)</option>
-                                </select>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                {/* Principal Sanction */}
+                                <div className="space-y-1.5 bg-amber-50/40 p-3.5 rounded-xl border border-amber-200">
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-amber-900">
+                                        Principal Sanction (₹) *
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base font-bold text-amber-700">₹</span>
+                                        <input
+                                            type="number"
+                                            step="500"
+                                            value={principalAmount}
+                                            onChange={(e) => setPrincipalAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                                            placeholder="50000"
+                                            className="w-full pl-7 pr-3 py-2 bg-white border border-amber-300 rounded-lg text-base font-bold font-mono text-gray-950 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-xs"
+                                        />
+                                    </div>
+                                    {/* Preset Pills */}
+                                    <div className="flex gap-1 pt-1">
+                                        {[25000, 50000, 100000].map((amt) => (
+                                            <button
+                                                key={amt}
+                                                type="button"
+                                                onClick={() => setPrincipalAmount(amt)}
+                                                className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white border border-amber-200 text-amber-800 hover:bg-amber-100 transition shadow-xs"
+                                            >
+                                                ₹{(amt / 1000).toFixed(0)}k
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Monthly Interest Rate */}
+                                <div className="space-y-1.5 p-3.5 rounded-xl border border-gray-200 bg-gray-50/50">
+                                    <label className="block text-xs font-semibold text-gray-700">Monthly Interest Rate</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            value={interestRatePm}
+                                            onChange={(e) => setInterestRatePm(e.target.value === '' ? '' : Number(e.target.value))}
+                                            className="w-24 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-bold font-mono text-gray-900 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
+                                            placeholder="2.5"
+                                        />
+                                        <span className="text-xs font-bold text-gray-600">% p.m.</span>
+                                    </div>
+                                    <span className="text-[10px] text-gray-400 block font-mono">
+                                        ({((Number(interestRatePm) || 0) * 12).toFixed(1)}% per annum)
+                                    </span>
+                                </div>
+
+                                {/* Payment Mode */}
+                                <div className="space-y-1.5 p-3.5 rounded-xl border border-gray-200 bg-gray-50/50">
+                                    <label className="block text-xs font-semibold text-gray-700">Disbursement Mode</label>
+                                    <div className="grid grid-cols-3 gap-1 pt-1">
+                                        {(['CASH', 'UPI', 'BANK_TRANSFER'] as const).map((m) => (
+                                            <button
+                                                key={m}
+                                                type="button"
+                                                onClick={() => setPaymentMode(m)}
+                                                className={`py-1.5 text-xs font-bold rounded-lg border transition ${
+                                                    paymentMode === m
+                                                        ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                                                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                {m === 'CASH' ? 'Cash' : m === 'UPI' ? 'UPI' : 'Bank'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <span className="text-[10px] text-gray-400 block pt-1">Immediate cash receipt</span>
+                                </div>
                             </div>
 
-                            {/* Vault / Storage Location */}
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                                    Vault Storage Location
+                            {/* Upfront 1st Month Interest Deduction */}
+                            <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <label className="flex items-center gap-3 cursor-pointer select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={deductFirstMonthInterest}
+                                        onChange={(e) => setDeductFirstMonthInterest(e.target.checked)}
+                                        className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                                    />
+                                    <div>
+                                        <span className="text-xs font-bold text-gray-900 block">Deduct 1st Month Interest Upfront</span>
+                                        <span className="text-[11px] text-gray-500">Deduct 1st month interest from cash in hand and issue immediate voucher</span>
+                                    </div>
                                 </label>
-                                <input
-                                    type="text"
-                                    value={storageLocation}
-                                    onChange={(e) => setStorageLocation(e.target.value)}
-                                    placeholder="Safe 1, Box 14"
-                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
-                                />
-                            </div>
 
-                            {/* Payment Remarks */}
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                                    Transaction Ref / Note
-                                </label>
-                                <input
-                                    type="text"
-                                    value={paymentRemarks}
-                                    onChange={(e) => setPaymentRemarks(e.target.value)}
-                                    placeholder="e.g. Counter Cash Release / UTR"
-                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
-                                />
+                                <div className="text-right font-mono text-xs">
+                                    <span className="text-[10px] text-gray-400 block uppercase font-sans">Advance Deduction:</span>
+                                    <span className="font-bold text-red-600">
+                                        {deductFirstMonthInterest ? `-${fmtINR(calculatedAdvanceInterest)}` : '₹0'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* General Notes */}
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                                Remarks &amp; Identification Notes
-                            </label>
-                            <input
-                                type="text"
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Counter verified. 42 mani & 1 pendal intact."
-                                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Right: Borrower Signature Pad (5 Cols) */}
-                    <div className="lg:col-span-5 bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 sm:p-6 flex flex-col justify-between">
-                        <div>
-                            <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-3">
+                        {/* SECTION C: SIGNATURE & NOTES */}
+                        <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 space-y-4">
+                            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                                 <div className="flex items-center gap-2">
                                     <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
                                         <FileText className="w-4 h-4" />
                                     </div>
                                     <div>
-                                        <h2 className="text-sm font-bold text-gray-900 tracking-tight">Borrower Digital Signature</h2>
-                                        <p className="text-xs text-gray-400">Stylus, touchscreen, or mouse</p>
+                                        <h2 className="text-sm font-bold text-gray-900">Borrower Signature &amp; Notes</h2>
+                                        <p className="text-[11px] text-gray-400">Signature will be embedded on the printed pledge chitthi</p>
                                     </div>
                                 </div>
-                                <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                                    Pledge Agreement
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <SignaturePad
+                                        value={customerSignatureUrl}
+                                        onChange={setCustomerSignatureUrl}
+                                        label="Borrower Digital Signature"
+                                        height={110}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Remarks / Loan Note</label>
+                                    <textarea
+                                        rows={4}
+                                        value={notes}
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        placeholder="e.g. Counter verified. 42 mani intact."
+                                        className="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ──── RIGHT COLUMN (4 COLS): STICKY DISBURSE & APPRAISAL CARD ──── */}
+                    <div className="lg:col-span-4 sticky top-20 space-y-4">
+                        <div className="bg-white rounded-2xl border border-amber-200/80 shadow-lg p-5 space-y-5">
+                            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-amber-600" />
+                                    <h3 className="text-sm font-bold text-gray-950">Appraisal &amp; Disburse</h3>
+                                </div>
+                                <span className="text-[10px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded">
+                                    LIVE SUMMARY
                                 </span>
                             </div>
 
-                            <SignaturePad
-                                value={customerSignatureUrl}
-                                onChange={setCustomerSignatureUrl}
-                                label="Borrower Pledge Signature"
-                                height={130}
-                            />
-                        </div>
+                            {/* Key Stats Stack */}
+                            <div className="space-y-3 divide-y divide-gray-100 text-xs">
+                                <div className="flex justify-between items-center pt-1">
+                                    <span className="text-gray-500">Pledged Net Gold:</span>
+                                    <span className="font-mono font-bold text-gray-950 text-sm">{totals.totalNet.toFixed(3)} g</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-3">
+                                    <span className="text-gray-500">Total Gold Valuation:</span>
+                                    <span className="font-mono font-bold text-gray-950 text-sm">{fmtINR(totals.totalValuation)}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-3">
+                                    <span className="text-gray-500">Loan Sanction Amount:</span>
+                                    <span className="font-mono font-bold text-amber-900 text-sm">{fmtINR(Number(principalAmount) || 0)}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-3">
+                                    <span className="text-gray-500">LTV Margin (RBI Cap 75%):</span>
+                                    <span className={`font-mono font-bold px-2 py-0.5 rounded text-xs ${
+                                        totals.ltvRatio <= 75 ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                                    }`}>
+                                        {totals.ltvRatio}% {totals.ltvRatio <= 75 ? '✓ Safe' : '⚠️ High'}
+                                    </span>
+                                </div>
+                            </div>
 
-                        <p className="text-[11px] text-gray-400 mt-2">
-                            This signature is embedded directly onto Page 1 of the official A4 Pledge Agreement Document.
-                        </p>
-                    </div>
-                </div>
-            </div>
+                            {/* Safe Box / Pigeonhole Slot Pill */}
+                            <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                                        <Package className="w-3.5 h-3.5 text-amber-600" /> Vault Safe Box
+                                    </span>
+                                    {isOwner && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsBoxUnlocked(!isBoxUnlocked)}
+                                            className="text-[10px] text-amber-700 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                                        >
+                                            {isBoxUnlocked ? <Unlock className="w-3 h-3 text-amber-600" /> : <Lock className="w-3 h-3 text-gray-400" />}
+                                            {isBoxUnlocked ? 'Override' : 'Owner Edit'}
+                                        </button>
+                                    )}
+                                </div>
+                                <input
+                                    type="text"
+                                    value={packetBoxNo}
+                                    readOnly={!isBoxUnlocked}
+                                    onChange={(e) => setPacketBoxNo(e.target.value)}
+                                    placeholder={selectedCustomer ? deriveBoxNumber(selectedCustomer.customerCode) || 'Box 100' : 'Select Customer First'}
+                                    className={`w-full px-3 py-1.5 rounded-lg text-xs font-bold font-mono shadow-xs focus:outline-none transition-colors ${
+                                        isBoxUnlocked
+                                            ? 'bg-amber-50 border border-amber-400 text-gray-950'
+                                            : 'bg-white border border-gray-300 text-gray-800 cursor-not-allowed select-none'
+                                    }`}
+                                />
+                                <span className="text-[10px] text-gray-500 block">
+                                    {selectedCustomer ? `Auto-assigned 1–100 slot for ${selectedCustomer.customerCode}` : 'Auto-maps once borrower is chosen'}
+                                </span>
+                            </div>
 
-            {/* ─────────────────────────────────────────────────────────────
-                STICKY BOTTOM ACTION BAR (MODERN FLOATING DOCK)
-            ───────────────────────────────────────────────────────────── */}
-            <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-gray-200 py-3.5 px-6 shadow-xl">
-                <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex flex-wrap items-center gap-5 text-xs font-mono">
-                        <div>
-                            <span className="text-[10px] text-gray-400 block uppercase font-sans">Borrower:</span>
-                            <span className="font-bold text-gray-900">
-                                {selectedCustomer ? selectedCustomer.fullName : 'None Selected'}
-                            </span>
-                        </div>
-                        <div className="h-7 w-px bg-gray-200 hidden sm:block" />
-                        <div>
-                            <span className="text-[10px] text-gray-400 block uppercase font-sans">Total Net Gold:</span>
-                            <span className="font-bold text-gray-900">{totals.totalNet.toFixed(3)} g</span>
-                        </div>
-                        <div className="h-7 w-px bg-gray-200 hidden sm:block" />
-                        <div>
-                            <span className="text-[10px] text-gray-400 block uppercase font-sans">Valuation:</span>
-                            <span className="font-bold text-gray-900">{fmtINR(totals.totalValuation)}</span>
-                        </div>
-                        <div className="h-7 w-px bg-gray-200 hidden sm:block" />
-                        <div>
-                            <span className="text-[10px] text-emerald-700 block uppercase font-sans font-bold">Net Cash Disbursed:</span>
-                            <span className="text-base font-extrabold text-emerald-700">
-                                {fmtINR(netCashToDisburse)}
-                            </span>
-                        </div>
-                    </div>
+                            {/* Net Cash Callout */}
+                            <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md space-y-1">
+                                <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-100 block">
+                                    Net Cash Handover to Customer:
+                                </span>
+                                <div className="text-2xl font-extrabold font-mono tracking-tight">
+                                    {fmtINR(netCashToDisburse)}
+                                </div>
+                                <p className="text-[11px] text-emerald-100">
+                                    {deductFirstMonthInterest ? 'Includes 1st month advance interest voucher' : 'Full principal handover'}
+                                </p>
+                            </div>
 
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={handleResetForm}
-                            disabled={isSubmitting}
-                            className="px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold transition shadow-xs disabled:opacity-50"
-                        >
-                            Reset
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleSubmitLoan}
-                            disabled={isSubmitting}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold transition shadow-sm disabled:opacity-50 active:scale-98"
-                        >
-                            {isSubmitting ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    <span>Processing Loan Disburse…</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Printer className="w-4 h-4" />
-                                    <span>Disburse Loan &amp; Print Pledge Document</span>
-                                </>
-                            )}
-                        </button>
+                            {/* Big Primary Disburse Button */}
+                            <button
+                                type="button"
+                                onClick={handleSubmitLoan}
+                                disabled={isSubmitting}
+                                className="w-full py-3.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        <span>Sanctioning &amp; Printing…</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Printer className="w-4 h-4" />
+                                        <span>Disburse &amp; Print Chitthi</span>
+                                    </>
+                                )}
+                            </button>
+
+                            <p className="text-[10px] text-center text-gray-400">
+                                Single click originates loan, writes ledger entry, locks packet, and generates foldable Chitthi
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1354,6 +1232,7 @@ export default function CounterOriginationPage() {
                     onCustomerCreated={(customer) => {
                         setSelectedCustomer(customer);
                         setIsNewCustomerModalOpen(false);
+                        showToast(`Borrower ${customer.fullName} registered successfully!`, 'success', 'Customer Added');
                     }}
                 />
             )}

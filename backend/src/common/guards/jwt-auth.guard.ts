@@ -6,9 +6,14 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
+import { PrismaService } from '../../prisma/prisma.service.js';
+
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -33,10 +38,26 @@ export class JwtAuthGuard implements CanActivate {
       // to request.user.id, so a forged/expired token must never reach a
       // handler (§85 — authorization is enforced server-side, not by the UI).
       const payload = await this.jwtService.verifyAsync(token);
+      let userId = payload.sub;
+      let userRole = payload.role;
+
+      if (payload.employeeCode) {
+        try {
+          const userInActiveBook = await this.prisma.user.findUnique({
+            where: { employeeCode: payload.employeeCode },
+            select: { id: true, role: true, active: true },
+          });
+          if (userInActiveBook && userInActiveBook.active) {
+            userId = userInActiveBook.id;
+            userRole = userInActiveBook.role;
+          }
+        } catch {}
+      }
+
       request.user = {
-        id: payload.sub,
+        id: userId,
         employeeCode: payload.employeeCode,
-        role: payload.role,
+        role: userRole,
       };
       return true;
     } catch {
