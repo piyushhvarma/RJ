@@ -18,11 +18,12 @@ export declare class AuditService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     log(entry: AuditEntry, tx?: Prisma.TransactionClient | PrismaService): Promise<{
-        id: string;
         result: string;
+        id: string;
         entityType: string;
         entityId: string;
         action: string;
+        userId: string;
         roleAtTime: import("@prisma/client").$Enums.UserRole;
         oldValue: Prisma.JsonValue | null;
         newValue: Prisma.JsonValue | null;
@@ -31,14 +32,14 @@ export declare class AuditService {
         ipAddress: string | null;
         deviceId: string | null;
         timestamp: Date;
-        userId: string;
     }>;
     timeline(entityType: string, entityId: string): Promise<{
-        id: string;
         result: string;
+        id: string;
         entityType: string;
         entityId: string;
         action: string;
+        userId: string;
         roleAtTime: import("@prisma/client").$Enums.UserRole;
         oldValue: Prisma.JsonValue | null;
         newValue: Prisma.JsonValue | null;
@@ -47,6 +48,5 @@ export declare class AuditService {
         ipAddress: string | null;
         deviceId: string | null;
         timestamp: Date;
-        userId: string;
     }[]>;
 }

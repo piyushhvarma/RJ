@@ -26,27 +26,27 @@ export declare class BiometricService {
     verify(customerId: string, actor: AuthenticatedUser, loanId?: string): Promise<{
         attemptsRemaining: number;
         fallbackAvailable: boolean;
-        id: string;
         result: import("@prisma/client").$Enums.BiometricResult;
+        id: string;
         deviceId: string;
         timestamp: Date;
         customerId: string;
         verifiedById: string;
+        loanId: string | null;
         attemptNumber: number;
         fallbackUsed: boolean;
         fallbackReason: string | null;
-        loanId: string | null;
     }>;
     recordFallback(customerId: string, actor: AuthenticatedUser, reason: string, approvedById: string, loanId?: string): Promise<{
-        id: string;
         result: import("@prisma/client").$Enums.BiometricResult;
+        id: string;
         deviceId: string;
         timestamp: Date;
         customerId: string;
         verifiedById: string;
+        loanId: string | null;
         attemptNumber: number;
         fallbackUsed: boolean;
         fallbackReason: string | null;
-        loanId: string | null;
     }>;
 }

@@ -7,12 +7,12 @@ export declare class PaymentsController {
     receive(dto: ReceivePaymentDto, user: AuthenticatedUser): Promise<{
         id: string;
         createdAt: Date;
-        otherCharges: number;
         loanId: string;
-        lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
-        paymentDate: Date;
+        otherCharges: number;
+        notes: string | null;
         paymentCode: string;
         amount: number;
+        paymentDate: Date;
         mode: import("@prisma/client").$Enums.PaymentMode;
         principalComponent: number;
         interestComponent: number;
@@ -20,18 +20,18 @@ export declare class PaymentsController {
         cashierId: string;
         receiptNumber: string;
         transactionRef: string | null;
-        notes: string | null;
+        lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
     }>;
     findAll(loanId?: string, q?: string, page?: number, limit?: number): Promise<{
         items: {
             id: string;
             createdAt: Date;
-            otherCharges: number;
             loanId: string;
-            lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
-            paymentDate: Date;
+            otherCharges: number;
+            notes: string | null;
             paymentCode: string;
             amount: number;
+            paymentDate: Date;
             mode: import("@prisma/client").$Enums.PaymentMode;
             principalComponent: number;
             interestComponent: number;
@@ -39,7 +39,7 @@ export declare class PaymentsController {
             cashierId: string;
             receiptNumber: string;
             transactionRef: string | null;
-            notes: string | null;
+            lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
         }[];
         total: number;
         page: number;
@@ -69,9 +69,9 @@ export declare class PaymentsController {
             loan: {
                 customer: {
                     id: string;
-                    mobile: string | null;
-                    fullName: string;
                     customerCode: string;
+                    fullName: string;
+                    mobile: string | null;
                 };
                 id: string;
                 status: import("@prisma/client").$Enums.LoanStatus;

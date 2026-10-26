@@ -16,9 +16,10 @@ export declare class JewelleryService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        category: string;
         status: import("@prisma/client").$Enums.JewelleryStatus;
         loanId: string;
+        itemCode: string;
+        category: string;
         metalType: import("@prisma/client").$Enums.MetalType;
         description: string;
         grossWeight: number;
@@ -28,7 +29,6 @@ export declare class JewelleryService {
         fineness: number | null;
         valuationRate: number;
         valuation: number;
-        itemCode: string;
         hallmarkDetails: string | null;
         identifyingMarks: string | null;
         condition: string | null;
@@ -39,27 +39,28 @@ export declare class JewelleryService {
     addPhoto(itemId: string, dto: AddJewelleryPhotoDto, actor: AuthenticatedUser): Promise<{
         id: string;
         fileUrl: string;
+        jewelleryItemId: string;
         angle: string;
         capturedById: string;
         capturedAt: Date;
-        jewelleryItemId: string;
     }>;
     findByLoan(loanId: string): Promise<({
         photos: {
             id: string;
             fileUrl: string;
+            jewelleryItemId: string;
             angle: string;
             capturedById: string;
             capturedAt: Date;
-            jewelleryItemId: string;
         }[];
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        category: string;
         status: import("@prisma/client").$Enums.JewelleryStatus;
         loanId: string;
+        itemCode: string;
+        category: string;
         metalType: import("@prisma/client").$Enums.MetalType;
         description: string;
         grossWeight: number;
@@ -69,7 +70,6 @@ export declare class JewelleryService {
         fineness: number | null;
         valuationRate: number;
         valuation: number;
-        itemCode: string;
         hallmarkDetails: string | null;
         identifyingMarks: string | null;
         condition: string | null;
@@ -82,18 +82,19 @@ export declare class JewelleryService {
             photos: {
                 id: string;
                 fileUrl: string;
+                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
-                jewelleryItemId: string;
             }[];
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            category: string;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
+            itemCode: string;
+            category: string;
             metalType: import("@prisma/client").$Enums.MetalType;
             description: string;
             grossWeight: number;
@@ -103,7 +104,6 @@ export declare class JewelleryService {
             fineness: number | null;
             valuationRate: number;
             valuation: number;
-            itemCode: string;
             hallmarkDetails: string | null;
             identifyingMarks: string | null;
             condition: string | null;
@@ -127,9 +127,9 @@ export declare class JewelleryService {
             loan: {
                 customer: {
                     id: string;
-                    mobile: string | null;
-                    fullName: string;
                     customerCode: string;
+                    fullName: string;
+                    mobile: string | null;
                 };
                 id: string;
                 status: import("@prisma/client").$Enums.LoanStatus;
@@ -138,18 +138,19 @@ export declare class JewelleryService {
             photos: {
                 id: string;
                 fileUrl: string;
+                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
-                jewelleryItemId: string;
             }[];
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            category: string;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
+            itemCode: string;
+            category: string;
             metalType: import("@prisma/client").$Enums.MetalType;
             description: string;
             grossWeight: number;
@@ -159,7 +160,6 @@ export declare class JewelleryService {
             fineness: number | null;
             valuationRate: number;
             valuation: number;
-            itemCode: string;
             hallmarkDetails: string | null;
             identifyingMarks: string | null;
             condition: string | null;
@@ -197,16 +197,16 @@ export declare class JewelleryService {
             loan: {
                 customer: {
                     id: string;
-                    fullName: string;
                     customerCode: string;
+                    fullName: string;
                 };
                 id: string;
                 status: import("@prisma/client").$Enums.LoanStatus;
+                loanCode: string;
+                principalAmount: number | null;
                 _count: {
                     jewelleryItems: number;
                 };
-                loanCode: string;
-                principalAmount: number | null;
             };
         } & {
             id: string;
@@ -215,8 +215,8 @@ export declare class JewelleryService {
             approvedById: string | null;
             status: import("@prisma/client").$Enums.AppraisalStatus;
             loanId: string;
-            notes: string | null;
             appraiserId: string;
+            notes: string | null;
             approvedAt: Date | null;
             goldRateSource: string | null;
             goldRateValue: number | null;

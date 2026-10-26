@@ -39,11 +39,14 @@ let CustomersController = class CustomersController {
     addDocument(id, dto, user) {
         return this.customersService.addDocument(id, dto, user);
     }
-    search(query) {
-        return this.customersService.search(query);
+    search(query, user) {
+        return this.customersService.search(query, user);
     }
-    findOne(id) {
-        return this.customersService.findById(id);
+    getAccessHistory(id) {
+        return this.customersService.getAccessHistory(id);
+    }
+    findOne(id, user) {
+        return this.customersService.findById(id, user);
     }
 };
 __decorate([
@@ -88,15 +91,24 @@ __decorate([
 __decorate([
     Get(),
     __param(0, Query()),
+    __param(1, CurrentUser()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [SearchCustomersDto]),
+    __metadata("design:paramtypes", [SearchCustomersDto, Object]),
     __metadata("design:returntype", void 0)
 ], CustomersController.prototype, "search", null);
 __decorate([
-    Get(':id'),
+    Get(':id/access-history'),
     __param(0, Param('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CustomersController.prototype, "getAccessHistory", null);
+__decorate([
+    Get(':id'),
+    __param(0, Param('id')),
+    __param(1, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], CustomersController.prototype, "findOne", null);
 CustomersController = __decorate([

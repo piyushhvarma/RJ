@@ -143,20 +143,70 @@ let CustomersService = class CustomersService {
         });
         return doc;
     }
-    async findById(id) {
+    async findById(id, actor) {
         const customer = await this.prisma.customer.findUnique({
             where: { id },
             include: {
                 documents: { orderBy: { createdAt: 'desc' } },
                 biometric: true,
-                loans: { orderBy: { createdAt: 'desc' } },
+                loans: {
+                    orderBy: { createdAt: 'desc' },
+                    include: {
+                        jewelleryItems: {
+                            include: { photos: true },
+                        },
+                        packet: {
+                            include: { storageLocation: true },
+                        },
+                        payments: {
+                            orderBy: { paymentDate: 'desc' },
+                            take: 5,
+                        },
+                    },
+                },
             },
         });
         if (!customer)
             throw new NotFoundException('Customer not found');
+        if (actor) {
+            await this.audit.log({
+                entityType: 'Customer',
+                entityId: customer.id,
+                action: 'CUSTOMER_VIEWED',
+                userId: actor.id,
+                roleAtTime: actor.role,
+                newValue: {
+                    customerCode: customer.customerCode,
+                    fullName: customer.fullName,
+                    totalLoans: customer.loans.length,
+                    activeLoans: customer.loans.filter((l) => l.status === 'ACTIVE' || l.status === 'OVERDUE').length,
+                },
+                result: 'SUCCESS',
+            });
+        }
         return customer;
     }
-    async search(dto = {}) {
+    async getAccessHistory(id) {
+        return this.prisma.auditLog.findMany({
+            where: {
+                entityType: 'Customer',
+                entityId: id,
+            },
+            orderBy: { timestamp: 'desc' },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        role: true,
+                        email: true,
+                    },
+                },
+            },
+            take: 50,
+        });
+    }
+    async search(dto = {}, actor) {
         const page = Math.max(1, dto.page ? Number(dto.page) : 1);
         const limit = Math.max(1, Math.min(100, dto.limit ? Number(dto.limit) : 25));
         const skip = (page - 1) * limit;
@@ -172,6 +222,9 @@ let CustomersService = class CustomersService {
                 { customerCode: { contains: q, mode: 'insensitive' } },
                 { guardianName: { contains: q, mode: 'insensitive' } },
                 { city: { contains: q, mode: 'insensitive' } },
+                { loans: { some: { legacyPledgeNo: { contains: q, mode: 'insensitive' } } } },
+                { loans: { some: { loanCode: { contains: q, mode: 'insensitive' } } } },
+                { loans: { some: { jewelleryItems: { some: { description: { contains: q, mode: 'insensitive' } } } } } },
             ];
         }
         const [items, total] = await Promise.all([
@@ -187,6 +240,17 @@ let CustomersService = class CustomersService {
             }),
             this.prisma.customer.count({ where }),
         ]);
+        if (dto.q && dto.q.trim().length > 0 && actor) {
+            await this.audit.log({
+                entityType: 'CustomerSearch',
+                entityId: actor.id,
+                action: 'CUSTOMER_SEARCHED',
+                userId: actor.id,
+                roleAtTime: actor.role,
+                newValue: { query: dto.q.trim(), totalMatches: total },
+                result: 'SUCCESS',
+            });
+        }
         return {
             items,
             total,

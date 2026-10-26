@@ -95,11 +95,11 @@ export declare class PacketsService {
             id: string;
             reason: string;
             timestamp: Date;
-            movedById: string;
-            returned: boolean;
             packetId: string;
             fromLocationId: string | null;
             toLocationId: string | null;
+            movedById: string;
+            returned: boolean;
         }[];
     } & {
         id: string;
@@ -124,17 +124,17 @@ export declare class PacketsService {
             loan: {
                 customer: {
                     id: string;
-                    mobile: string | null;
-                    fullName: string;
                     customerCode: string;
+                    fullName: string;
+                    mobile: string | null;
                 };
                 id: string;
                 status: import("@prisma/client").$Enums.LoanStatus;
+                loanCode: string;
+                principalAmount: number | null;
                 _count: {
                     jewelleryItems: number;
                 };
-                loanCode: string;
-                principalAmount: number | null;
             };
             storageLocation: {
                 id: string;

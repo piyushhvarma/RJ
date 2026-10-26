@@ -9,10 +9,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 import { Injectable, UnauthorizedException, } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../../prisma/prisma.service.js';
 let JwtAuthGuard = class JwtAuthGuard {
     jwtService;
-    constructor(jwtService) {
+    prisma;
+    constructor(jwtService, prisma) {
         this.jwtService = jwtService;
+        this.prisma = prisma;
     }
     async canActivate(context) {
         const request = context.switchToHttp().getRequest();
@@ -32,10 +35,25 @@ let JwtAuthGuard = class JwtAuthGuard {
         }
         try {
             const payload = await this.jwtService.verifyAsync(token);
+            let userId = payload.sub;
+            let userRole = payload.role;
+            if (payload.employeeCode) {
+                try {
+                    const userInActiveBook = await this.prisma.user.findUnique({
+                        where: { employeeCode: payload.employeeCode },
+                        select: { id: true, role: true, active: true },
+                    });
+                    if (userInActiveBook && userInActiveBook.active) {
+                        userId = userInActiveBook.id;
+                        userRole = userInActiveBook.role;
+                    }
+                }
+                catch { }
+            }
             request.user = {
-                id: payload.sub,
+                id: userId,
                 employeeCode: payload.employeeCode,
-                role: payload.role,
+                role: userRole,
             };
             return true;
         }
@@ -46,7 +64,8 @@ let JwtAuthGuard = class JwtAuthGuard {
 };
 JwtAuthGuard = __decorate([
     Injectable(),
-    __metadata("design:paramtypes", [JwtService])
+    __metadata("design:paramtypes", [JwtService,
+        PrismaService])
 ], JwtAuthGuard);
 export { JwtAuthGuard };
 //# sourceMappingURL=jwt-auth.guard.js.map

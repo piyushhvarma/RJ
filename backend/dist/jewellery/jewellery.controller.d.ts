@@ -10,9 +10,10 @@ export declare class JewelleryController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        category: string;
         status: import("@prisma/client").$Enums.JewelleryStatus;
         loanId: string;
+        itemCode: string;
+        category: string;
         metalType: import("@prisma/client").$Enums.MetalType;
         description: string;
         grossWeight: number;
@@ -22,7 +23,6 @@ export declare class JewelleryController {
         fineness: number | null;
         valuationRate: number;
         valuation: number;
-        itemCode: string;
         hallmarkDetails: string | null;
         identifyingMarks: string | null;
         condition: string | null;
@@ -33,26 +33,26 @@ export declare class JewelleryController {
     addPhoto(id: string, dto: AddJewelleryPhotoDto, user: AuthenticatedUser): Promise<{
         id: string;
         fileUrl: string;
+        jewelleryItemId: string;
         angle: string;
         capturedById: string;
         capturedAt: Date;
-        jewelleryItemId: string;
     }>;
     findAllAppraisals(page?: number, limit?: number): Promise<{
         items: ({
             loan: {
                 customer: {
                     id: string;
-                    fullName: string;
                     customerCode: string;
+                    fullName: string;
                 };
                 id: string;
                 status: import("@prisma/client").$Enums.LoanStatus;
+                loanCode: string;
+                principalAmount: number | null;
                 _count: {
                     jewelleryItems: number;
                 };
-                loanCode: string;
-                principalAmount: number | null;
             };
         } & {
             id: string;
@@ -61,8 +61,8 @@ export declare class JewelleryController {
             approvedById: string | null;
             status: import("@prisma/client").$Enums.AppraisalStatus;
             loanId: string;
-            notes: string | null;
             appraiserId: string;
+            notes: string | null;
             approvedAt: Date | null;
             goldRateSource: string | null;
             goldRateValue: number | null;
@@ -78,18 +78,19 @@ export declare class JewelleryController {
             photos: {
                 id: string;
                 fileUrl: string;
+                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
-                jewelleryItemId: string;
             }[];
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            category: string;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
+            itemCode: string;
+            category: string;
             metalType: import("@prisma/client").$Enums.MetalType;
             description: string;
             grossWeight: number;
@@ -99,7 +100,6 @@ export declare class JewelleryController {
             fineness: number | null;
             valuationRate: number;
             valuation: number;
-            itemCode: string;
             hallmarkDetails: string | null;
             identifyingMarks: string | null;
             condition: string | null;
@@ -123,9 +123,9 @@ export declare class JewelleryController {
             loan: {
                 customer: {
                     id: string;
-                    mobile: string | null;
-                    fullName: string;
                     customerCode: string;
+                    fullName: string;
+                    mobile: string | null;
                 };
                 id: string;
                 status: import("@prisma/client").$Enums.LoanStatus;
@@ -134,18 +134,19 @@ export declare class JewelleryController {
             photos: {
                 id: string;
                 fileUrl: string;
+                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
-                jewelleryItemId: string;
             }[];
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            category: string;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
+            itemCode: string;
+            category: string;
             metalType: import("@prisma/client").$Enums.MetalType;
             description: string;
             grossWeight: number;
@@ -155,7 +156,6 @@ export declare class JewelleryController {
             fineness: number | null;
             valuationRate: number;
             valuation: number;
-            itemCode: string;
             hallmarkDetails: string | null;
             identifyingMarks: string | null;
             condition: string | null;

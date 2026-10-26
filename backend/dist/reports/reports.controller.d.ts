@@ -45,8 +45,8 @@ export declare class ReportsController {
         dueLoans: {
             dueToday: {
                 customer: {
-                    mobile: string | null;
                     fullName: string;
+                    mobile: string | null;
                 };
                 id: string;
                 loanCode: string;
@@ -55,8 +55,8 @@ export declare class ReportsController {
             }[];
             due3Days: {
                 customer: {
-                    mobile: string | null;
                     fullName: string;
+                    mobile: string | null;
                 };
                 id: string;
                 loanCode: string;
@@ -65,8 +65,8 @@ export declare class ReportsController {
             }[];
             due7Days: {
                 customer: {
-                    mobile: string | null;
                     fullName: string;
+                    mobile: string | null;
                 };
                 id: string;
                 loanCode: string;

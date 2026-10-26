@@ -1,6 +1,8 @@
 node_modules/
 .env
-.env*.local
+.env*
+*.backup
+*.bak
 .DS_Store
 Thumbs.db
 *.mdb

@@ -43,9 +43,9 @@ export declare class DashboardController {
         recentLoans: {
             customer: {
                 id: string;
-                mobile: string | null;
-                fullName: string;
                 customerCode: string;
+                fullName: string;
+                mobile: string | null;
             };
             id: string;
             createdAt: Date;
@@ -56,10 +56,10 @@ export declare class DashboardController {
         recentCustomers: {
             id: string;
             createdAt: Date;
-            mobile: string | null;
-            fullName: string;
-            kycStatus: import("@prisma/client").$Enums.VerificationStatus;
             customerCode: string;
+            fullName: string;
+            mobile: string | null;
+            kycStatus: import("@prisma/client").$Enums.VerificationStatus;
         }[];
     }>;
 }

@@ -15,10 +15,10 @@ export declare class LoansController {
         items: {
             customer: {
                 id: string;
-                mobile: string | null;
-                fullName: string;
-                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
                 customerCode: string;
+                fullName: string;
+                mobile: string | null;
+                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
             };
             packet: {
                 id: string;
@@ -28,16 +28,16 @@ export declare class LoansController {
             id: string;
             createdAt: Date;
             status: import("@prisma/client").$Enums.LoanStatus;
-            _count: {
-                jewelleryItems: number;
-                payments: number;
-            };
             loanCode: string;
             principalAmount: number | null;
             interestRate: number | null;
             interestType: import("@prisma/client").$Enums.InterestType | null;
             sanctionedDate: Date | null;
             maturityDate: Date | null;
+            _count: {
+                jewelleryItems: number;
+                payments: number;
+            };
         }[];
         total: number;
         page: number;
@@ -70,10 +70,11 @@ export declare class LoansController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            mobile: string | null;
+            customerCode: string;
             fullName: string;
             guardianName: string | null;
             dateOfBirth: Date | null;
+            mobile: string | null;
             alternateMobile: string | null;
             address: string | null;
             city: string | null;
@@ -81,9 +82,8 @@ export declare class LoansController {
             pincode: string | null;
             occupation: string | null;
             photoUrl: string | null;
-            kycStatus: import("@prisma/client").$Enums.VerificationStatus;
-            customerCode: string;
             signatureUrl: string | null;
+            kycStatus: import("@prisma/client").$Enums.VerificationStatus;
             biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
             status: import("@prisma/client").$Enums.RecordLifecycle;
             createdById: string;
@@ -127,18 +127,19 @@ export declare class LoansController {
             photos: {
                 id: string;
                 fileUrl: string;
+                jewelleryItemId: string;
                 angle: string;
                 capturedById: string;
                 capturedAt: Date;
-                jewelleryItemId: string;
             }[];
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            category: string;
             status: import("@prisma/client").$Enums.JewelleryStatus;
             loanId: string;
+            itemCode: string;
+            category: string;
             metalType: import("@prisma/client").$Enums.MetalType;
             description: string;
             grossWeight: number;
@@ -148,7 +149,6 @@ export declare class LoansController {
             fineness: number | null;
             valuationRate: number;
             valuation: number;
-            itemCode: string;
             hallmarkDetails: string | null;
             identifyingMarks: string | null;
             condition: string | null;
@@ -163,8 +163,8 @@ export declare class LoansController {
             approvedById: string | null;
             status: import("@prisma/client").$Enums.AppraisalStatus;
             loanId: string;
-            notes: string | null;
             appraiserId: string;
+            notes: string | null;
             approvedAt: Date | null;
             goldRateSource: string | null;
             goldRateValue: number | null;
@@ -173,12 +173,12 @@ export declare class LoansController {
         payments: {
             id: string;
             createdAt: Date;
-            otherCharges: number;
             loanId: string;
-            lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
-            paymentDate: Date;
+            otherCharges: number;
+            notes: string | null;
             paymentCode: string;
             amount: number;
+            paymentDate: Date;
             mode: import("@prisma/client").$Enums.PaymentMode;
             principalComponent: number;
             interestComponent: number;
@@ -186,7 +186,7 @@ export declare class LoansController {
             cashierId: string;
             receiptNumber: string;
             transactionRef: string | null;
-            notes: string | null;
+            lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
         }[];
         ledgerEntries: {
             id: string;
@@ -194,8 +194,8 @@ export declare class LoansController {
             reason: string | null;
             createdById: string;
             loanId: string;
-            amount: number;
             type: import("@prisma/client").$Enums.LedgerEntryType;
+            amount: number;
             balanceAfter: number;
             relatedPaymentId: string | null;
         }[];
@@ -249,10 +249,11 @@ export declare class LoansController {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
-                mobile: string | null;
+                customerCode: string;
                 fullName: string;
                 guardianName: string | null;
                 dateOfBirth: Date | null;
+                mobile: string | null;
                 alternateMobile: string | null;
                 address: string | null;
                 city: string | null;
@@ -260,9 +261,8 @@ export declare class LoansController {
                 pincode: string | null;
                 occupation: string | null;
                 photoUrl: string | null;
-                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
-                customerCode: string;
                 signatureUrl: string | null;
+                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
                 biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
                 status: import("@prisma/client").$Enums.RecordLifecycle;
                 createdById: string;
@@ -272,9 +272,10 @@ export declare class LoansController {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
-                category: string;
                 status: import("@prisma/client").$Enums.JewelleryStatus;
                 loanId: string;
+                itemCode: string;
+                category: string;
                 metalType: import("@prisma/client").$Enums.MetalType;
                 description: string;
                 grossWeight: number;
@@ -284,7 +285,6 @@ export declare class LoansController {
                 fineness: number | null;
                 valuationRate: number;
                 valuation: number;
-                itemCode: string;
                 hallmarkDetails: string | null;
                 identifyingMarks: string | null;
                 condition: string | null;
@@ -295,12 +295,12 @@ export declare class LoansController {
             payments: {
                 id: string;
                 createdAt: Date;
-                otherCharges: number;
                 loanId: string;
-                lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
-                paymentDate: Date;
+                otherCharges: number;
+                notes: string | null;
                 paymentCode: string;
                 amount: number;
+                paymentDate: Date;
                 mode: import("@prisma/client").$Enums.PaymentMode;
                 principalComponent: number;
                 interestComponent: number;
@@ -308,7 +308,7 @@ export declare class LoansController {
                 cashierId: string;
                 receiptNumber: string;
                 transactionRef: string | null;
-                notes: string | null;
+                lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
             }[];
             ledgerEntries: {
                 id: string;
@@ -316,8 +316,8 @@ export declare class LoansController {
                 reason: string | null;
                 createdById: string;
                 loanId: string;
-                amount: number;
                 type: import("@prisma/client").$Enums.LedgerEntryType;
+                amount: number;
                 balanceAfter: number;
                 relatedPaymentId: string | null;
             }[];

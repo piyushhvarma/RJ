@@ -685,7 +685,18 @@ let LoansService = class LoansService {
                 },
             });
             const packetCode = await this.ids.next('PKT', tx);
-            const label = dto.storageLocationLabel?.trim() || `Box-${loanCode.slice(-4)}`;
+            let defaultBoxLabel = `Box-${loanCode.slice(-4)}`;
+            if (customer.customerCode) {
+                const match = customer.customerCode.match(/\d+$/);
+                if (match) {
+                    const num = parseInt(match[0], 10);
+                    if (!isNaN(num)) {
+                        const remainder = num % 100;
+                        defaultBoxLabel = `Box ${remainder === 0 ? 100 : remainder}`;
+                    }
+                }
+            }
+            const label = dto.storageLocationLabel?.trim() || defaultBoxLabel;
             const location = await tx.storageLocation.upsert({
                 where: {
                     branch_safe_locker_shelf_position: {

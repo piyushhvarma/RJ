@@ -7,6 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { BookMiddleware } from './prisma/book.middleware.js';
 import { AuthModule } from './auth/auth.module.js';
 import { AuditModule } from './audit/audit.module.js';
 import { CommonModule } from './common/common.module.js';
@@ -22,6 +23,9 @@ import { ReportsModule } from './reports/reports.module.js';
 import { DocumentsModule } from './documents/documents.module.js';
 import { InterestModule } from './interest/interest.module.js';
 let AppModule = class AppModule {
+    configure(consumer) {
+        consumer.apply(BookMiddleware).forRoutes('*');
+    }
 };
 AppModule = __decorate([
     Module({

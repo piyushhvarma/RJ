@@ -12,12 +12,12 @@ export declare class PaymentsService {
     receive(dto: ReceivePaymentDto, actor: AuthenticatedUser): Promise<{
         id: string;
         createdAt: Date;
-        otherCharges: number;
         loanId: string;
-        lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
-        paymentDate: Date;
+        otherCharges: number;
+        notes: string | null;
         paymentCode: string;
         amount: number;
+        paymentDate: Date;
         mode: import("@prisma/client").$Enums.PaymentMode;
         principalComponent: number;
         interestComponent: number;
@@ -25,17 +25,17 @@ export declare class PaymentsService {
         cashierId: string;
         receiptNumber: string;
         transactionRef: string | null;
-        notes: string | null;
+        lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
     }>;
     findByLoan(loanId: string): Promise<{
         id: string;
         createdAt: Date;
-        otherCharges: number;
         loanId: string;
-        lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
-        paymentDate: Date;
+        otherCharges: number;
+        notes: string | null;
         paymentCode: string;
         amount: number;
+        paymentDate: Date;
         mode: import("@prisma/client").$Enums.PaymentMode;
         principalComponent: number;
         interestComponent: number;
@@ -43,7 +43,7 @@ export declare class PaymentsService {
         cashierId: string;
         receiptNumber: string;
         transactionRef: string | null;
-        notes: string | null;
+        lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
     }[]>;
     findAll(query?: {
         loanId?: string;
@@ -54,12 +54,12 @@ export declare class PaymentsService {
         items: {
             id: string;
             createdAt: Date;
-            otherCharges: number;
             loanId: string;
-            lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
-            paymentDate: Date;
+            otherCharges: number;
+            notes: string | null;
             paymentCode: string;
             amount: number;
+            paymentDate: Date;
             mode: import("@prisma/client").$Enums.PaymentMode;
             principalComponent: number;
             interestComponent: number;
@@ -67,7 +67,7 @@ export declare class PaymentsService {
             cashierId: string;
             receiptNumber: string;
             transactionRef: string | null;
-            notes: string | null;
+            lifecycle: import("@prisma/client").$Enums.RecordLifecycle;
         }[];
         total: number;
         page: number;
@@ -97,9 +97,9 @@ export declare class PaymentsService {
             loan: {
                 customer: {
                     id: string;
-                    mobile: string | null;
-                    fullName: string;
                     customerCode: string;
+                    fullName: string;
+                    mobile: string | null;
                 };
                 id: string;
                 status: import("@prisma/client").$Enums.LoanStatus;

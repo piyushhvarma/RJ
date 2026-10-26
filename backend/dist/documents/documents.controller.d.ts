@@ -9,8 +9,8 @@ export declare class DocumentsController {
             id: string;
             createdAt: Date;
             reason: string | null;
-            fileUrl: string;
             createdById: string;
+            fileUrl: string;
             documentId: string;
             versionNumber: number;
             scannedSignedCopyUrl: string | null;
@@ -32,10 +32,11 @@ export declare class DocumentsController {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
-                mobile: string | null;
+                customerCode: string;
                 fullName: string;
                 guardianName: string | null;
                 dateOfBirth: Date | null;
+                mobile: string | null;
                 alternateMobile: string | null;
                 address: string | null;
                 city: string | null;
@@ -43,9 +44,8 @@ export declare class DocumentsController {
                 pincode: string | null;
                 occupation: string | null;
                 photoUrl: string | null;
-                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
-                customerCode: string;
                 signatureUrl: string | null;
+                kycStatus: import("@prisma/client").$Enums.VerificationStatus;
                 biometricStatus: import("@prisma/client").$Enums.BiometricStatus;
                 status: import("@prisma/client").$Enums.RecordLifecycle;
                 createdById: string;
@@ -75,8 +75,8 @@ export declare class DocumentsController {
                 storedAt: Date | null;
             }) | null;
             scheme: {
-                id: string;
                 name: string;
+                id: string;
                 active: boolean;
                 interestRate: number;
                 interestType: import("@prisma/client").$Enums.InterestType;
@@ -87,9 +87,10 @@ export declare class DocumentsController {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
-                category: string;
                 status: import("@prisma/client").$Enums.JewelleryStatus;
                 loanId: string;
+                itemCode: string;
+                category: string;
                 metalType: import("@prisma/client").$Enums.MetalType;
                 description: string;
                 grossWeight: number;
@@ -99,7 +100,6 @@ export declare class DocumentsController {
                 fineness: number | null;
                 valuationRate: number;
                 valuation: number;
-                itemCode: string;
                 hallmarkDetails: string | null;
                 identifyingMarks: string | null;
                 condition: string | null;
@@ -132,8 +132,8 @@ export declare class DocumentsController {
             id: string;
             createdAt: Date;
             reason: string | null;
-            fileUrl: string;
             createdById: string;
+            fileUrl: string;
             documentId: string;
             versionNumber: number;
             scannedSignedCopyUrl: string | null;

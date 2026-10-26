@@ -21,27 +21,27 @@ export declare class BiometricController {
     verify(customerId: string, dto: VerifyBiometricDto, user: AuthenticatedUser): Promise<{
         attemptsRemaining: number;
         fallbackAvailable: boolean;
-        id: string;
         result: import("@prisma/client").$Enums.BiometricResult;
+        id: string;
         deviceId: string;
         timestamp: Date;
         customerId: string;
         verifiedById: string;
+        loanId: string | null;
         attemptNumber: number;
         fallbackUsed: boolean;
         fallbackReason: string | null;
-        loanId: string | null;
     }>;
     fallback(customerId: string, dto: FallbackBiometricDto, user: AuthenticatedUser): Promise<{
-        id: string;
         result: import("@prisma/client").$Enums.BiometricResult;
+        id: string;
         deviceId: string;
         timestamp: Date;
         customerId: string;
         verifiedById: string;
+        loanId: string | null;
         attemptNumber: number;
         fallbackUsed: boolean;
         fallbackReason: string | null;
-        loanId: string | null;
     }>;
 }
